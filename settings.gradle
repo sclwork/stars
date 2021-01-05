@@ -1,0 +1,2 @@
+include ':recorder'
+rootProject.name = "stars"

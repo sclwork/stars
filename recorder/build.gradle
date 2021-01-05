@@ -1,0 +1,91 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdkVersion project.properties.CompileSdkVersion as int
+    buildToolsVersion project.properties.BuildToolsVersion as String
+
+    defaultConfig {
+        applicationId "com.scliang.tars"
+        minSdkVersion project.properties.MinSdkVersion as int
+        targetSdkVersion project.properties.TargetSdkVersion as int
+        versionCode project.properties.VersionCode as int
+        versionName project.properties.VersionName as String
+
+        multiDexEnabled true
+
+        externalNativeBuild {
+            cmake {
+                abiFilters /*'armeabi', */'armeabi-v7a', 'arm64-v8a'/*, 'x86', 'x86_64', 'mips', 'mips64'*/
+                cppFlags "-std=c++11 -frtti -fexceptions"
+                cFlags "-DSTDC_HEADERS"
+                arguments "-DANDROID_STL=c++_shared"
+            }
+        }
+
+        ndk {
+            abiFilters /*'armeabi', */'armeabi-v7a', 'arm64-v8a'/*, 'x86', 'x86_64', 'mips', 'mips64'*/
+        }
+    }
+
+    signingConfigs {
+        Properties properties = new Properties()
+        InputStream inputStream = project.rootProject.file('local.properties').newDataInputStream()
+        properties.load(inputStream)
+
+        release {
+            storeFile file(properties.getProperty('keystore.file'))
+            keyAlias properties.getProperty('keystore.alias')
+            keyPassword properties.getProperty('keystore.pwd')
+            storePassword properties.getProperty('keystore.pwd')
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+            minifyEnabled false
+            renderscriptDebuggable true
+            zipAlignEnabled false
+            versionNameSuffix '_debug'
+            signingConfig signingConfigs.release
+        }
+        beta {
+            debuggable true
+            renderscriptDebuggable true
+            shrinkResources true
+            minifyEnabled true
+            zipAlignEnabled true
+            versionNameSuffix '_beta'
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            debuggable false
+            renderscriptDebuggable false
+            shrinkResources true
+            minifyEnabled true
+            zipAlignEnabled true
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.2.1'
+}
