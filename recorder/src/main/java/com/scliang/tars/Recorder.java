@@ -14,18 +14,14 @@ import java.io.InputStream;
 import java.lang.ref.SoftReference;
 
 public class Recorder {
-    /**
-     * Get single instance object
-     * @return single instance object
-     */
-    public static Recorder instance() { return Recorder.SingletonHolder.INSTANCE; }
 
     /**
      * Init media utils
      * @return true: load native library [media] success
      */
-    public boolean init(Context context) {
-        if (mInit)
+    public static boolean init(Context context) {
+        final Recorder r = SingletonHolder.INSTANCE;
+        if (r.mInit)
             return true;
 
         if (context == null)
@@ -42,34 +38,89 @@ public class Recorder {
             return false;
 
         // save context to SoftReference
-        setContext(context);
+        r.setContext(context);
 
         // load so library
-        try { System.loadLibrary("recorder"); mInit = true;
-        } catch (Throwable e) { e.printStackTrace(); mInit = false; }
+        try { System.loadLibrary("recorder"); r.mInit = true;
+        } catch (Throwable e) { e.printStackTrace(); r.mInit = false; }
 
         // init ops
-        if (mInit) {
+        if (r.mInit) {
             // jni init
-            jniInit(getOpenCVCascadeFileRes(), getMNNFileRes());
+            r.jniInit(r.getOpenCVCascadeFileRes(), r.getMNNFileRes());
         }
 
         // return
-        return mInit;
+        return r.mInit;
     }
 
     /**
      * Release [free/delete] all resource
      */
-    public void release() {
+    public static void release() {
+        final Recorder r = SingletonHolder.INSTANCE;
         // must init [success] first
-        if (!mInit)
+        if (!r.mInit)
             return;
 
         // jni release
-        jniRelease();
+        r.jniRelease();
         // flag
-        mInit = false;
+        r.mInit = false;
+    }
+
+    public static void rendererInit() {
+        final Recorder r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        r.jniRendererInit();
+    }
+
+    public static void rendererRelease() {
+        final Recorder r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        r.jniRendererRelease();
+    }
+
+    public static void rendererSurfaceCreated() {
+        final Recorder r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        r.jniRendererSurfaceCreated();
+    }
+
+    public static void rendererSurfaceChanged(int width, int height) {
+        final Recorder r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        r.jniRendererSurfaceChanged(width, height);
+    }
+
+    public static void rendererSurfaceDestroyed() {
+        final Recorder r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        r.jniRendererSurfaceDestroyed();
+    }
+
+    public static void rendererDrawFrame() {
+        final Recorder r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        r.jniRendererDrawFrame();
     }
 
 
@@ -156,6 +207,13 @@ public class Recorder {
     private native void jniInit(@NonNull String opencvCascadePath,
                                 @NonNull String mnnModelPaths);
     private native void jniRelease();
+    ///////////////////////////////////////////////////////////
+    private native int jniRendererInit();
+    private native int jniRendererRelease();
+    private native int jniRendererSurfaceCreated();
+    private native int jniRendererSurfaceChanged(int width, int height);
+    private native int jniRendererSurfaceDestroyed();
+    private native int jniRendererDrawFrame();
 
 
 

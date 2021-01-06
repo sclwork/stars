@@ -10,10 +10,13 @@
 #include <condition_variable>
 #include <queue>
 
+namespace recorder {
+
 template<class T, class Container = std::queue<T>>
 class safe_queue {
 public:
     safe_queue() = default;
+    ~safe_queue() = default;
 
 public:
     template<class Element>
@@ -82,5 +85,7 @@ private:
     std::condition_variable cond;
     Container queue;
 };
+
+} //namespace recorder
 
 #endif //STARS_SAFE_QUEUE_HPP

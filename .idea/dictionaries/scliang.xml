@@ -2,12 +2,17 @@
   <dictionary name="scliang">
     <words>
       <w>blazeface</w>
+      <w>coords</w>
+      <w>essl</w>
       <w>ffmpeg</w>
       <w>haarcascade</w>
+      <w>mediump</w>
       <w>opencv</w>
       <w>opensl</w>
+      <w>prog</w>
       <w>scliang</w>
       <w>tensorflow</w>
+      <w>thiz</w>
       <w>webrtc</w>
     </words>
   </dictionary>

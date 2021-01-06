@@ -12,13 +12,12 @@ SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall -pthread")
 
 # lamemp3
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/jniLibs/${ANDROID_ABI})
-set(SRC_DIR src/main/cpp/lamemp3)
 include_directories(src/main/cpp/lamemp3 src/main/cpp/lamemp3/lame)
-aux_source_directory(src/main/cpp/lamemp3 SRC_LIST)
+aux_source_directory(src/main/cpp/lamemp3 LAME_SRC_LIST)
 add_library(
         mp3lame
         SHARED
-        ${SRC_LIST})
+        ${LAME_SRC_LIST})
 find_library(
         log-lib
         log)
@@ -81,6 +80,9 @@ add_library(mnn_vulkan SHARED IMPORTED)
 set_target_properties(mnn_vulkan PROPERTIES IMPORTED_LOCATION
         ${CMAKE_SOURCE_DIR}/jniLibs/${CMAKE_ANDROID_ARCH_ABI}/libMNN_Vulkan.so)
 
+aux_source_directory(src/main/cpp/loop  LOOP_SRC_LIST)
+aux_source_directory(src/main/cpp/video VIDEO_SRC_LIST)
+
 add_library( # Sets the name of the library.
         recorder
 
@@ -88,8 +90,9 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        src/main/cpp/loop/safe_queue.hpp
-        src/main/cpp/loop/loop.cpp
+        ${LOOP_SRC_LIST}
+        ${VIDEO_SRC_LIST}
+        src/main/cpp/common.cpp
         src/main/cpp/jni.cpp)
 
 # Searches for a specified prebuilt library and stores the path as a

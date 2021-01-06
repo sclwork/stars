@@ -1,0 +1,226 @@
+//
+// Created by scliang on 1/6/21.
+//
+
+#include "common.h"
+#include "camera_paint.h"
+
+#define d(...)  LOG_D("Recorder-Native:camera_paint", __VA_ARGS__)
+#define e(...)  LOG_E("Recorder-Native:camera_paint", __VA_ARGS__)
+
+namespace recorder {
+} //namespace recorder
+
+recorder::camera_paint::camera_paint()
+:texture(0),vertex_shader(0),fragment_shader(0),program(0),
+sampler_location(0),sampler_matrix(0),cvs_width(0),cvs_height(0),cvs_ratio(0), matrix(glm::mat4{}) {
+    glGenTextures  (1, &texture);
+    glBindTexture  (GL_TEXTURE_2D, texture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture  (GL_TEXTURE_2D, GL_NONE);
+
+    char vShaderStr[] =
+            "#version 300 es                                     \n"
+            "layout(location = 0) in vec4 a_position;            \n"
+            "layout(location = 1) in vec2 a_texCoord;            \n"
+            "uniform mat4 u_Matrix;                              \n"
+            "out vec2 v_texCoord;                                \n"
+            "void main()                                         \n"
+            "{                                                   \n"
+            "   gl_Position = u_Matrix * a_position;             \n"
+            "   v_texCoord = a_texCoord;                         \n"
+            "}                                                   \n";
+
+    char fShaderStr[] =
+            "#version 300 es                                     \n"
+            "#extension GL_OES_EGL_image_external_essl3 : require\n"
+            "precision mediump float;                            \n"
+            "in vec2 v_texCoord;                                 \n"
+            "layout(location = 0) out vec4 outColor;             \n"
+            "uniform sampler2D sp_location;                      \n"
+            "void main()                                         \n"
+            "{                                                   \n"
+            "  outColor = texture(sp_location, v_texCoord);      \n"
+            "}                                                   \n";
+
+    program = create_program(vShaderStr, fShaderStr, vertex_shader, fragment_shader);
+    if (program) {
+        sampler_location = glGetUniformLocation(program, "sp_location");
+        sampler_matrix = glGetUniformLocation(program, "u_Matrix");
+    }
+
+    GLfloat vcs[] = {  -1.0f,  1.0f, 0.0f,
+                       -1.0f, -1.0f, 0.0f,
+                        1.0f, -1.0f, 0.0f,
+                        1.0f,  1.0f, 0.0f,  };
+    memcpy(vertices_coords, vcs, sizeof(GLfloat) * 12);
+
+    GLfloat tcs[] = {  0.0f,  0.0f,
+                       0.0f,  1.0f,
+                       1.0f,  1.0f,
+                       1.0f,  0.0f,  };
+    memcpy(texture_coords, tcs, sizeof(GLfloat) * 8);
+
+    GLushort is[6] = {  0, 1, 2,
+                        0, 2, 3,  };
+    memcpy(indices, is, sizeof(GLushort) * 6);
+}
+
+recorder::camera_paint::~camera_paint() {
+    glDeleteTextures(1, &texture);
+    texture = GL_NONE;
+    glDeleteProgram(program);
+    program = GL_NONE;
+}
+
+void recorder::camera_paint::set_canvas_size(int32_t width, int32_t height) {
+    if (height == 0) {
+        return;
+    }
+
+    cvs_width = width;
+    cvs_height = height;
+    cvs_ratio = (float)width/(float)height;
+}
+
+void recorder::camera_paint::draw(int32_t width, int32_t height, uint32_t *data) {
+    if (data == nullptr || program == GL_NONE || texture == GL_NONE) {
+        return;
+    }
+
+    float img_r = (float)width/(float)height;
+    update_matrix(0, 0, cvs_ratio>img_r?cvs_ratio/img_r:img_r/cvs_ratio);
+    glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+
+    //upload RGBA image data
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+
+    // Use the program object
+    glUseProgram(program);
+
+    // Load the vertex position
+    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), vertices_coords);
+    // Load the texture coordinate
+    glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof (GLfloat), texture_coords);
+
+    glEnableVertexAttribArray (0);
+    glEnableVertexAttribArray (1);
+
+    // Bind the RGBA map
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    // Set the RGBA map sampler to texture unit to 0
+    glUniform1i(sampler_location, 0);
+    glUniformMatrix4fv(sampler_matrix, 1, GL_FALSE, &(matrix)[0][0]);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+}
+
+void recorder::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float ratio) {
+    angleX = angleX % 360;
+    angleY = angleY % 360;
+
+    auto radiansX = (float)(MATH_PI / 180.0f * angleX);
+    auto radiansY = (float)(MATH_PI / 180.0f * angleY);
+
+    // Projection matrix
+    glm::mat4 Projection = glm::ortho(-ratio, ratio, -1.0f, 1.0f, 0.0f, 100.0f);
+
+    // View matrix
+    glm::mat4 View = glm::lookAt(
+            glm::vec3(0, 0, 4), // Camera is at (0,0,1), in World Space
+            glm::vec3(0, 0, 0), // and looks at the origin
+            glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
+    );
+
+    // Model matrix
+    glm::mat4 Model = glm::mat4(1.0f);
+    Model = glm::scale(Model, glm::vec3(1.0f, 1.0f, 1.0f));
+    Model = glm::rotate(Model, radiansX, glm::vec3(1.0f, 0.0f, 0.0f));
+    Model = glm::rotate(Model, radiansY, glm::vec3(0.0f, 1.0f, 0.0f));
+    Model = glm::translate(Model, glm::vec3(0.0f, 0.0f, 0.0f));
+
+    matrix = Projection * View * Model;
+}
+
+GLuint recorder::camera_paint::load_shader(GLenum shaderType, const char *pSource) {
+    GLuint shader = glCreateShader(shaderType);
+    if (shader) {
+        glShaderSource(shader, 1, &pSource, nullptr);
+        glCompileShader(shader);
+        GLint compiled = 0;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+        if (!compiled) {
+            GLint infoLen = 0;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
+            if (infoLen) {
+                char* buf = (char*) malloc((size_t)infoLen);
+                if (buf) {
+                    glGetShaderInfoLog(shader, infoLen, nullptr, buf);
+                    e("LoadShader Could not compile shader %d: %s", shaderType, buf);
+                    free(buf);
+                }
+                glDeleteShader(shader);
+                shader = 0;
+            }
+        }
+    }
+
+    return shader;
+}
+
+GLuint recorder::camera_paint::create_program(const char *pVertexShaderSource,
+                                              const char *pFragShaderSource,
+                                              GLuint &vertexShaderHandle,
+                                              GLuint &fragShaderHandle) {
+    GLuint prog = 0;
+    vertexShaderHandle = load_shader(GL_VERTEX_SHADER, pVertexShaderSource);
+    if (!vertexShaderHandle) {
+        return prog;
+    }
+
+    fragShaderHandle = load_shader(GL_FRAGMENT_SHADER, pFragShaderSource);
+    if (!fragShaderHandle) {
+        return prog;
+    }
+
+    prog = glCreateProgram();
+    if (prog) {
+        glAttachShader(prog, vertexShaderHandle);
+        glAttachShader(prog, fragShaderHandle);
+        glLinkProgram(prog);
+        GLint linkStatus = GL_FALSE;
+        glGetProgramiv(prog, GL_LINK_STATUS, &linkStatus);
+
+        glDetachShader(prog, vertexShaderHandle);
+        glDeleteShader(vertexShaderHandle);
+        vertexShaderHandle = 0;
+        glDetachShader(prog, fragShaderHandle);
+        glDeleteShader(fragShaderHandle);
+        fragShaderHandle = 0;
+        if (linkStatus != GL_TRUE) {
+            GLint bufLength = 0;
+            glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &bufLength);
+            if (bufLength) {
+                char* buf = (char*)malloc((size_t)bufLength);
+                if (buf) {
+                    glGetProgramInfoLog(prog, bufLength, nullptr, buf);
+                    e("GLUtils::CreateProgram Could not link program: %s", buf);
+                    free(buf);
+                }
+            }
+            glDeleteProgram(prog);
+            prog = 0;
+        }
+    }
+
+    return prog;
+}
