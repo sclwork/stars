@@ -84,7 +84,7 @@ aux_source_directory(src/main/cpp/loop  LOOP_SRC_LIST)
 aux_source_directory(src/main/cpp/video VIDEO_SRC_LIST)
 
 add_library( # Sets the name of the library.
-        recorder
+        media
 
         # Sets the library as a shared library.
         SHARED
@@ -116,7 +116,7 @@ find_library(
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-        recorder
+        media
         # Links the target library to the ffmpeg library
         postproc
         avcodec

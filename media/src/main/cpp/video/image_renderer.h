@@ -1,0 +1,38 @@
+//
+// Created by scliang on 1/7/21.
+//
+
+#ifndef STARS_IMAGE_RENDERER_H
+#define STARS_IMAGE_RENDERER_H
+
+#include "paint.h"
+#include "renderer.h"
+
+namespace media {
+
+class image_renderer: public renderer {
+public:
+    image_renderer();
+    ~image_renderer();
+
+public:
+    void surface_created() override;
+    void surface_destroyed() override;
+    void surface_changed(int32_t w, int32_t h) override;
+    void draw_frame(int32_t w, int32_t h, uint32_t *data) override;
+
+private:
+    image_renderer(image_renderer&&) = delete;
+    image_renderer(const image_renderer&) = delete;
+    image_renderer& operator=(image_renderer&&) = delete;
+    image_renderer& operator=(const image_renderer&) = delete;
+
+private:
+    int32_t width;
+    int32_t height;
+    paint  *paint;
+};
+
+} //media media
+
+#endif //STARS_IMAGE_RENDERER_H

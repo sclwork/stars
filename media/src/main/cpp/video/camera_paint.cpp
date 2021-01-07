@@ -5,14 +5,14 @@
 #include "common.h"
 #include "camera_paint.h"
 
-#define d(...)  LOG_D("Recorder-Native:camera_paint", __VA_ARGS__)
-#define e(...)  LOG_E("Recorder-Native:camera_paint", __VA_ARGS__)
+#define log_d(...)  LOG_D("Media-Native:camera_paint", __VA_ARGS__)
+#define log_e(...)  LOG_E("Media-Native:camera_paint", __VA_ARGS__)
 
-namespace recorder {
-} //namespace recorder
+namespace media {
+} //namespace media
 
-recorder::camera_paint::camera_paint()
-:texture(0),vertex_shader(0),fragment_shader(0),program(0),
+media::camera_paint::camera_paint()
+:texture(GL_NONE),vertex_shader(GL_NONE),fragment_shader(GL_NONE),program(GL_NONE),
 sampler_location(0),sampler_matrix(0),cvs_width(0),cvs_height(0),cvs_ratio(0), matrix(glm::mat4{}) {
     glGenTextures  (1, &texture);
     glBindTexture  (GL_TEXTURE_2D, texture);
@@ -67,16 +67,20 @@ sampler_location(0),sampler_matrix(0),cvs_width(0),cvs_height(0),cvs_ratio(0), m
     GLushort is[6] = {  0, 1, 2,
                         0, 2, 3,  };
     memcpy(indices, is, sizeof(GLushort) * 6);
+
+    log_d("created.");
 }
 
-recorder::camera_paint::~camera_paint() {
+media::camera_paint::~camera_paint() {
     glDeleteTextures(1, &texture);
     texture = GL_NONE;
     glDeleteProgram(program);
     program = GL_NONE;
+
+    log_d("release.");
 }
 
-void recorder::camera_paint::set_canvas_size(int32_t width, int32_t height) {
+void media::camera_paint::set_canvas_size(int32_t width, int32_t height) {
     if (height == 0) {
         return;
     }
@@ -84,9 +88,11 @@ void recorder::camera_paint::set_canvas_size(int32_t width, int32_t height) {
     cvs_width = width;
     cvs_height = height;
     cvs_ratio = (float)width/(float)height;
+
+    log_d("canvas size: %d,%d %0.4f", cvs_width, cvs_height, cvs_ratio);
 }
 
-void recorder::camera_paint::draw(int32_t width, int32_t height, uint32_t *data) {
+void media::camera_paint::draw(int32_t width, int32_t height, uint32_t *data) {
     if (data == nullptr || program == GL_NONE || texture == GL_NONE) {
         return;
     }
@@ -119,12 +125,12 @@ void recorder::camera_paint::draw(int32_t width, int32_t height, uint32_t *data)
 
     // Set the RGBA map sampler to texture unit to 0
     glUniform1i(sampler_location, 0);
-    glUniformMatrix4fv(sampler_matrix, 1, GL_FALSE, &(matrix)[0][0]);
+    glUniformMatrix4fv(sampler_matrix, 1, GL_FALSE, &(matrix[0][0]));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
 
-void recorder::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float ratio) {
+void media::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float ratio) {
     angleX = angleX % 360;
     angleY = angleY % 360;
 
@@ -151,7 +157,7 @@ void recorder::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float
     matrix = Projection * View * Model;
 }
 
-GLuint recorder::camera_paint::load_shader(GLenum shaderType, const char *pSource) {
+GLuint media::camera_paint::load_shader(GLenum shaderType, const char *pSource) {
     GLuint shader = glCreateShader(shaderType);
     if (shader) {
         glShaderSource(shader, 1, &pSource, nullptr);
@@ -165,7 +171,7 @@ GLuint recorder::camera_paint::load_shader(GLenum shaderType, const char *pSourc
                 char* buf = (char*) malloc((size_t)infoLen);
                 if (buf) {
                     glGetShaderInfoLog(shader, infoLen, nullptr, buf);
-                    e("LoadShader Could not compile shader %d: %s", shaderType, buf);
+                    log_e("LoadShader Could not compile shader %d: %s", shaderType, buf);
                     free(buf);
                 }
                 glDeleteShader(shader);
@@ -177,10 +183,10 @@ GLuint recorder::camera_paint::load_shader(GLenum shaderType, const char *pSourc
     return shader;
 }
 
-GLuint recorder::camera_paint::create_program(const char *pVertexShaderSource,
-                                              const char *pFragShaderSource,
-                                              GLuint &vertexShaderHandle,
-                                              GLuint &fragShaderHandle) {
+GLuint media::camera_paint::create_program(const char *pVertexShaderSource,
+                                           const char *pFragShaderSource,
+                                           GLuint &vertexShaderHandle,
+                                           GLuint &fragShaderHandle) {
     GLuint prog = 0;
     vertexShaderHandle = load_shader(GL_VERTEX_SHADER, pVertexShaderSource);
     if (!vertexShaderHandle) {
@@ -213,7 +219,7 @@ GLuint recorder::camera_paint::create_program(const char *pVertexShaderSource,
                 char* buf = (char*)malloc((size_t)bufLength);
                 if (buf) {
                     glGetProgramInfoLog(prog, bufLength, nullptr, buf);
-                    e("GLUtils::CreateProgram Could not link program: %s", buf);
+                    log_e("GLUtils::CreateProgram Could not link program: %s", buf);
                     free(buf);
                 }
             }

@@ -1,2 +1,2 @@
-include ':recorder'
+include ':media'
 rootProject.name = "stars"

@@ -13,14 +13,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 
-public class Recorder {
+public class Media {
 
     /**
      * Init media utils
      * @return true: load native library [media] success
      */
     public static boolean init(Context context) {
-        final Recorder r = SingletonHolder.INSTANCE;
+        final Media r = SingletonHolder.INSTANCE;
         if (r.mInit)
             return true;
 
@@ -41,12 +41,13 @@ public class Recorder {
         r.setContext(context);
 
         // load so library
-        try { System.loadLibrary("recorder"); r.mInit = true;
+        try { System.loadLibrary("media"); r.mInit = true;
         } catch (Throwable e) { e.printStackTrace(); r.mInit = false; }
 
         // init ops
         if (r.mInit) {
             // jni init
+            r.getDemoCppFileRes(); // TODO: demo png res
             r.jniInit(r.getOpenCVCascadeFileRes(), r.getMNNFileRes());
         }
 
@@ -58,7 +59,7 @@ public class Recorder {
      * Release [free/delete] all resource
      */
     public static void release() {
-        final Recorder r = SingletonHolder.INSTANCE;
+        final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
             return;
@@ -70,7 +71,7 @@ public class Recorder {
     }
 
     public static void rendererInit() {
-        final Recorder r = SingletonHolder.INSTANCE;
+        final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
             return;
@@ -79,7 +80,7 @@ public class Recorder {
     }
 
     public static void rendererRelease() {
-        final Recorder r = SingletonHolder.INSTANCE;
+        final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
             return;
@@ -88,7 +89,7 @@ public class Recorder {
     }
 
     public static void rendererSurfaceCreated() {
-        final Recorder r = SingletonHolder.INSTANCE;
+        final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
             return;
@@ -97,7 +98,7 @@ public class Recorder {
     }
 
     public static void rendererSurfaceChanged(int width, int height) {
-        final Recorder r = SingletonHolder.INSTANCE;
+        final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
             return;
@@ -106,7 +107,7 @@ public class Recorder {
     }
 
     public static void rendererSurfaceDestroyed() {
-        final Recorder r = SingletonHolder.INSTANCE;
+        final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
             return;
@@ -115,7 +116,7 @@ public class Recorder {
     }
 
     public static void rendererDrawFrame() {
-        final Recorder r = SingletonHolder.INSTANCE;
+        final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
             return;
@@ -137,18 +138,18 @@ public class Recorder {
                 return "";
 
             is = context.getResources().openRawResource(R.raw.haarcascade_frontalface_default);
-            File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
-            File cascadeFile = new File(cascadeDir, "haarcascade_frontalface_default.xml");
-            if (cascadeFile.exists())
-                return cascadeFile.getAbsolutePath();
+            File dir = context.getDir("files", Context.MODE_PRIVATE);
+            File file = new File(dir, "haarcascade_frontalface_default.xml");
+            if (file.exists())
+                return file.getAbsolutePath();
 
-            os = new FileOutputStream(cascadeFile);
+            os = new FileOutputStream(file);
             byte[] buffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = is.read(buffer)) != -1)
                 os.write(buffer, 0, bytesRead);
 
-            return cascadeFile.getAbsolutePath();
+            return file.getAbsolutePath();
         } catch (IOException e) {
             e.printStackTrace();
             return "";
@@ -169,18 +170,18 @@ public class Recorder {
                 return "";
 
             is = context.getResources().openRawResource(raw);
-            File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
-            File cascadeFile = new File(cascadeDir, name);
-            if (cascadeFile.exists())
-                return cascadeFile.getAbsolutePath();
+            File dir = context.getDir("files", Context.MODE_PRIVATE);
+            File file = new File(dir, name);
+            if (file.exists())
+                return file.getAbsolutePath();
 
-            os = new FileOutputStream(cascadeFile);
+            os = new FileOutputStream(file);
             byte[] buffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = is.read(buffer)) != -1)
                 os.write(buffer, 0, bytesRead);
 
-            return cascadeFile.getAbsolutePath();
+            return file.getAbsolutePath();
         } catch (IOException e) {
             e.printStackTrace();
             return "";
@@ -197,6 +198,38 @@ public class Recorder {
 //        return ";" + getMNNFile(R.raw.det1, "det1.mnn") + ";" +
 //                     getMNNFile(R.raw.det2, "det2.mnn") + ";" +
 //                     getMNNFile(R.raw.det3, "det3.mnn");
+    }
+
+    private String getDemoCppFileRes() {
+        InputStream is = null;
+        FileOutputStream os = null;
+        try {
+            Context context = getContext();
+            if (context == null)
+                return "";
+
+            is = context.getResources().openRawResource(R.raw.cpp);
+            File dir = context.getDir("files", Context.MODE_PRIVATE);
+            File file = new File(dir, "cpp.png");
+            if (file.exists())
+                return file.getAbsolutePath();
+
+            os = new FileOutputStream(file);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1)
+                os.write(buffer, 0, bytesRead);
+
+            return file.getAbsolutePath();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "";
+        } finally {
+            try { if (is != null) is.close();
+            } catch (IOException ignored) { }
+            try { if (os != null) os.close();
+            } catch (IOException ignored) { }
+        }
     }
 
 
@@ -223,7 +256,7 @@ public class Recorder {
     private SoftReference<Context> mContext;
     private void setContext(Context context) { mContext = new SoftReference<>(context); }
     private Context getContext() { return mContext == null ? null : mContext.get(); }
-    private static class SingletonHolder { private static final Recorder INSTANCE = new Recorder(); }
-    private Recorder() { }
+    private static class SingletonHolder { private static final Media INSTANCE = new Media(); }
+    private Media() { }
     private boolean mInit;
 }

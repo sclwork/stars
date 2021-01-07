@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".DemoActivity">
 
-    <com.scliang.tars.RecorderView
+    <com.scliang.tars.MediaGLView
         android:id="@+id/recorder_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

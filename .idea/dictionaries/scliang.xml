@@ -5,6 +5,7 @@
       <w>coords</w>
       <w>essl</w>
       <w>ffmpeg</w>
+      <w>frontalface</w>
       <w>haarcascade</w>
       <w>mediump</w>
       <w>opencv</w>

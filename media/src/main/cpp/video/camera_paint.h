@@ -12,7 +12,7 @@
 #include <GLES3/gl3.h>
 #include "paint.h"
 
-namespace recorder {
+namespace media {
 
 class camera_paint: public paint {
 public:
@@ -20,8 +20,8 @@ public:
     ~camera_paint();
 
 public:
-    void set_canvas_size(int32_t width, int32_t height);
-    void draw(int32_t width, int32_t height, uint32_t *data);
+    void set_canvas_size(int32_t width, int32_t height) override;
+    void draw(int32_t width, int32_t height, uint32_t *data) override;
 
 private:
     void update_matrix(int32_t angleX, int32_t angleY, float ratio);
@@ -51,6 +51,6 @@ private:
     GLushort  indices[6]{};
 };
 
-} //namespace recorder
+} //namespace media
 
 #endif //STARS_CAMERA_PAINT_H

@@ -8,7 +8,7 @@ import android.view.SurfaceHolder;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-public class RecorderView extends GLSurfaceView {
+public class MediaGLView extends GLSurfaceView {
     public interface OnRendererListener {
         void onRendererInit();
         void onRendererRelease();
@@ -62,12 +62,12 @@ public class RecorderView extends GLSurfaceView {
     private RecorderRenderer mRenderer;
     private OnRendererListener mOnRendererListener;
 
-    public RecorderView(Context context) {
+    public MediaGLView(Context context) {
         super(context);
         init();
     }
 
-    public RecorderView(Context context, AttributeSet attrs) {
+    public MediaGLView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }

@@ -6,10 +6,10 @@
 #include "common.h"
 #include "safe_queue.hpp"
 
-#define d(...)  LOG_D("Recorder-Native:loop", __VA_ARGS__)
-#define e(...)  LOG_E("Recorder-Native:loop", __VA_ARGS__)
+#define log_d(...)  LOG_D("Media-Native:loop", __VA_ARGS__)
+#define log_e(...)  LOG_E("Media-Native:loop", __VA_ARGS__)
 
-namespace recorder {
+namespace media {
 
 class ln {
 public:
@@ -49,14 +49,44 @@ static std::atomic_bool loop_running(false);
 static std::unique_ptr<common> com_ptr;
 static safe_queue<ln> queue;
 
+void renderer_init() {
+    com_ptr->renderer_init();
+    log_d("renderer init.");
+}
+
+void renderer_release() {
+    com_ptr->renderer_release();
+    log_d("renderer release.");
+}
+
+void renderer_surface_created() {
+    com_ptr->renderer_surface_created();
+    log_d("renderer surface created.");
+}
+
+void renderer_surface_destroyed() {
+    com_ptr->renderer_surface_destroyed();
+    log_d("renderer surface destroyed.");
+}
+
+void renderer_surface_changed(int32_t w, int32_t h) {
+    com_ptr->renderer_surface_changed(w, h);
+    log_d("renderer surface changed: %d,%d.", w, h);
+}
+
+void renderer_draw_frame() {
+    com_ptr->renderer_draw_frame();
+//    d("renderer draw frame.");
+}
+
 static void loop_run(std::string &&cascade, std::string &&mnn) {
     loop_running = true;
 
-    d("=================================================");
+    log_d("=================================================");
     com_ptr.reset(new common(cascade, mnn));
-    d("hardware concurrency: %d", std::thread::hardware_concurrency());
+    log_d("hardware concurrency: %d", std::thread::hardware_concurrency());
 //    d("cascade:%s, mnn:%s", cascade.c_str(), mnn.c_str());
-    d("recorder loop running...");
+    log_d("media loop running...");
     while (true) {
         auto n = queue.wait_and_pop();
         if (n->is_exit()) {
@@ -66,15 +96,16 @@ static void loop_run(std::string &&cascade, std::string &&mnn) {
         n->run();
     }
 
-    d("recorder loop exited...");
-    common *com = com_ptr.release(); delete com;
+    log_d("media loop exited...");
+    common *com = com_ptr.release();
+    delete com;
     loop_running = false;
-    d("=================================================");
+    log_d("=================================================");
 }
 
-} //namespace recorder
+} //namespace media
 
-void recorder::loop_start(const char *cascade, const char *mnn) {
+void media::loop_start(const char *cascade, const char *mnn) {
     if (loop_running) {
         return;
     }
@@ -83,7 +114,7 @@ void recorder::loop_start(const char *cascade, const char *mnn) {
     t.detach();
 }
 
-void recorder::loop_exit() {
+void media::loop_exit() {
     if (!loop_running) {
         return;
     }
@@ -91,7 +122,7 @@ void recorder::loop_exit() {
     queue.push(ln::create_exit_ln());
 }
 
-void recorder::loop_post(void (*runnable)(void*, void (*)(void*)),
+void media::loop_post(void (*runnable)(void*, void (*)(void*)),
                          void *ctx,
                          void (*callback)(void*)) {
     if (!loop_running) {

@@ -11,7 +11,7 @@ public class DemoActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Recorder.init(this);
+        Media.init(this);
         Window window = getWindow();
         window.getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR |
@@ -23,36 +23,36 @@ public class DemoActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        final RecorderView recorderView = findViewById(R.id.recorder_view);
-        if (recorderView != null) recorderView.setOnRendererListener(new RecorderView.OnRendererListener() {
+        final MediaGLView recorderView = findViewById(R.id.recorder_view);
+        if (recorderView != null) recorderView.setOnRendererListener(new MediaGLView.OnRendererListener() {
             @Override
             public void onRendererInit() {
-                Recorder.rendererInit();
+                Media.rendererInit();
             }
 
             @Override
             public void onRendererRelease() {
-                Recorder.rendererRelease();
+                Media.rendererRelease();
             }
 
             @Override
             public void onRendererSurfaceCreated() {
-                Recorder.rendererSurfaceCreated();
+                Media.rendererSurfaceCreated();
             }
 
             @Override
             public void onRendererSurfaceChanged(int width, int height) {
-                Recorder.rendererSurfaceChanged(width, height);
+                Media.rendererSurfaceChanged(width, height);
             }
 
             @Override
             public void onRendererSurfaceDestroyed() {
-                Recorder.rendererSurfaceDestroyed();
+                Media.rendererSurfaceDestroyed();
             }
 
             @Override
             public void onRendererDrawFrame() {
-                Recorder.rendererDrawFrame();
+                Media.rendererDrawFrame();
             }
         });
     }
@@ -60,7 +60,7 @@ public class DemoActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        final RecorderView recorderView = findViewById(R.id.recorder_view);
+        final MediaGLView recorderView = findViewById(R.id.recorder_view);
         if (recorderView != null) {
             recorderView.onResume();
         }
@@ -69,7 +69,7 @@ public class DemoActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        final RecorderView recorderView = findViewById(R.id.recorder_view);
+        final MediaGLView recorderView = findViewById(R.id.recorder_view);
         if (recorderView != null) {
             recorderView.onPause();
         }
@@ -77,7 +77,7 @@ public class DemoActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        Recorder.release();
+        Media.release();
         super.onDestroy();
     }
 }

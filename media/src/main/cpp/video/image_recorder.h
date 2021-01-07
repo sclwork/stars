@@ -5,7 +5,7 @@
 #ifndef STARS_IMAGE_RECORDER_H
 #define STARS_IMAGE_RECORDER_H
 
-namespace recorder {
+namespace media {
 
 class image_recorder {
 public:
@@ -19,6 +19,6 @@ private:
     image_recorder& operator=(const image_recorder&) = delete;
 };
 
-} //namespace recorder
+} //namespace media
 
 #endif //STARS_IMAGE_RECORDER_H

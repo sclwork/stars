@@ -10,7 +10,7 @@
 #include <condition_variable>
 #include <queue>
 
-namespace recorder {
+namespace media {
 
 template<class T, class Container = std::queue<T>>
 class safe_queue {
@@ -86,6 +86,6 @@ private:
     Container queue;
 };
 
-} //namespace recorder
+} //namespace media
 
 #endif //STARS_SAFE_QUEUE_HPP
