@@ -46,3 +46,12 @@ void media::image_renderer::draw_frame(int32_t w, int32_t h, uint32_t *data) {
 
     paint->draw(w, h, data);
 }
+
+void media::image_renderer::get_size(int32_t *ow, int32_t *oh) {
+    if (ow != nullptr) {
+        *ow = width;
+    }
+    if (oh != nullptr) {
+        *oh = height;
+    }
+}

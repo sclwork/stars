@@ -60,7 +60,6 @@ public class MediaGLView extends GLSurfaceView {
     }
 
     private RecorderRenderer mRenderer;
-    private OnRendererListener mOnRendererListener;
 
     public MediaGLView(Context context) {
         super(context);
@@ -77,40 +76,32 @@ public class MediaGLView extends GLSurfaceView {
         mRenderer = new RecorderRenderer(new OnRendererListener() {
             @Override
             public void onRendererInit() {
-                if (mOnRendererListener != null)
-                    mOnRendererListener.onRendererInit();
+                Media.rendererInit();
             }
 
             @Override
             public void onRendererRelease() {
-                if (mOnRendererListener != null)
-                    mOnRendererListener.onRendererRelease();
+                Media.rendererRelease();
             }
 
             @Override
             public void onRendererSurfaceCreated() {
-                if (mOnRendererListener != null)
-                    mOnRendererListener.onRendererSurfaceCreated();
-
+                Media.rendererSurfaceCreated();
             }
 
             @Override
             public void onRendererSurfaceChanged(int width, int height) {
-                if (mOnRendererListener != null)
-                    mOnRendererListener.onRendererSurfaceChanged(width, height);
-
+                Media.rendererSurfaceChanged(width, height);
             }
 
             @Override
             public void onRendererSurfaceDestroyed() {
-                if (mOnRendererListener != null)
-                    mOnRendererListener.onRendererSurfaceDestroyed();
+                Media.rendererSurfaceDestroyed();
             }
 
             @Override
             public void onRendererDrawFrame() {
-                if (mOnRendererListener != null)
-                    mOnRendererListener.onRendererDrawFrame();
+                Media.rendererDrawFrame();
             }
         });
         setRenderer(mRenderer);
@@ -128,9 +119,5 @@ public class MediaGLView extends GLSurfaceView {
     protected void onDetachedFromWindow() {
         queueEvent(()->{if(mRenderer != null)mRenderer.release();});
         super.onDetachedFromWindow();
-    }
-
-    public void setOnRendererListener(OnRendererListener listener) {
-        mOnRendererListener = listener;
     }
 }

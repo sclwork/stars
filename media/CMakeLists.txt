@@ -82,6 +82,8 @@ set_target_properties(mnn_vulkan PROPERTIES IMPORTED_LOCATION
 
 aux_source_directory(src/main/cpp/loop  LOOP_SRC_LIST)
 aux_source_directory(src/main/cpp/video VIDEO_SRC_LIST)
+aux_source_directory(src/main/cpp/video/collect VIDEO_COLLECT_SRC_LIST)
+aux_source_directory(src/main/cpp/video/play VIDEO_PLAY_SRC_LIST)
 
 add_library( # Sets the name of the library.
         media
@@ -92,6 +94,8 @@ add_library( # Sets the name of the library.
         # Provides a relative path to your source file(s).
         ${LOOP_SRC_LIST}
         ${VIDEO_SRC_LIST}
+        ${VIDEO_COLLECT_SRC_LIST}
+        ${VIDEO_PLAY_SRC_LIST}
         src/main/cpp/common.cpp
         src/main/cpp/jni.cpp)
 

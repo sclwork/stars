@@ -22,39 +22,6 @@ public class DemoActivity extends AppCompatActivity {
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
 
         setContentView(R.layout.activity_main);
-
-        final MediaGLView recorderView = findViewById(R.id.recorder_view);
-        if (recorderView != null) recorderView.setOnRendererListener(new MediaGLView.OnRendererListener() {
-            @Override
-            public void onRendererInit() {
-                Media.rendererInit();
-            }
-
-            @Override
-            public void onRendererRelease() {
-                Media.rendererRelease();
-            }
-
-            @Override
-            public void onRendererSurfaceCreated() {
-                Media.rendererSurfaceCreated();
-            }
-
-            @Override
-            public void onRendererSurfaceChanged(int width, int height) {
-                Media.rendererSurfaceChanged(width, height);
-            }
-
-            @Override
-            public void onRendererSurfaceDestroyed() {
-                Media.rendererSurfaceDestroyed();
-            }
-
-            @Override
-            public void onRendererDrawFrame() {
-                Media.rendererDrawFrame();
-            }
-        });
     }
 
     @Override

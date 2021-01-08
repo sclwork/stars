@@ -7,9 +7,11 @@
 
 #include <string>
 #include "log.h"
-#include "video/renderer.h"
+#include "video/collect/recorder.h"
+#include "video/play/renderer.h"
 
-#define MATH_PI 3.1415926535897932384626433832802
+#define DRAW_TEST_FRAME 1
+#define MATH_PI         3.1415926535897932384626433832802
 
 namespace media {
 
@@ -44,7 +46,7 @@ public:
 public:
     void draw_to_renderer(renderer *);
 
-#if LOG_ABLE
+#if DRAW_TEST_FRAME
 public:
     void setup_test_data(int32_t w, int32_t h);
 #endif
@@ -87,8 +89,9 @@ private:
     std::string cascade;
     std::string mnn;
     //////////////////////////
+    recorder   *recorder;
     renderer   *renderer;
-#if LOG_ABLE
+#if DRAW_TEST_FRAME
     //////////////////////////
     frame      *test_frame;
 #endif
