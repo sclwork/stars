@@ -13,6 +13,7 @@ public:
 
 public:
     virtual void update_size(int32_t w, int32_t h) = 0;
+    virtual void update_frame() = 0;
 };
 
 } //media media

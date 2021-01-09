@@ -79,13 +79,9 @@ void renderer_draw_frame() {
 //    d("renderer draw frame.");
 }
 
-static void loop_run(std::string &&cascade, std::string &&mnn) {
+static void loop_run() {
     loop_running = true;
-
-    log_d("=================================================");
-    com_ptr.reset(new common(cascade, mnn));
     log_d("hardware concurrency: %d", std::thread::hardware_concurrency());
-//    d("cascade:%s, mnn:%s", cascade.c_str(), mnn.c_str());
     log_d("media loop running...");
     while (true) {
         auto n = queue.wait_and_pop();
@@ -110,12 +106,17 @@ void media::loop_start(const char *cascade, const char *mnn) {
         return;
     }
 
-    std::thread t(loop_run, std::string(cascade), std::string(mnn));
+    log_d("=================================================");
+    std::string c(cascade); std::string m(mnn);
+    com_ptr.reset(new common(c, m));
+    std::thread t(loop_run);
     t.detach();
 }
 
 void media::loop_exit() {
     if (!loop_running) {
+        common *com = com_ptr.release();
+        delete com;
         return;
     }
 

@@ -138,4 +138,8 @@ void media::common::renderer_draw_frame() {
         test_frame->draw_to_renderer(renderer);
     }
 #endif
+
+    if (recorder) {
+        recorder->update_frame();
+    }
 }

@@ -30,6 +30,7 @@ public:
 
 public:
     std::string get_id();
+    int32_t get_latest_image();
 
 public:
     bool preview(int32_t req_w, int32_t req_h);
@@ -45,9 +46,9 @@ private:
     void get_fps(ACameraMetadata *metadata);
     void get_ori(ACameraMetadata *metadata);
     void get_af_mode(ACameraMetadata *metadata);
-    void get_size(ACameraMetadata *metadata, int32_t req_w, int32_t req_h);
 
 private:
+    static void get_size(ACameraMetadata *metadata, int32_t req_w, int32_t req_h, int32_t *out_w, int32_t *out_h);
     static void onDisconnected(void *context, ACameraDevice *device) {}
     static void onError(void *context, ACameraDevice *device, int error) {}
     static void onActive(void *context, ACameraCaptureSession *session) {}
@@ -59,8 +60,6 @@ private:
     RecState state;
     ACameraDevice *dev;
     ///////////////////////////////////
-    int32_t width;
-    int32_t height;
     int32_t fps_req;
     int32_t fps_range[2];
     int32_t ori;
@@ -77,6 +76,10 @@ private:
     ///////////////////////////////////
     ACameraDevice_StateCallbacks ds_callbacks;
     ACameraCaptureSession_stateCallbacks css_callbacks;
+    ///////////////////////////////////
+    uint32_t *img_cache;
+    int32_t img_width;
+    int32_t img_height;
 };
 
 } //namespace media

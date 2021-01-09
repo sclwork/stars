@@ -19,8 +19,10 @@ image_recorder::image_recorder(int32_t width, int32_t height)
         log_d("found cam %s", c->get_id().c_str());
     }
     log_d("--------------------");
-    run_cam = cams[0];
-    run_cam->preview(width, height);
+    if (!cams.empty()) {
+        run_cam = cams[0];
+        run_cam->preview(width, height);
+    }
 }
 
 image_recorder::~image_recorder() {
@@ -40,6 +42,12 @@ void image_recorder::update_size(int32_t w, int32_t h) {
     if (run_cam) {
         run_cam->close();
         run_cam->preview(width, height);
+    }
+}
+
+void image_recorder::update_frame() {
+    if (run_cam) {
+        run_cam->get_latest_image();
     }
 }
 

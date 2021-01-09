@@ -18,6 +18,7 @@ public:
 
 public:
     void update_size(int32_t w, int32_t h);
+    void update_frame();
 
 private:
     image_recorder(image_recorder&&) = delete;

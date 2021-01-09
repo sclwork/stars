@@ -16,6 +16,59 @@
 
 namespace media {
 
+/**
+ * Helper function for YUV_420 to RGB conversion. Courtesy of Tensorflow
+ * ImageClassifier Sample:
+ * https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/android/jni/yuv2rgb.cc
+ * The difference is that here we have to swap UV plane when calling it.
+ */
+#ifndef MAX
+#define MAX(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a > _b ? _a : _b;      \
+  })
+#define MIN(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a < _b ? _a : _b;      \
+  })
+#endif
+
+// This value is 2 ^ 18 - 1, and is used to clamp the RGB values before their
+// ranges
+// are normalized to eight bits.
+const int kMaxChannelValue = 262143;
+
+inline uint32_t YUV2RGB(int nY, int nU, int nV) {
+    nY -= 16;
+    nU -= 128;
+    nV -= 128;
+    if (nY < 0) nY = 0;
+
+    // This is the floating point equivalent. We do the conversion in integer
+    // because some Android devices do not have floating point in hardware.
+    // nR = (int)(1.164 * nY + 1.596 * nV);
+    // nG = (int)(1.164 * nY - 0.813 * nV - 0.391 * nU);
+    // nB = (int)(1.164 * nY + 2.018 * nU);
+
+    int nR = (int)(1192 * nY + 1634 * nV);
+    int nG = (int)(1192 * nY - 833 * nV - 400 * nU);
+    int nB = (int)(1192 * nY + 2066 * nU);
+
+    nR = MIN(kMaxChannelValue, MAX(0, nR));
+    nG = MIN(kMaxChannelValue, MAX(0, nG));
+    nB = MIN(kMaxChannelValue, MAX(0, nB));
+
+    nR = (nR >> 10) & 0xff;
+    nG = (nG >> 10) & 0xff;
+    nB = (nB >> 10) & 0xff;
+
+    return 0xff000000 | (nR << 16) | (nG << 8) | nB;
+}
+
 void camera::enumerate(std::vector<std::shared_ptr<camera>> &cams) {
     ACameraManager *manager = ACameraManager_create();
     if (manager == nullptr) {
@@ -49,12 +102,13 @@ void camera::enumerate(std::vector<std::shared_ptr<camera>> &cams) {
 }
 
 camera::camera(std::string id, int32_t fps)
-:id(std::move(id)), state(None), dev(nullptr), width(0), height(0),
+:id(std::move(id)), state(None), dev(nullptr),
 fps_req(fps), fps_range(), ori(0), af_mode(ACAMERA_CONTROL_AF_MODE_OFF),
 reader(nullptr), window(nullptr), cap_request(nullptr), out_container(nullptr),
 out_session(nullptr), cap_session(nullptr), out_target(nullptr),
 ds_callbacks({nullptr, onDisconnected, onError}),
-css_callbacks({nullptr, onClosed, onReady, onActive}) {
+css_callbacks({nullptr, onClosed, onReady, onActive}),
+img_cache(nullptr), img_width(0), img_height(0) {
     log_d("created. %s", this->id.c_str());
 }
 
@@ -65,6 +119,130 @@ camera::~camera() {
 
 std::string camera::get_id() {
     return std::string(id);
+}
+
+int32_t camera::get_latest_image() {
+    AImage *image;
+    media_status_t status = AImageReader_acquireLatestImage(reader, &image);
+    if (status != AMEDIA_OK) {
+        return -2;
+    }
+
+    int32_t format = 0;
+    status = AImage_getFormat(image, &format);
+    if (status != AMEDIA_OK || format != AIMAGE_FORMAT_YUV_420_888) {
+        AImage_delete(image);
+        return -3;
+    }
+
+    int32_t planeCount = 0;
+    status = AImage_getNumberOfPlanes(image, &planeCount);
+    if (status != AMEDIA_OK || planeCount != 3) {
+        AImage_delete(image);
+        return -4;
+    }
+
+    int32_t yStride, uvStride;
+    uint8_t *yPixel, *uPixel, *vPixel;
+    int32_t yLen, uLen, vLen;
+    int32_t uvPixelStride;
+    AImageCropRect srcRect;
+
+    AImage_getPlaneRowStride(image, 0, &yStride);
+    AImage_getPlaneRowStride(image, 1, &uvStride);
+    AImage_getPlaneData(image, 0, &yPixel, &yLen);
+    AImage_getPlaneData(image, 1, &vPixel, &vLen);
+    AImage_getPlaneData(image, 2, &uPixel, &uLen);
+    AImage_getPlanePixelStride(image, 1, &uvPixelStride);
+
+    AImage_getCropRect(image, &srcRect);
+    int32_t src_w = srcRect.right - srcRect.left;
+    int32_t src_h = srcRect.bottom - srcRect.top;
+    log_d("latest image size: %d,%d.", src_w, src_h);
+
+    if (img_cache == nullptr || img_width != src_w || img_height != src_h) {
+        if (img_cache) free(img_cache);
+        img_width = src_w; img_height = src_h;
+        img_cache = (uint32_t *) malloc(sizeof(uint32_t) * img_width * img_height);
+        if (img_cache == nullptr) {
+            log_e("Failed malloc image cache.");
+        } else {
+            log_d("malloc image cache size: %d,%d.", img_width, img_height);
+        }
+    }
+
+    if (img_cache == nullptr) {
+        AImage_delete(image);
+        return -5;
+    }
+
+    uint32_t *cache = img_cache;
+    if (ori == 0) {
+        for (int32_t y = 0; y < img_height; y++) {
+            const uint8_t *pY = yPixel + yStride * (y + srcRect.top) + srcRect.left;
+
+            int32_t uv_row_start = uvStride * ((y + srcRect.top) >> 1);
+            const uint8_t *pU = uPixel + uv_row_start + (srcRect.left >> 1);
+            const uint8_t *pV = vPixel + uv_row_start + (srcRect.left >> 1);
+
+            for (int32_t x = 0; x < img_width; x++) {
+                const int32_t uv_offset = (x >> 1) * uvPixelStride;
+                cache[x] = YUV2RGB(pY[x], pU[uv_offset], pV[uv_offset]);
+            }
+            cache += img_width;
+        }
+    } else if (ori == 90) {
+        cache += img_height - 1;
+        for (int32_t y = 0; y < img_height; y++) {
+            const uint8_t *pY = yPixel + yStride * (y + srcRect.top) + srcRect.left;
+
+            int32_t uv_row_start = uvStride * ((y + srcRect.top) >> 1);
+            const uint8_t *pU = uPixel + uv_row_start + (srcRect.left >> 1);
+            const uint8_t *pV = vPixel + uv_row_start + (srcRect.left >> 1);
+
+            for (int32_t x = 0; x < img_width; x++) {
+                const int32_t uv_offset = (x >> 1) * uvPixelStride;
+                // [x, y]--> [-y, x]
+                cache[x * img_width] = YUV2RGB(pY[x], pU[uv_offset], pV[uv_offset]);
+            }
+            cache -= 1;  // move to the next column
+        }
+    } else if (ori == 180) {
+        cache += (img_height - 1) * img_width;
+        for (int32_t y = 0; y < img_height; y++) {
+            const uint8_t *pY = yPixel + yStride * (y + srcRect.top) + srcRect.left;
+
+            int32_t uv_row_start = uvStride * ((y + srcRect.top) >> 1);
+            const uint8_t *pU = uPixel + uv_row_start + (srcRect.left >> 1);
+            const uint8_t *pV = vPixel + uv_row_start + (srcRect.left >> 1);
+
+            for (int32_t x = 0; x < img_width; x++) {
+                const int32_t uv_offset = (x >> 1) * uvPixelStride;
+                // mirror image since we are using front camera
+                cache[img_width - 1 - x] = YUV2RGB(pY[x], pU[uv_offset], pV[uv_offset]);
+                // out[x] = YUV2RGB(pY[x], pU[uv_offset], pV[uv_offset]);
+            }
+            cache -= img_width;
+        }
+    } else if (ori == 270) {
+        for (int32_t y = 0; y < img_height; y++) {
+            const uint8_t *pY = yPixel + yStride * (y + srcRect.top) + srcRect.left;
+
+            int32_t uv_row_start = uvStride * ((y + srcRect.top) >> 1);
+            const uint8_t *pU = uPixel + uv_row_start + (srcRect.left >> 1);
+            const uint8_t *pV = vPixel + uv_row_start + (srcRect.left >> 1);
+
+            for (int32_t x = 0; x < img_width; x++) {
+                const int32_t uv_offset = (x >> 1) * uvPixelStride;
+                cache[(img_width - 1 - x) * img_width] =
+                        YUV2RGB(pY[x], pU[uv_offset], pV[uv_offset]);
+            }
+            cache += 1;  // move to the next column
+        }
+    }
+
+    AImage_delete(image);
+    return 0;
 }
 
 bool camera::preview(int32_t req_w, int32_t req_h) {
@@ -98,7 +276,8 @@ bool camera::preview(int32_t req_w, int32_t req_h) {
     log_d("preview sensor orientation: %d.", ori);
     get_af_mode(metadata);
     log_d("select af mode: %d.", af_mode);
-    get_size(metadata, req_w, req_h);
+    int32_t width, height;
+    get_size(metadata, req_w, req_h, &width, &height);
     log_d("preview size: %dx%d.", width, height);
 
     if (width <= 0 || height <= 0) {
@@ -263,6 +442,12 @@ void camera::close() {
         window = nullptr;
     }
 
+    img_width = img_height = 0;
+    if (img_cache) {
+        free(img_cache);
+        img_cache = nullptr;
+    }
+
     state = None;
     log_d("Success to close CameraDevice id: %s.", id.c_str());
 }
@@ -363,7 +548,7 @@ void camera::get_af_mode(ACameraMetadata *metadata) {
     }
 }
 
-void camera::get_size(ACameraMetadata *metadata, int32_t req_w, int32_t req_h) {
+void camera::get_size(ACameraMetadata *metadata, int32_t req_w, int32_t req_h, int32_t *out_w, int32_t *out_h) {
     if (metadata == nullptr) {
         return;
     }
@@ -387,13 +572,16 @@ void camera::get_size(ACameraMetadata *metadata, int32_t req_w, int32_t req_h) {
         if (format == AIMAGE_FORMAT_YUV_420_888 || format == AIMAGE_FORMAT_JPEG) {
             w = entry.data.i32[i * 4 + 1];
             h = entry.data.i32[i * 4 + 2];
+            if (w == 0 && h == 0) {
+                continue;
+            }
             log_d("has preview size: %d,%d.", w, h);
         }
     }
 
     // TODO: select best preview size
-    width = req_w;
-    height = req_h;
+    *out_w = req_w;
+    *out_h = req_h;
 }
 
 } //namespace media
