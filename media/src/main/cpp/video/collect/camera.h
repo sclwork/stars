@@ -9,6 +9,7 @@
 #include <string>
 #include <media/NdkImageReader.h>
 #include <camera/NdkCameraDevice.h>
+#include "image_cache.h"
 
 namespace media {
 
@@ -18,6 +19,27 @@ enum RecState {
     Recording,
     Paused_Preview,
     Paused_Record,
+};
+
+// get_latest_image tmp args
+struct img_args {
+    int32_t x, y;
+    AImage *image;
+    int32_t format;
+    int32_t planeCount;
+    int32_t yStride, uvStride;
+    uint8_t *yPixel, *uPixel, *vPixel;
+    int32_t yLen, uLen, vLen;
+    int32_t uvPixelStride;
+    AImageCropRect srcRect;
+    int32_t src_w, src_h;
+    int32_t img_width;
+    int32_t img_height;
+    uint32_t *cache;
+    uint8_t *pY, *pU, *pV;
+    int32_t uv_row_start;
+    int32_t uv_offset;
+    int32_t nR, nG, nB;
 };
 
 class camera {
@@ -30,7 +52,7 @@ public:
 
 public:
     std::string get_id();
-    int32_t get_latest_image();
+    std::shared_ptr<image_cache> get_latest_image();
 
 public:
     bool preview(int32_t req_w, int32_t req_h);
@@ -56,6 +78,8 @@ private:
     static void onClosed(void *context, ACameraCaptureSession *session) {}
 
 private:
+    struct img_args img_args;
+    ///////////////////////////////////
     std::string id;
     RecState state;
     ACameraDevice *dev;
@@ -77,9 +101,7 @@ private:
     ACameraDevice_StateCallbacks ds_callbacks;
     ACameraCaptureSession_stateCallbacks css_callbacks;
     ///////////////////////////////////
-    uint32_t *img_cache;
-    int32_t img_width;
-    int32_t img_height;
+    std::shared_ptr<image_cache> img_cache;
 };
 
 } //namespace media

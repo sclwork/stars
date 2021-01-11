@@ -92,10 +92,10 @@ static void loop_run() {
         n->run();
     }
 
-    log_d("media loop exited...");
     common *com = com_ptr.release();
     delete com;
     loop_running = false;
+    log_d("media loop exited...");
     log_d("=================================================");
 }
 

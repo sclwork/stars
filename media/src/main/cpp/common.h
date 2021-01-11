@@ -10,9 +10,6 @@
 #include "video/collect/recorder.h"
 #include "video/play/renderer.h"
 
-#define DRAW_TEST_FRAME 1
-#define MATH_PI         3.1415926535897932384626433832802
-
 namespace media {
 
 /*
@@ -38,29 +35,11 @@ void renderer_surface_destroyed();
 void renderer_surface_changed(int32_t w, int32_t h);
 void renderer_draw_frame();
 
-class frame {
-public:
-    frame() = default;
-    ~frame() = default;
-
-public:
-    void draw_to_renderer(renderer *);
-
-#if DRAW_TEST_FRAME
-public:
-    void setup_test_data(int32_t w, int32_t h);
-#endif
-
-private:
-    frame(frame&&) = delete;
-    frame(const frame&) = delete;
-    frame& operator=(frame&&) = delete;
-    frame& operator=(const frame&) = delete;
-
-private:
-    int32_t   width;
-    int32_t   height;
-    uint32_t *data;
+// renderer_draw_frame tmp args
+struct frame_args {
+    int32_t frame_width;
+    int32_t frame_height;
+    uint32_t *frame_cache;
 };
 
 /**
@@ -86,15 +65,13 @@ private:
     common& operator=(const common&) = delete;
 
 private:
+    struct frame_args frame_args;
+    //////////////////////////
     std::string cascade;
     std::string mnn;
     //////////////////////////
     recorder   *recorder;
     renderer   *renderer;
-#if DRAW_TEST_FRAME
-    //////////////////////////
-    frame      *test_frame;
-#endif
 };
 
 } //media media

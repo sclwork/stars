@@ -5,6 +5,8 @@
 #ifndef STARS_RENDERER_H
 #define STARS_RENDERER_H
 
+#include <cstdint>
+
 namespace media {
 
 class renderer {

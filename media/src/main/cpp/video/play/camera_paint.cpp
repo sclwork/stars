@@ -2,7 +2,7 @@
 // Created by scliang on 1/6/21.
 //
 
-#include "common.h"
+#include "log.h"
 #include "camera_paint.h"
 
 #define log_d(...)  LOG_D("Media-Native:camera_paint", __VA_ARGS__)
@@ -130,6 +130,7 @@ void media::camera_paint::draw(int32_t width, int32_t height, uint32_t *data) {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
 
+#define MATH_PI 3.1415926535897932384626433832802
 void media::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float ratio) {
     angleX = angleX % 360;
     angleY = angleY % 360;

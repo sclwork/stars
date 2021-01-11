@@ -5,6 +5,8 @@
 #ifndef STARS_PAINT_H
 #define STARS_PAINT_H
 
+#include <cstdint>
+
 namespace media {
 
 class paint {

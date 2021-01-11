@@ -9,9 +9,10 @@
 #define log_e(...)  LOG_E("Media-Native:image_recorder", __VA_ARGS__)
 
 namespace media {
+} //namespace media
 
-image_recorder::image_recorder(int32_t width, int32_t height)
-:width(width), height(height), cams(), run_cam(nullptr) {
+media::image_recorder::image_recorder()
+:cache_args(), cache(nullptr), cams(), run_cam(nullptr) {
     log_d("created.");
     camera::enumerate(cams);
     log_d("--------------------");
@@ -19,36 +20,77 @@ image_recorder::image_recorder(int32_t width, int32_t height)
         log_d("found cam %s", c->get_id().c_str());
     }
     log_d("--------------------");
+    // TODO: default select camera
     if (!cams.empty()) {
         run_cam = cams[0];
-        run_cam->preview(width, height);
     }
 }
 
-image_recorder::~image_recorder() {
+media::image_recorder::~image_recorder() {
     run_cam = nullptr;
     log_d("release.");
 }
 
-void image_recorder::update_size(int32_t w, int32_t h) {
-    if (w == width && h == height) {
-        return;
+void media::image_recorder::update_size(int32_t w, int32_t h) {
+    // check reset cache
+    if (cache == nullptr || !cache->same_size(w, h)) {
+        cache = std::make_shared<image_cache>();
+        cache->update_size(w, h);
     }
-
-    width = w;
-    height = h;
-
     // restart cam
     if (run_cam) {
         run_cam->close();
-        run_cam->preview(width, height);
+        run_cam->preview(w, h);
     }
 }
 
-void image_recorder::update_frame() {
-    if (run_cam) {
-        run_cam->get_latest_image();
+std::shared_ptr<media::image_cache> media::image_recorder::update_frame() {
+    if (cache == nullptr || run_cam == nullptr) {
+        return cache;
     }
-}
 
-} //namespace media
+    cache->get(&cache_args.cache_width, &cache_args.cache_height, &cache_args.cache_cache);
+    if (cache_args.cache_cache == nullptr) {
+        return cache;
+    }
+
+    std::shared_ptr<media::image_cache> cam_cache = run_cam->get_latest_image();
+    if (cam_cache == nullptr || !cam_cache->available()) {
+        return cache;
+    }
+
+    cam_cache->get(&cache_args.img_width, &cache_args.img_height, &cache_args.img_cache);
+    if (cache_args.img_cache == nullptr) {
+        return cache;
+    }
+
+    cache_args.wof = (cache_args.cache_width - cache_args.img_width) / 2;
+    cache_args.hof = (cache_args.cache_height - cache_args.img_height) / 2;
+    if (cache_args.wof >= 0 && cache_args.hof >= 0) {
+        for (int32_t i = 0; i < cache_args.img_height; i++) {
+            memcpy(cache_args.cache_cache + ((i + cache_args.hof) * cache_args.cache_width + cache_args.wof),
+                   cache_args.img_cache + (i * cache_args.img_width),
+                   sizeof(uint32_t) * cache_args.img_width);
+        }
+    } else if (cache_args.wof < 0 && cache_args.hof >= 0) {
+        for (int32_t i = 0; i < cache_args.img_height; i++) {
+            memcpy(cache_args.cache_cache + ((i + cache_args.hof) * cache_args.cache_width),
+                   cache_args.img_cache + (i * cache_args.img_width - cache_args.wof),
+                   sizeof(uint32_t) * cache_args.cache_width);
+        }
+    } else if (cache_args.wof >= 0 && cache_args.hof < 0) {
+        for (int32_t i = 0; i < cache_args.cache_height; i++) {
+            memcpy(cache_args.cache_cache + (i * cache_args.cache_width + cache_args.wof),
+                   cache_args.img_cache + ((i - cache_args.hof) * cache_args.img_width),
+                   sizeof(uint32_t) * cache_args.img_width);
+        }
+    } else if (cache_args.wof < 0 && cache_args.hof < 0) {
+        for (int32_t i = 0; i < cache_args.cache_height; i++) {
+            memcpy(cache_args.cache_cache + (i * cache_args.cache_width),
+                   cache_args.img_cache + ((i - cache_args.hof) * cache_args.img_width - cache_args.wof),
+                   sizeof(uint32_t) * cache_args.cache_width);
+        }
+    }
+
+    return cache;
+}
