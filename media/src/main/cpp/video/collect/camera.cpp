@@ -43,7 +43,7 @@ namespace media {
 // are normalized to eight bits.
 const int kMaxChannelValue = 262143;
 
-inline uint32_t yuv_rgb(struct img_args img_args, int32_t nY, int32_t nU, int32_t nV) {
+inline uint32_t yuv_rgb_pixl(struct img_args img_args, int32_t nY, int32_t nU, int32_t nV) {
     nY -= 16;
     nU -= 128;
     nV -= 128;
@@ -51,9 +51,9 @@ inline uint32_t yuv_rgb(struct img_args img_args, int32_t nY, int32_t nU, int32_
 
     // This is the floating point equivalent. We do the conversion in integer
     // because some Android devices do not have floating point in hardware.
-    // nR = (int32_t)(1.164 * nY + 1.596 * nV);
-    // nG = (int32_t)(1.164 * nY - 0.813 * nV - 0.391 * nU);
-    // nB = (int32_t)(1.164 * nY + 2.018 * nU);
+//     img_args.nR = (int32_t)(1.164 * nY + 1.596 * nV);
+//     img_args.nG = (int32_t)(1.164 * nY - 0.813 * nV - 0.391 * nU);
+//     img_args.nB = (int32_t)(1.164 * nY + 2.018 * nU);
 
     img_args.nR = (int)(1192 * nY + 1634 * nV);
     img_args.nG = (int)(1192 * nY - 833 * nV - 400 * nU);
@@ -68,6 +68,82 @@ inline uint32_t yuv_rgb(struct img_args img_args, int32_t nY, int32_t nU, int32_
     img_args.nB = (img_args.nB >> 10) & 0xff;
 
     return 0xff000000 | (img_args.nR << 16) | (img_args.nG << 8) | img_args.nB;
+}
+
+void yuv2argb(struct img_args img_args, int32_t ori) {
+    if (ori == 0) {
+        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
+            img_args.pY = img_args.yPixel + img_args.yStride *
+                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
+
+            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
+            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
+            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
+
+            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
+                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
+                img_args.cache[img_args.x] = media::yuv_rgb_pixl(img_args, img_args.pY[img_args.x],
+                        img_args.pU[img_args.uv_offset], img_args.pV[img_args.uv_offset]);
+            }
+            img_args.cache += img_args.img_width;
+        }
+    } else if (ori == 90) {
+        img_args.cache += img_args.img_height - 1;
+        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
+            img_args.pY = img_args.yPixel + img_args.yStride *
+                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
+
+            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
+            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
+            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
+
+            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
+                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
+                // [x, y]--> [-y, x]
+                img_args.cache[img_args.x * img_args.img_width] =
+                        media::yuv_rgb_pixl(img_args, img_args.pY[img_args.x],
+                                img_args.pU[img_args.uv_offset], img_args.pV[img_args.uv_offset]);
+            }
+            img_args.cache -= 1;  // move to the next column
+        }
+    } else if (ori == 180) {
+        img_args.cache += (img_args.img_height - 1) * img_args.img_width;
+        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
+            img_args.pY = img_args.yPixel + img_args.yStride *
+                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
+
+            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
+            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
+            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
+
+            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
+                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
+                // mirror image since we are using front camera
+                img_args.cache[img_args.img_width - 1 - img_args.x] = media::yuv_rgb_pixl(
+                        img_args, img_args.pY[img_args.x], img_args.pU[img_args.uv_offset],
+                        img_args.pV[img_args.uv_offset]);
+                // out[x] = YUV2RGB(pY[x], pU[uv_offset], pV[uv_offset]);
+            }
+            img_args.cache -= img_args.img_width;
+        }
+    } else if (ori == 270) {
+        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
+            img_args.pY = img_args.yPixel + img_args.yStride *
+                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
+
+            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
+            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
+            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
+
+            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
+                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
+                img_args.cache[(img_args.img_width - 1 - img_args.x) * img_args.img_width] =
+                        media::yuv_rgb_pixl(img_args, img_args.pY[img_args.x],
+                                img_args.pU[img_args.uv_offset], img_args.pV[img_args.uv_offset]);
+            }
+            img_args.cache += 1;  // move to the next column
+        }
+    }
 }
 
 } //namespace media
@@ -170,80 +246,7 @@ std::shared_ptr<media::image_cache> media::camera::get_latest_image() {
         return img_cache;
     }
 
-    if (ori == 0) {
-        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
-            img_args.pY = img_args.yPixel + img_args.yStride *
-                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
-
-            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
-            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-
-            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
-                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
-                img_args.cache[img_args.x] = yuv_rgb(img_args, img_args.pY[img_args.x],
-                        img_args.pU[img_args.uv_offset], img_args.pV[img_args.uv_offset]);
-            }
-            img_args.cache += img_args.img_width;
-        }
-    } else if (ori == 90) {
-        img_args.cache += img_args.img_height - 1;
-        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
-            img_args.pY = img_args.yPixel + img_args.yStride *
-                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
-
-            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
-            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-
-            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
-                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
-                // [x, y]--> [-y, x]
-                img_args.cache[img_args.x * img_args.img_width] =
-                        yuv_rgb(img_args, img_args.pY[img_args.x],
-                        img_args.pU[img_args.uv_offset], img_args.pV[img_args.uv_offset]);
-            }
-            img_args.cache -= 1;  // move to the next column
-        }
-    } else if (ori == 180) {
-        img_args.cache += (img_args.img_height - 1) * img_args.img_width;
-        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
-            img_args.pY = img_args.yPixel + img_args.yStride *
-                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
-
-            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
-            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-
-            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
-                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
-                // mirror image since we are using front camera
-                img_args.cache[img_args.img_width - 1 - img_args.x] = yuv_rgb(img_args,
-                        img_args.pY[img_args.x], img_args.pU[img_args.uv_offset],
-                        img_args.pV[img_args.uv_offset]);
-                // out[x] = YUV2RGB(pY[x], pU[uv_offset], pV[uv_offset]);
-            }
-            img_args.cache -= img_args.img_width;
-        }
-    } else if (ori == 270) {
-        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
-            img_args.pY = img_args.yPixel + img_args.yStride *
-                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
-
-            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
-            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-
-            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
-                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
-                img_args.cache[(img_args.img_width - 1 - img_args.x) * img_args.img_width] =
-                        yuv_rgb(img_args, img_args.pY[img_args.x],
-                                img_args.pU[img_args.uv_offset], img_args.pV[img_args.uv_offset]);
-            }
-            img_args.cache += 1;  // move to the next column
-        }
-    }
-
+    yuv2argb(img_args, ori);
     AImage_delete(img_args.image);
     return img_cache;
 }

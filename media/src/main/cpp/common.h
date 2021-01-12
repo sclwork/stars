@@ -5,6 +5,7 @@
 #ifndef STARS_COMMON_H
 #define STARS_COMMON_H
 
+#include <time.h>
 #include <string>
 #include "log.h"
 #include "video/collect/recorder.h"
@@ -37,6 +38,11 @@ void renderer_draw_frame();
 
 // renderer_draw_frame tmp args
 struct frame_args {
+#if LOG_ABLE
+    struct timespec t;
+    int32_t d_ns;
+    long ns;
+#endif
     int32_t frame_width;
     int32_t frame_height;
     uint32_t *frame_cache;

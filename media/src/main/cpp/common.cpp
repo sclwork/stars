@@ -81,6 +81,11 @@ void media::common::renderer_draw_frame() {
         return;
     }
 
+#if LOG_ABLE
+    clock_gettime(CLOCK_REALTIME, &frame_args.t);
+    frame_args.ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec;
+#endif
+
     std::shared_ptr<media::image_cache> frame = recorder->update_frame();
     if (frame == nullptr || !frame->available()) {
         return;
@@ -92,4 +97,11 @@ void media::common::renderer_draw_frame() {
     }
 
     renderer->draw_frame(frame_args.frame_width, frame_args.frame_height, frame_args.frame_cache);
+
+#if LOG_ABLE
+    clock_gettime(CLOCK_REALTIME, &frame_args.t);
+    frame_args.d_ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec - frame_args.ns;
+    frame_args.ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec;
+    log_d("draw frame use ms: %.3f", (float)frame_args.d_ns / 1000000.0f);
+#endif
 }
