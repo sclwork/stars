@@ -88,13 +88,13 @@ public class Media {
         r.jniRendererRelease();
     }
 
-    public static void rendererSurfaceCreated() {
+    public static int rendererSurfaceCreated() {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
-            return;
+            return 0;
 
-        r.jniRendererSurfaceCreated();
+        return r.jniRendererSurfaceCreated();
     }
 
     public static void rendererSurfaceChanged(int width, int height) {
@@ -122,6 +122,15 @@ public class Media {
             return;
 
         r.jniRendererDrawFrame();
+    }
+
+    public static void rendererSelectCamera(int camera) {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        r.jniRendererSelectCamera(camera);
     }
 
 
@@ -247,6 +256,7 @@ public class Media {
     private native int jniRendererSurfaceChanged(int width, int height);
     private native int jniRendererSurfaceDestroyed();
     private native int jniRendererDrawFrame();
+    private native int jniRendererSelectCamera(int camera);
 
 
 

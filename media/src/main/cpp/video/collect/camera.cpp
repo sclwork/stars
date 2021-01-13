@@ -16,136 +16,6 @@
 #define log_e(...)  LOG_E("Media-Native:camera", __VA_ARGS__)
 
 namespace media {
-
-/**
- * Helper function for YUV_420 to RGB conversion. Courtesy of Tensorflow
- * ImageClassifier Sample:
- * https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/android/jni/yuv2rgb.cc
- * The difference is that here we have to swap UV plane when calling it.
- */
-#ifndef MAX
-#define MAX(a, b)           \
-  ({                        \
-    __typeof__(a) _a = (a); \
-    __typeof__(b) _b = (b); \
-    _a > _b ? _a : _b;      \
-  })
-#define MIN(a, b)           \
-  ({                        \
-    __typeof__(a) _a = (a); \
-    __typeof__(b) _b = (b); \
-    _a < _b ? _a : _b;      \
-  })
-#endif
-
-// This value is 2 ^ 18 - 1, and is used to clamp the RGB values before their
-// ranges
-// are normalized to eight bits.
-const int kMaxChannelValue = 262143;
-
-inline uint32_t yuv_rgb_pixl(struct img_args img_args, int32_t nY, int32_t nU, int32_t nV) {
-    nY -= 16;
-    nU -= 128;
-    nV -= 128;
-    if (nY < 0) nY = 0;
-
-    // This is the floating point equivalent. We do the conversion in integer
-    // because some Android devices do not have floating point in hardware.
-//     img_args.nR = (int32_t)(1.164 * nY + 1.596 * nV);
-//     img_args.nG = (int32_t)(1.164 * nY - 0.813 * nV - 0.391 * nU);
-//     img_args.nB = (int32_t)(1.164 * nY + 2.018 * nU);
-
-    img_args.nR = (int)(1192 * nY + 1634 * nV);
-    img_args.nG = (int)(1192 * nY - 833 * nV - 400 * nU);
-    img_args.nB = (int)(1192 * nY + 2066 * nU);
-
-    img_args.nR = MIN(kMaxChannelValue, MAX(0, img_args.nR));
-    img_args.nG = MIN(kMaxChannelValue, MAX(0, img_args.nG));
-    img_args.nB = MIN(kMaxChannelValue, MAX(0, img_args.nB));
-
-    img_args.nR = (img_args.nR >> 10) & 0xff;
-    img_args.nG = (img_args.nG >> 10) & 0xff;
-    img_args.nB = (img_args.nB >> 10) & 0xff;
-
-    return 0xff000000 | (img_args.nR << 16) | (img_args.nG << 8) | img_args.nB;
-}
-
-void yuv2argb(struct img_args img_args, int32_t ori) {
-    if (ori == 0) {
-        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
-            img_args.pY = img_args.yPixel + img_args.yStride *
-                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
-
-            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
-            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-
-            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
-                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
-                img_args.cache[img_args.x] = media::yuv_rgb_pixl(img_args, img_args.pY[img_args.x],
-                        img_args.pU[img_args.uv_offset], img_args.pV[img_args.uv_offset]);
-            }
-            img_args.cache += img_args.img_width;
-        }
-    } else if (ori == 90) {
-        img_args.cache += img_args.img_height - 1;
-        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
-            img_args.pY = img_args.yPixel + img_args.yStride *
-                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
-
-            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
-            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-
-            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
-                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
-                // [x, y]--> [-y, x]
-                img_args.cache[img_args.x * img_args.img_width] =
-                        media::yuv_rgb_pixl(img_args, img_args.pY[img_args.x],
-                                img_args.pU[img_args.uv_offset], img_args.pV[img_args.uv_offset]);
-            }
-            img_args.cache -= 1;  // move to the next column
-        }
-    } else if (ori == 180) {
-        img_args.cache += (img_args.img_height - 1) * img_args.img_width;
-        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
-            img_args.pY = img_args.yPixel + img_args.yStride *
-                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
-
-            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
-            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-
-            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
-                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
-                // mirror image since we are using front camera
-                img_args.cache[img_args.img_width - 1 - img_args.x] = media::yuv_rgb_pixl(
-                        img_args, img_args.pY[img_args.x], img_args.pU[img_args.uv_offset],
-                        img_args.pV[img_args.uv_offset]);
-                // out[x] = YUV2RGB(pY[x], pU[uv_offset], pV[uv_offset]);
-            }
-            img_args.cache -= img_args.img_width;
-        }
-    } else if (ori == 270) {
-        for (img_args.y = 0; img_args.y < img_args.img_height; img_args.y++) {
-            img_args.pY = img_args.yPixel + img_args.yStride *
-                    (img_args.y + img_args.srcRect.top) + img_args.srcRect.left;
-
-            img_args.uv_row_start = img_args.uvStride * ((img_args.y + img_args.srcRect.top) >> 1);
-            img_args.pU = img_args.uPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-            img_args.pV = img_args.vPixel + img_args.uv_row_start + (img_args.srcRect.left >> 1);
-
-            for (img_args.x = 0; img_args.x < img_args.img_width; img_args.x++) {
-                img_args.uv_offset = (img_args.x >> 1) * img_args.uvPixelStride;
-                img_args.cache[(img_args.img_width - 1 - img_args.x) * img_args.img_width] =
-                        media::yuv_rgb_pixl(img_args, img_args.pY[img_args.x],
-                                img_args.pU[img_args.uv_offset], img_args.pV[img_args.uv_offset]);
-            }
-            img_args.cache += 1;  // move to the next column
-        }
-    }
-}
-
 } //namespace media
 
 void media::camera::enumerate(std::vector<std::shared_ptr<camera>> &cams) {
@@ -230,9 +100,14 @@ std::shared_ptr<media::image_cache> media::camera::get_latest_image() {
     img_args.src_h = img_args.srcRect.bottom - img_args.srcRect.top;
 //    log_d("latest image size: %d,%d.", img_args.src_w, img_args.src_h);
 
-    if (img_cache == nullptr || !img_cache->same_size(img_args.src_w, img_args.src_h)) {
-        img_cache = std::make_shared<image_cache>();
-        img_cache->update_size(img_args.src_w, img_args.src_h);
+    if (img_args.ori == 90 || img_args.ori == 270) {
+        if (img_cache == nullptr || !img_cache->same_size(img_args.src_h, img_args.src_w)) {
+            img_cache = std::make_shared<image_cache>(img_args.src_h, img_args.src_w);
+        }
+    } else {
+        if (img_cache == nullptr || !img_cache->same_size(img_args.src_w, img_args.src_h)) {
+            img_cache = std::make_shared<image_cache>(img_args.src_w, img_args.src_h);
+        }
     }
 
     if (!img_cache->available()) {
@@ -246,7 +121,7 @@ std::shared_ptr<media::image_cache> media::camera::get_latest_image() {
         return img_cache;
     }
 
-    yuv2argb(img_args, ori);
+    yuv2argb(img_args);
     AImage_delete(img_args.image);
     return img_cache;
 }
@@ -282,7 +157,7 @@ bool media::camera::preview(int32_t req_w, int32_t req_h) {
     log_d("preview sensor orientation: %d.", ori);
     get_af_mode(metadata);
     log_d("select af mode: %d.", af_mode);
-    int32_t width, height;
+    int32_t width = 0, height = 0;
     get_size(metadata, req_w, req_h, &width, &height);
     log_d("preview size: %d,%d.", width, height);
 
@@ -511,6 +386,7 @@ void media::camera::get_ori(ACameraMetadata *metadata) {
     }
 
     ori = entry.data.i32[0];
+    img_args.ori = ori;
 }
 
 void media::camera::get_af_mode(ACameraMetadata *metadata) {
@@ -563,8 +439,10 @@ void media::camera::get_size(ACameraMetadata *metadata,
         return;
     }
 
-    int32_t w, h;
+    int32_t w, h, sub, min = 6000;
+#if LOG_ABLE
     std::string s;
+#endif
     for (int32_t i = 0; i < entry.count; i += 4) {
         int32_t input = entry.data.i32[i + 3];
         int32_t format = entry.data.i32[i + 0];
@@ -575,16 +453,28 @@ void media::camera::get_size(ACameraMetadata *metadata,
         if (format == AIMAGE_FORMAT_YUV_420_888 || format == AIMAGE_FORMAT_JPEG) {
             w = entry.data.i32[i * 4 + 1];
             h = entry.data.i32[i * 4 + 2];
-            if (w == 0 || h == 0 || w > 6000 || h > 6000 || w < 200 || h < 200) {
+            if (w == 0 || h == 0 || w > 6000 || h > 6000 || w < 200 || h < 200 ||
+                    w*h > 6000000 || w*h < 1000000) {
                 continue;
             }
+#if LOG_ABLE
             s.append("[").append(std::to_string(w)).append(",")
              .append(std::to_string(h)).append("],");
+#endif
+            sub = w - req_h;
+            if (sub >= 0 && sub < min) {
+                min = sub;
+                *out_w = w;
+                *out_h = h;
+            }
         }
     }
-    log_d("has preview size: %s.", s.c_str());
+#if LOG_ABLE
+    log_d("filter preview size: %s.", s.c_str());
+#endif
 
-    // TODO: select best preview size
-    *out_w = req_w;
-    *out_h = req_h;
+    if (*out_w == 0 || *out_h == 0) {
+        *out_w = req_h;
+        *out_h = req_w;
+    }
 }

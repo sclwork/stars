@@ -30,6 +30,8 @@ public:
     ~image_recorder();
 
 public:
+    int32_t camera_count() const override;
+    void select_camera(int camera) override;
     void update_size(int32_t w, int32_t h) override;
     std::shared_ptr<image_cache> update_frame() override;
 

@@ -53,8 +53,7 @@ JNIEXPORT jint JNICALL
 Java_com_scliang_tars_Media_jniRendererSurfaceCreated(
 JNIEnv *env, jobject thiz) {
 //    log_d("RecorderJNI [RendererSurfaceCreated]");
-    media::renderer_surface_created();
-    return 0;
+    return media::renderer_surface_created();
 }
 
 JNIEXPORT jint JNICALL
@@ -79,6 +78,15 @@ Java_com_scliang_tars_Media_jniRendererDrawFrame(
 JNIEnv *env, jobject thiz) {
 //    log_d("RecorderJNI [RendererDrawFrame]");
     media::renderer_draw_frame();
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniRendererSelectCamera(
+JNIEnv *env, jobject thiz,
+jint camera) {
+//    log_d("RecorderJNI [SelectCamera %d]", camera);
+    media::renderer_select_camera(camera);
     return 0;
 }
 

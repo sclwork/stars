@@ -23,24 +23,15 @@ enum RecState {
 
 // get_latest_image tmp args
 struct img_args {
-    int32_t x, y;
-    AImage *image;
-    int32_t format;
-    int32_t planeCount;
-    int32_t yStride, uvStride;
-    uint8_t *yPixel, *uPixel, *vPixel;
-    int32_t yLen, uLen, vLen;
-    int32_t uvPixelStride;
+    int32_t x, y, format, planeCount, yStride, uvStride, yLen, uLen, vLen, uvPixelStride;
+    int32_t src_w, src_h, img_width, img_height, uv_row_start, uv_offset, nY, nU, nV, nR, nG, nB, ori;
+    uint8_t *yPixel, *uPixel, *vPixel, *pY, *pU, *pV;
     AImageCropRect srcRect;
-    int32_t src_w, src_h;
-    int32_t img_width;
-    int32_t img_height;
-    uint32_t *cache;
-    uint8_t *pY, *pU, *pV;
-    int32_t uv_row_start;
-    int32_t uv_offset;
-    int32_t nR, nG, nB;
+    uint32_t *cache, argb;
+    AImage *image;
 };
+
+void yuv2argb(struct img_args &img_args);
 
 class camera {
 public:

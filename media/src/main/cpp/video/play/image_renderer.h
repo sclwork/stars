@@ -34,6 +34,6 @@ private:
     paint  *paint;
 };
 
-} //media media
+} //namespace media
 
 #endif //STARS_IMAGE_RENDERER_H

@@ -21,6 +21,6 @@ public:
     virtual void get_size(int32_t *ow, int32_t *oh) = 0;
 };
 
-} //media media
+} //namespace media
 
 #endif //STARS_RENDERER_H

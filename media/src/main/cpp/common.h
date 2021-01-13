@@ -10,6 +10,9 @@
 #include "log.h"
 #include "video/collect/recorder.h"
 #include "video/play/renderer.h"
+#include "video/proc/mnn.h"
+
+#define LOG_DRAW_TIME 0
 
 namespace media {
 
@@ -31,14 +34,15 @@ void loop_post(void (*runnable)(void *ctx, void (*callback)(void *ctx)),
  */
 void renderer_init();
 void renderer_release();
-void renderer_surface_created();
+int32_t renderer_surface_created();
 void renderer_surface_destroyed();
 void renderer_surface_changed(int32_t w, int32_t h);
 void renderer_draw_frame();
+void renderer_select_camera(int camera);
 
 // renderer_draw_frame tmp args
 struct frame_args {
-#if LOG_ABLE
+#if LOG_ABLE && LOG_DRAW_TIME
     struct timespec t;
     int32_t d_ns;
     long ns;
@@ -46,6 +50,7 @@ struct frame_args {
     int32_t frame_width;
     int32_t frame_height;
     uint32_t *frame_cache;
+    std::vector<cv::Rect> faces;
 };
 
 /**
@@ -59,10 +64,11 @@ public:
 public:
     void renderer_init();
     void renderer_release();
-    void renderer_surface_created();
+    int32_t renderer_surface_created();
     void renderer_surface_destroyed();
     void renderer_surface_changed(int32_t w, int32_t h);
     void renderer_draw_frame();
+    void renderer_select_camera(int camera);
 
 private:
     common(common&&) = delete;
@@ -73,13 +79,14 @@ private:
 private:
     struct frame_args frame_args;
     //////////////////////////
-    std::string cascade;
-    std::string mnn;
+    std::string cas_path;
     //////////////////////////
-    recorder   *recorder;
     renderer   *renderer;
+    recorder   *recorder;
+    //////////////////////////
+    std::shared_ptr<mnn> mnn;
 };
 
-} //media media
+} //namespace media
 
 #endif //STARS_COMMON_H

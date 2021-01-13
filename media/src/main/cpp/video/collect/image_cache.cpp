@@ -12,31 +12,19 @@
 namespace media {
 } //namespace media
 
-media::image_cache::image_cache():width(0), height(0), cache(nullptr) {
+media::image_cache::image_cache(int32_t w, int32_t h):width(w), height(h) {
     log_d("created.");
+    cache = (uint32_t *) malloc(sizeof(uint32_t) * width * height);
+    if (cache == nullptr) {
+        log_e("Failed malloc image cache.");
+    } else {
+        log_d("malloc image cache size: %d,%d.", width, height);
+    }
 }
 
 media::image_cache::~image_cache() {
     if (cache) free(cache);
     log_d("release.");
-}
-
-bool media::image_cache::update_size(int32_t w, int32_t h) {
-    if (same_size(w, h)) {
-        return false;
-    }
-
-    width = w;
-    height = h;
-
-    cache = (uint32_t *) malloc(sizeof(uint32_t) * width * height);
-    if (cache == nullptr) {
-        log_e("Failed malloc image cache.");
-        return false;
-    } else {
-        log_d("malloc image cache size: %d,%d.", width, height);
-        return true;
-    }
 }
 
 bool media::image_cache::same_size(int32_t w, int32_t h) const {
@@ -48,9 +36,9 @@ bool media::image_cache::available() const {
 }
 
 void media::image_cache::get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache) const {
-    *out_w = width;
-    *out_h = height;
-    *out_cache = cache;
+    if (out_w) *out_w = width;
+    if (out_h) *out_h = height;
+    if (out_cache) *out_cache = cache;
 }
 
 #if DRAW_TEST_FRAME

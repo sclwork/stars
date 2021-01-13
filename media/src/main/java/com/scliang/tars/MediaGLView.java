@@ -2,6 +2,8 @@ package com.scliang.tars;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 
@@ -16,6 +18,11 @@ public class MediaGLView extends GLSurfaceView {
         void onRendererSurfaceChanged(int width, int height);
         void onRendererSurfaceDestroyed();
         void onRendererDrawFrame();
+        void onRendererSelectCamera(int camera);
+    }
+
+    public interface OnCameraCountListener {
+        void onCameraCountReady(int count);
     }
 
     private static class RecorderRenderer implements GLSurfaceView.Renderer {
@@ -33,6 +40,11 @@ public class MediaGLView extends GLSurfaceView {
         public final void release() {
             if (mOnRendererListener != null)
                 mOnRendererListener.onRendererRelease();
+        }
+
+        public void selectCamera(int camera) {
+            if (mOnRendererListener != null)
+                mOnRendererListener.onRendererSelectCamera(camera);
         }
 
         @Override
@@ -60,6 +72,8 @@ public class MediaGLView extends GLSurfaceView {
     }
 
     private RecorderRenderer mRenderer;
+    private OnCameraCountListener mOnCameraCountListener;
+    private final Handler mUIHandler = new Handler(Looper.getMainLooper());
 
     public MediaGLView(Context context) {
         super(context);
@@ -86,7 +100,11 @@ public class MediaGLView extends GLSurfaceView {
 
             @Override
             public void onRendererSurfaceCreated() {
-                Media.rendererSurfaceCreated();
+                final int cameraCount = Media.rendererSurfaceCreated();
+                mUIHandler.postDelayed(() -> {
+                    if (mOnCameraCountListener != null)
+                        mOnCameraCountListener.onCameraCountReady(cameraCount);
+                }, 250);
             }
 
             @Override
@@ -102,6 +120,11 @@ public class MediaGLView extends GLSurfaceView {
             @Override
             public void onRendererDrawFrame() {
                 Media.rendererDrawFrame();
+            }
+
+            @Override
+            public void onRendererSelectCamera(int camera) {
+                Media.rendererSelectCamera(camera);
             }
         });
         setRenderer(mRenderer);
@@ -119,5 +142,13 @@ public class MediaGLView extends GLSurfaceView {
     protected void onDetachedFromWindow() {
         queueEvent(()->{if(mRenderer != null)mRenderer.release();});
         super.onDetachedFromWindow();
+    }
+
+    public void selectCamera(int camera) {
+        queueEvent(()->{if(mRenderer != null)mRenderer.selectCamera(camera);});
+    }
+
+    public void setOnCameraCountListener(OnCameraCountListener listener) {
+        mOnCameraCountListener = listener;
     }
 }

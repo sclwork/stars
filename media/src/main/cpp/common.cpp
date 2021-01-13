@@ -12,14 +12,15 @@
 namespace media {
 } //namespace media
 
-media::common::common(std::string &cascade, std::string &mnn)
-:frame_args(), cascade(cascade), mnn(mnn), recorder(nullptr), renderer(nullptr) {
-    log_d("created. cascade:%s, mnn:%s", cascade.c_str(), mnn.c_str());
+media::common::common(std::string &cas_path, std::string &mnn_path)
+:frame_args(), cas_path(cas_path), renderer(nullptr), recorder(nullptr),
+mnn(new media::mnn(mnn_path, 4)) {
+    log_d("created. cascade:%s.", cas_path.c_str());
 }
 
 media::common::~common() {
-    delete recorder;
     delete renderer;
+    delete recorder;
     log_d("release.");
 }
 
@@ -42,12 +43,13 @@ void media::common::renderer_release() {
 /*
  * run in renderer thread.
  */
-void media::common::renderer_surface_created() {
+int32_t media::common::renderer_surface_created() {
     delete recorder;
     recorder = new image_recorder();
     if (renderer) {
         renderer->surface_created();
     }
+    return recorder ? recorder->camera_count() : 0;
 }
 
 /*
@@ -81,7 +83,7 @@ void media::common::renderer_draw_frame() {
         return;
     }
 
-#if LOG_ABLE
+#if LOG_ABLE && LOG_DRAW_TIME
     clock_gettime(CLOCK_REALTIME, &frame_args.t);
     frame_args.ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec;
 #endif
@@ -91,6 +93,10 @@ void media::common::renderer_draw_frame() {
         return;
     }
 
+    mnn->face_detect(frame, frame_args.faces);
+    mnn::flag_faces(frame, frame_args.faces);
+//    log_d("face detect count: %ld.", frame_args.faces.size());
+
     frame->get(&frame_args.frame_width, &frame_args.frame_height, &frame_args.frame_cache);
     if (frame_args.frame_cache == nullptr) {
         return;
@@ -98,10 +104,19 @@ void media::common::renderer_draw_frame() {
 
     renderer->draw_frame(frame_args.frame_width, frame_args.frame_height, frame_args.frame_cache);
 
-#if LOG_ABLE
+#if LOG_ABLE && LOG_DRAW_TIME
     clock_gettime(CLOCK_REALTIME, &frame_args.t);
     frame_args.d_ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec - frame_args.ns;
     frame_args.ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec;
     log_d("draw frame use ms: %.3f", (float)frame_args.d_ns / 1000000.0f);
 #endif
+}
+
+/*
+ * run in renderer thread.
+ */
+void media::common::renderer_select_camera(int camera) {
+    if (recorder) {
+        recorder->select_camera(camera);
+    }
 }

@@ -59,9 +59,9 @@ void renderer_release() {
     log_d("renderer release.");
 }
 
-void renderer_surface_created() {
-    com_ptr->renderer_surface_created();
+int32_t renderer_surface_created() {
     log_d("renderer surface created.");
+    return com_ptr->renderer_surface_created();
 }
 
 void renderer_surface_destroyed() {
@@ -77,6 +77,11 @@ void renderer_surface_changed(int32_t w, int32_t h) {
 void renderer_draw_frame() {
     com_ptr->renderer_draw_frame();
 //    d("renderer draw frame.");
+}
+
+void renderer_select_camera(int camera) {
+    com_ptr->renderer_select_camera(camera);
+    log_d("renderer select camera: %d.", camera);
 }
 
 static void loop_run() {

@@ -20,10 +20,6 @@ media::image_recorder::image_recorder()
         log_d("found cam %s", c->get_id().c_str());
     }
     log_d("--------------------");
-    // TODO: default select camera
-    if (!cams.empty()) {
-        run_cam = cams[0];
-    }
 }
 
 media::image_recorder::~image_recorder() {
@@ -31,11 +27,33 @@ media::image_recorder::~image_recorder() {
     log_d("release.");
 }
 
+int32_t media::image_recorder::camera_count() const {
+    return cams.size();
+}
+
+void media::image_recorder::select_camera(int camera) {
+    if (camera < 0 || camera >= cams.size()) {
+        return;
+    }
+
+    if (run_cam) {
+        run_cam->close();
+    }
+
+    if (cache == nullptr) {
+        return;
+    }
+
+    int32_t w, h;
+    cache->get(&w, &h);
+    run_cam = cams[camera];
+    run_cam->preview(w, h);
+}
+
 void media::image_recorder::update_size(int32_t w, int32_t h) {
     // check reset cache
     if (cache == nullptr || !cache->same_size(w, h)) {
-        cache = std::make_shared<image_cache>();
-        cache->update_size(w, h);
+        cache = std::make_shared<image_cache>(w, h);
     }
     // restart cam
     if (run_cam) {

@@ -13,16 +13,15 @@ namespace media {
 
 class image_cache {
 public:
-    image_cache();
+    image_cache(int32_t w, int32_t h);
     ~image_cache();
 
 public:
-    bool update_size(int32_t w, int32_t h);
     bool same_size(int32_t w, int32_t h) const;
     bool available() const;
 
 public:
-    void get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache) const;
+    void get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache = nullptr) const;
 
 #if DRAW_TEST_FRAME
 public:
