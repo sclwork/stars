@@ -4,15 +4,16 @@
 
 #include <string>
 #include "log.h"
-#include "image_cache.h"
+#include "image_frame.h"
 
-#define log_d(...)  LOG_D("Media-Native:image_cache", __VA_ARGS__)
-#define log_e(...)  LOG_E("Media-Native:image_cache", __VA_ARGS__)
+#define log_d(...)  LOG_D("Media-Native:image_frame", __VA_ARGS__)
+#define log_e(...)  LOG_E("Media-Native:image_frame", __VA_ARGS__)
 
 namespace media {
 } //namespace media
 
-media::image_cache::image_cache(int32_t w, int32_t h):width(w), height(h) {
+media::image_frame::image_frame(int32_t w, int32_t h)
+:width(w), height(h) {
     log_d("created.");
     cache = (uint32_t *) malloc(sizeof(uint32_t) * width * height);
     if (cache == nullptr) {
@@ -22,20 +23,32 @@ media::image_cache::image_cache(int32_t w, int32_t h):width(w), height(h) {
     }
 }
 
-media::image_cache::~image_cache() {
+media::image_frame::image_frame(const image_frame &frame)
+:width(frame.width), height(frame.height) {
+    log_d("created.");
+    cache = (uint32_t *) malloc(sizeof(uint32_t) * width * height);
+    if (cache == nullptr) {
+        log_e("Failed malloc image cache.");
+    } else {
+        log_d("malloc image cache size: %d,%d.", width, height);
+        memcpy(cache, frame.cache, sizeof(uint32_t) * width * height);
+    }
+}
+
+media::image_frame::~image_frame() {
     if (cache) free(cache);
     log_d("release.");
 }
 
-bool media::image_cache::same_size(int32_t w, int32_t h) const {
+bool media::image_frame::same_size(int32_t w, int32_t h) const {
     return w == width && h == height;
 }
 
-bool media::image_cache::available() const {
+bool media::image_frame::available() const {
     return cache != nullptr;
 }
 
-void media::image_cache::get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache) const {
+void media::image_frame::get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache) const {
     if (out_w) *out_w = width;
     if (out_h) *out_h = height;
     if (out_cache) *out_cache = cache;
@@ -43,7 +56,7 @@ void media::image_cache::get(int32_t *out_w, int32_t *out_h, uint32_t **out_cach
 
 #if DRAW_TEST_FRAME
 #include <opencv2/opencv.hpp>
-void media::image_cache::setup_test_data(int32_t w, int32_t h) {
+void media::image_frame::setup_test_data(int32_t w, int32_t h) {
     if (cache && w > 0 && h > 0) {
         // TODO: demo image path
         cv::Mat img = cv::imread("/data/user/0/com.scliang.tars/app_files/cpp.png");

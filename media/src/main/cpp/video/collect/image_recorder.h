@@ -7,12 +7,12 @@
 
 #include <string>
 #include "recorder.h"
-#include "image_cache.h"
+#include "proc/image_frame.h"
 #include "camera.h"
 
 namespace media {
 
-// update_frame tmp args
+// collect_frame tmp args
 struct cache_args {
     int32_t cache_width;
     int32_t cache_height;
@@ -33,7 +33,7 @@ public:
     int32_t camera_count() const override;
     void select_camera(int camera) override;
     void update_size(int32_t w, int32_t h) override;
-    std::shared_ptr<image_cache> update_frame() override;
+    std::shared_ptr<image_frame> collect_frame() override;
 
 private:
     image_recorder(image_recorder&&) = delete;
@@ -43,7 +43,7 @@ private:
 
 private:
     struct cache_args cache_args;
-    std::shared_ptr<image_cache> cache;
+    std::shared_ptr<image_frame> frame;
     /////////////////////////////////////////
     std::vector<std::shared_ptr<camera>> cams;
     std::shared_ptr<camera>run_cam;

@@ -84,6 +84,16 @@ void renderer_select_camera(int camera) {
     log_d("renderer select camera: %d.", camera);
 }
 
+void renderer_record_start(const char *name) {
+    com_ptr->renderer_record_start(std::string(name));
+    log_d("renderer record start: %s.", name);
+}
+
+void renderer_record_stop() {
+    com_ptr->renderer_record_stop();
+    log_d("renderer record stop.");
+}
+
 static void loop_run() {
     loop_running = true;
     log_d("hardware concurrency: %d", std::thread::hardware_concurrency());

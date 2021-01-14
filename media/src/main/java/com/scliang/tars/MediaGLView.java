@@ -19,6 +19,8 @@ public class MediaGLView extends GLSurfaceView {
         void onRendererSurfaceDestroyed();
         void onRendererDrawFrame();
         void onRendererSelectCamera(int camera);
+        void onRendererRecordStart(String name);
+        void onRendererRecordStop();
     }
 
     public interface OnCameraCountListener {
@@ -45,6 +47,16 @@ public class MediaGLView extends GLSurfaceView {
         public void selectCamera(int camera) {
             if (mOnRendererListener != null)
                 mOnRendererListener.onRendererSelectCamera(camera);
+        }
+
+        public void startRecord(String name) {
+            if (mOnRendererListener != null)
+                mOnRendererListener.onRendererRecordStart(name);
+        }
+
+        public void stopRecord() {
+            if (mOnRendererListener != null)
+                mOnRendererListener.onRendererRecordStop();
         }
 
         @Override
@@ -126,6 +138,16 @@ public class MediaGLView extends GLSurfaceView {
             public void onRendererSelectCamera(int camera) {
                 Media.rendererSelectCamera(camera);
             }
+
+            @Override
+            public void onRendererRecordStart(String name) {
+                Media.rendererRecordStart(name);
+            }
+
+            @Override
+            public void onRendererRecordStop() {
+                Media.rendererRecordStop();
+            }
         });
         setRenderer(mRenderer);
         queueEvent(mRenderer::init);
@@ -146,6 +168,14 @@ public class MediaGLView extends GLSurfaceView {
 
     public void selectCamera(int camera) {
         queueEvent(()->{if(mRenderer != null)mRenderer.selectCamera(camera);});
+    }
+
+    public void startRecord(String name) {
+        queueEvent(()->{if(mRenderer != null)mRenderer.startRecord(name);});
+    }
+
+    public void stopRecord() {
+        queueEvent(()->{if(mRenderer != null)mRenderer.stopRecord();});
     }
 
     public void setOnCameraCountListener(OnCameraCountListener listener) {

@@ -6,6 +6,7 @@
 #define STARS_PAINT_H
 
 #include <cstdint>
+#include "proc/image_frame.h"
 
 namespace media {
 
@@ -15,7 +16,7 @@ public:
 
 public:
     virtual void set_canvas_size(int32_t width, int32_t height) = 0;
-    virtual void draw(int32_t width, int32_t height, uint32_t *data) = 0;
+    virtual void draw(std::shared_ptr<image_frame> &frame) = 0;
 };
 
 } //namespace media

@@ -133,6 +133,24 @@ public class Media {
         r.jniRendererSelectCamera(camera);
     }
 
+    public static void rendererRecordStart(String name) {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        r.jniRendererRecordStart(name);
+    }
+
+    public static void rendererRecordStop() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        r.jniRendererRecordStop();
+    }
+
 
 
 
@@ -257,6 +275,8 @@ public class Media {
     private native int jniRendererSurfaceDestroyed();
     private native int jniRendererDrawFrame();
     private native int jniRendererSelectCamera(int camera);
+    private native int jniRendererRecordStart(String name);
+    private native int jniRendererRecordStop();
 
 
 

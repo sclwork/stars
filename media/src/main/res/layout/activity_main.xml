@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="30dp"
         android:orientation="vertical"
-        android:layout_centerVertical="true"
+        android:layout_alignParentBottom="true"
         android:visibility="invisible">
 
         <RadioButton
@@ -30,37 +30,40 @@
             android:id="@+id/camera_b"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
             android:text="Cam-B" />
 
         <RadioButton
             android:id="@+id/camera_c"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
             android:text="Cam-C" />
 
         <RadioButton
             android:id="@+id/camera_d"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
             android:text="Cam-D" />
 
         <RadioButton
             android:id="@+id/camera_e"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
             android:text="Cam-E" />
 
         <RadioButton
             android:id="@+id/camera_f"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
             android:text="Cam-F" />
 
     </RadioGroup>
+
+    <Button
+        android:id="@+id/record"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="30dp" />
 
 </RelativeLayout>

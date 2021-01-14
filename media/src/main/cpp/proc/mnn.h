@@ -9,7 +9,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <MNN/Interpreter.hpp>
-#include <video/collect/image_cache.h>
+#include <proc/image_frame.h>
 
 namespace media {
 
@@ -20,6 +20,7 @@ struct face_args {
     float aw, ah, ai, au;
     float xcenter, ycenter, bw, bh, ss;
     float ymin, xmin, ymax, xmax, nonface_prob, face_prob;
+    cv::Scalar flag_color;
 };
 
 class mnn {
@@ -28,12 +29,12 @@ public:
     ~mnn();
 
 public:
-    void face_detect(const std::shared_ptr<image_cache> &frame,
+    void face_detect(const std::shared_ptr<image_frame> &frame,
             std::vector<cv::Rect> &faces, const int32_t min_face = 64);
 
 public:
-    static void flag_faces(const std::shared_ptr<image_cache> &frame,
-            std::vector<cv::Rect> &faces);
+    void flag_faces(const std::shared_ptr<image_frame> &frame,
+            std::vector<cv::Rect> &faces, std::string &fps) const;
 
 private:
     mnn(mnn&&) = delete;

@@ -51,7 +51,7 @@ void media::camera::enumerate(std::vector<std::shared_ptr<camera>> &cams) {
 }
 
 media::camera::camera(std::string id, int32_t fps)
-:img_args(), id(std::move(id)), state(None), dev(nullptr),
+:img_args(), id(std::move(id)), state(RecState::None), dev(nullptr),
 fps_req(fps), fps_range(), ori(0), af_mode(ACAMERA_CONTROL_AF_MODE_OFF),
 reader(nullptr), window(nullptr), cap_request(nullptr), out_container(nullptr),
 out_session(nullptr), cap_session(nullptr), out_target(nullptr),
@@ -70,7 +70,7 @@ std::string media::camera::get_id() {
     return std::string(id);
 }
 
-std::shared_ptr<media::image_cache> media::camera::get_latest_image() {
+std::shared_ptr<media::image_frame> media::camera::get_latest_image() {
     media_status_t status = AImageReader_acquireLatestImage(reader, &img_args.image);
     if (status != AMEDIA_OK) {
         return img_cache;
@@ -102,11 +102,11 @@ std::shared_ptr<media::image_cache> media::camera::get_latest_image() {
 
     if (img_args.ori == 90 || img_args.ori == 270) {
         if (img_cache == nullptr || !img_cache->same_size(img_args.src_h, img_args.src_w)) {
-            img_cache = std::make_shared<image_cache>(img_args.src_h, img_args.src_w);
+            img_cache = std::make_shared<image_frame>(img_args.src_h, img_args.src_w);
         }
     } else {
         if (img_cache == nullptr || !img_cache->same_size(img_args.src_w, img_args.src_h)) {
-            img_cache = std::make_shared<image_cache>(img_args.src_w, img_args.src_h);
+            img_cache = std::make_shared<image_frame>(img_args.src_w, img_args.src_h);
         }
     }
 
@@ -285,7 +285,7 @@ bool media::camera::preview(int32_t req_w, int32_t req_h) {
         return false;
     }
 
-    state = Previewing;
+    state = RecState::Previewing;
     log_d("Success to start preview [id: %s]; req size: %d,%d; pre size: %d,%d.",
             id.c_str(), req_w, req_h, width, height);
     return true;
@@ -324,7 +324,7 @@ void media::camera::close() {
     }
 
     img_cache.reset();
-    state = None;
+    state = RecState::None;
     log_d("Success to close CameraDevice id: %s.", id.c_str());
 }
 

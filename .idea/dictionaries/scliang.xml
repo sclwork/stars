@@ -5,6 +5,7 @@
       <w>coords</w>
       <w>essl</w>
       <w>ffmpeg</w>
+      <w>ffps</w>
       <w>frontalface</w>
       <w>haarcascade</w>
       <w>mediump</w>
@@ -15,6 +16,7 @@
       <w>prog</w>
       <w>scliang</w>
       <w>tensorflow</w>
+      <w>tflite</w>
       <w>thiz</w>
       <w>webrtc</w>
       <w>xcenter</w>

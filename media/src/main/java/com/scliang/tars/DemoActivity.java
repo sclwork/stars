@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
@@ -74,6 +75,7 @@ public class DemoActivity extends AppCompatActivity {
         if (recorderView != null) {
             recorderView.onResume();
         }
+        acquireScreen();
     }
 
     @Override
@@ -83,6 +85,7 @@ public class DemoActivity extends AppCompatActivity {
         if (recorderView != null) {
             recorderView.onPause();
         }
+        releaseScreen();
     }
 
     @Override
@@ -96,6 +99,30 @@ public class DemoActivity extends AppCompatActivity {
         final MediaGLView recorderView = findViewById(R.id.recorder_view);
         if (recorderView != null) {
             recorderView.selectCamera(camera);
+        }
+    }
+
+    private void acquireScreen() {
+        final View view = findViewById(R.id.recorder_view);
+        if (view != null) {
+            view.post(() -> {
+                Window window = getWindow();
+                if (window != null) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                }
+            });
+        }
+    }
+
+    private void releaseScreen() {
+        final View view = findViewById(R.id.recorder_view);
+        if (view != null) {
+            view.post(() -> {
+                Window window = getWindow();
+                if (window != null) {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                }
+            });
         }
     }
 }

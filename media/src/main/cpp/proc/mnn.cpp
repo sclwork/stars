@@ -49,6 +49,7 @@ static float iou(struct face_args &face_args, const cv::Rect &box0, const cv::Re
 
 media::mnn::mnn(std::string &blazeface_file, uint32_t threads_num):face_args() {
     log_d("created.");
+    face_args.flag_color = cv::Scalar(255, 0, 0, 255);
     std::regex re{ ";" };
     std::vector<std::string> names {
             std::sregex_token_iterator(blazeface_file.begin(), blazeface_file.end(), re, -1),
@@ -88,7 +89,7 @@ media::mnn::~mnn() {
     log_d("release.");
 }
 
-void media::mnn::face_detect(const std::shared_ptr<image_cache> &frame,
+void media::mnn::face_detect(const std::shared_ptr<image_frame> &frame,
         std::vector<cv::Rect> &faces, const int32_t min_face) {
     int32_t width, height; uint32_t *data;
     frame->get(&width, &height, &data);
@@ -178,16 +179,14 @@ void media::mnn::face_detect(const std::shared_ptr<image_cache> &frame,
     }
 }
 
-void media::mnn::flag_faces(const std::shared_ptr<image_cache> &frame,
-        std::vector<cv::Rect> &faces) {
-    if (faces.empty()) {
-        return;
-    }
-
+void media::mnn::flag_faces(const std::shared_ptr<image_frame> &frame,
+        std::vector<cv::Rect> &faces, std::string &fps) const {
     int32_t width, height; uint32_t *data;
     frame->get(&width, &height, &data);
     cv::Mat img(height, width, CV_8UC4, (unsigned char *) data);
     for (const auto &face : faces) {
-        cv::rectangle(img, face, cv::Scalar(255, 0, 0, 255), 4);
+        cv::rectangle(img, face, face_args.flag_color, 4);
     }
+    cv::putText(img, fps, cv::Point(width / 2 - 80, height - 120),
+                cv::FONT_HERSHEY_SIMPLEX, 2, face_args.flag_color, 4);
 }

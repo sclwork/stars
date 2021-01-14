@@ -12,7 +12,7 @@ namespace media {
 } //namespace media
 
 media::image_recorder::image_recorder()
-:cache_args(), cache(nullptr), cams(), run_cam(nullptr) {
+:cache_args(), frame(nullptr), cams(), run_cam(nullptr) {
     log_d("created.");
     camera::enumerate(cams);
     log_d("--------------------");
@@ -38,22 +38,23 @@ void media::image_recorder::select_camera(int camera) {
 
     if (run_cam) {
         run_cam->close();
+        run_cam = nullptr;
     }
 
-    if (cache == nullptr) {
+    if (frame == nullptr) {
         return;
     }
 
     int32_t w, h;
-    cache->get(&w, &h);
+    frame->get(&w, &h);
     run_cam = cams[camera];
     run_cam->preview(w, h);
 }
 
 void media::image_recorder::update_size(int32_t w, int32_t h) {
     // check reset cache
-    if (cache == nullptr || !cache->same_size(w, h)) {
-        cache = std::make_shared<image_cache>(w, h);
+    if (frame == nullptr || !frame->same_size(w, h)) {
+        frame = std::make_shared<image_frame>(w, h);
     }
     // restart cam
     if (run_cam) {
@@ -62,24 +63,24 @@ void media::image_recorder::update_size(int32_t w, int32_t h) {
     }
 }
 
-std::shared_ptr<media::image_cache> media::image_recorder::update_frame() {
-    if (cache == nullptr || run_cam == nullptr) {
-        return cache;
+std::shared_ptr<media::image_frame> media::image_recorder::collect_frame() {
+    if (frame == nullptr || run_cam == nullptr) {
+        return frame;
     }
 
-    cache->get(&cache_args.cache_width, &cache_args.cache_height, &cache_args.cache_cache);
+    frame->get(&cache_args.cache_width, &cache_args.cache_height, &cache_args.cache_cache);
     if (cache_args.cache_cache == nullptr) {
-        return cache;
+        return frame;
     }
 
-    std::shared_ptr<media::image_cache> cam_cache = run_cam->get_latest_image();
+    std::shared_ptr<media::image_frame> cam_cache = run_cam->get_latest_image();
     if (cam_cache == nullptr || !cam_cache->available()) {
-        return cache;
+        return frame;
     }
 
     cam_cache->get(&cache_args.img_width, &cache_args.img_height, &cache_args.img_cache);
     if (cache_args.img_cache == nullptr) {
-        return cache;
+        return frame;
     }
 
     cache_args.wof = (cache_args.cache_width - cache_args.img_width) / 2;
@@ -110,5 +111,5 @@ std::shared_ptr<media::image_cache> media::image_recorder::update_frame() {
         }
     }
 
-    return cache;
+    return frame;
 }

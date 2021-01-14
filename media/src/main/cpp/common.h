@@ -8,11 +8,18 @@
 #include <time.h>
 #include <string>
 #include "log.h"
+#include "proc/mnn.h"
+#include "proc/ffmpeg.h"
 #include "video/collect/recorder.h"
 #include "video/play/renderer.h"
-#include "video/proc/mnn.h"
 
-#define LOG_DRAW_TIME 0
+#define LOG_DRAW_TIME 1
+#define IMPORT_TFLITE 1
+
+#if IMPORT_TFLITE
+#include <proc/tflite.h>
+#include <opencv2/opencv.hpp>
+#endif
 
 namespace media {
 
@@ -39,6 +46,8 @@ void renderer_surface_destroyed();
 void renderer_surface_changed(int32_t w, int32_t h);
 void renderer_draw_frame();
 void renderer_select_camera(int camera);
+void renderer_record_start(const char *name);
+void renderer_record_stop();
 
 // renderer_draw_frame tmp args
 struct frame_args {
@@ -46,11 +55,16 @@ struct frame_args {
     struct timespec t;
     int32_t d_ns;
     long ns;
+    int32_t fps_sum;
+    int32_t fps_count;
+    std::string fps;
 #endif
-    int32_t frame_width;
-    int32_t frame_height;
-    uint32_t *frame_cache;
     std::vector<cv::Rect> faces;
+};
+
+enum class RECORD_STATE {
+    NONE,
+    RECORDING,
 };
 
 /**
@@ -69,6 +83,8 @@ public:
     void renderer_surface_changed(int32_t w, int32_t h);
     void renderer_draw_frame();
     void renderer_select_camera(int camera);
+    void renderer_record_start(std::string &&name);
+    void renderer_record_stop();
 
 private:
     common(common&&) = delete;
@@ -84,7 +100,13 @@ private:
     renderer   *renderer;
     recorder   *recorder;
     //////////////////////////
-    std::shared_ptr<mnn> mnn;
+#if IMPORT_TFLITE
+    std::shared_ptr<tflite>   tflite;
+#endif
+    std::shared_ptr<mnn>      mnn;
+    std::shared_ptr<ffmpeg>   ffmpeg;
+    //////////////////////////////////////
+    std::atomic<RECORD_STATE> record_state;
 };
 
 } //namespace media

@@ -9,11 +9,11 @@
 #include <string>
 #include <media/NdkImageReader.h>
 #include <camera/NdkCameraDevice.h>
-#include "image_cache.h"
+#include "proc/image_frame.h"
 
 namespace media {
 
-enum RecState {
+enum class RecState {
     None,
     Previewing,
     Recording,
@@ -43,7 +43,7 @@ public:
 
 public:
     std::string get_id();
-    std::shared_ptr<image_cache> get_latest_image();
+    std::shared_ptr<image_frame> get_latest_image();
 
 public:
     bool preview(int32_t req_w, int32_t req_h);
@@ -72,7 +72,7 @@ private:
     struct img_args img_args;
     ///////////////////////////////////
     std::string id;
-    RecState state;
+    std::atomic<RecState> state;
     ACameraDevice *dev;
     ///////////////////////////////////
     int32_t fps_req;
@@ -92,7 +92,7 @@ private:
     ACameraDevice_StateCallbacks ds_callbacks;
     ACameraCaptureSession_stateCallbacks css_callbacks;
     ///////////////////////////////////
-    std::shared_ptr<image_cache> img_cache;
+    std::shared_ptr<image_frame> img_cache;
 };
 
 } //namespace media

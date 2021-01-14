@@ -90,6 +90,23 @@ jint camera) {
     return 0;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniRendererRecordStart(
+JNIEnv *env, jobject thiz,
+jstring name) {
+    const char* c_name = env->GetStringUTFChars(name, nullptr);
+    media::renderer_record_start(c_name);
+    env->ReleaseStringUTFChars(name, c_name);
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniRendererRecordStop(
+JNIEnv *env, jobject thiz) {
+    media::renderer_record_stop();
+    return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif

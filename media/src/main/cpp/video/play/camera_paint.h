@@ -21,7 +21,7 @@ public:
 
 public:
     void set_canvas_size(int32_t width, int32_t height) override;
-    void draw(int32_t width, int32_t height, uint32_t *data) override;
+    void draw(std::shared_ptr<image_frame> &frame) override;
 
 private:
     void update_matrix(int32_t angleX, int32_t angleY, float ratio);
