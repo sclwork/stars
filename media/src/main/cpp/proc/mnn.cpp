@@ -12,16 +12,16 @@
 #define log_d(...)  LOG_D("Media-Native:mnn", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:mnn", __VA_ARGS__)
 
-#define INPUT_SIZE      128
-#define OUTPUT_NUM      960
-#define X_SCALE         10.0f
-#define Y_SCALE         10.0f
-#define H_SCALE         5.0f
-#define W_SCALE         5.0f
-#define score_threshold 0.5f
-#define nms_threshold   0.45f
-
 namespace media {
+
+const int32_t INPUT_SIZE    = 128;
+const int32_t OUTPUT_NUM    = 960;
+const float X_SCALE         = 10.0f;
+const float Y_SCALE         = 10.0f;
+const float H_SCALE         = 5.0f;
+const float W_SCALE         = 5.0f;
+const float score_threshold = 0.5f;
+const float nms_threshold   = 0.45f;
 
 static float iou(struct face_args &face_args, const cv::Rect &box0, const cv::Rect &box1) {
     face_args.xmin0 = box0.x;

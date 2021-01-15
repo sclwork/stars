@@ -9,6 +9,9 @@
 #define log_e(...)  LOG_E("Media-Native:camera_paint", __VA_ARGS__)
 
 namespace media {
+
+const double MATH_PI = 3.1415926535897932384626433832802;
+
 } //namespace media
 
 media::camera_paint::camera_paint()
@@ -137,7 +140,6 @@ void media::camera_paint::draw(std::shared_ptr<image_frame> &frame) {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
 
-#define MATH_PI 3.1415926535897932384626433832802
 void media::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float ratio) {
     angleX = angleX % 360;
     angleY = angleY % 360;

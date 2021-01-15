@@ -151,6 +151,15 @@ public class Media {
         r.jniRendererRecordStop();
     }
 
+    public static boolean rendererRecordRunning() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return false;
+
+        return r.jniRendererRecordRunning();
+    }
+
 
 
 
@@ -277,6 +286,7 @@ public class Media {
     private native int jniRendererSelectCamera(int camera);
     private native int jniRendererRecordStart(String name);
     private native int jniRendererRecordStop();
+    private native boolean jniRendererRecordRunning();
 
 
 

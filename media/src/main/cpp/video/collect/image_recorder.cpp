@@ -64,15 +64,11 @@ void media::image_recorder::update_size(int32_t w, int32_t h) {
 }
 
 std::shared_ptr<media::image_frame> media::image_recorder::collect_frame() {
-    if (frame == nullptr || run_cam == nullptr) {
+    if (frame == nullptr || !frame->available() || run_cam == nullptr) {
         return frame;
     }
 
     frame->get(&cache_args.cache_width, &cache_args.cache_height, &cache_args.cache_cache);
-    if (cache_args.cache_cache == nullptr) {
-        return frame;
-    }
-
     std::shared_ptr<media::image_frame> cam_cache = run_cam->get_latest_image();
     if (cam_cache == nullptr || !cam_cache->available()) {
         return frame;

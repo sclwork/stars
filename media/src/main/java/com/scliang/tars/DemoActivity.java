@@ -8,6 +8,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 
 public class DemoActivity extends AppCompatActivity {
     private int mSelectedCamera = -1;
@@ -64,6 +65,14 @@ public class DemoActivity extends AppCompatActivity {
                 }
             } else {
                 selectCamera(mSelectedCamera);
+            }
+        });
+        final TextView record = findViewById(R.id.record);
+        if (record != null) record.setOnClickListener(v -> {
+            if (Media.rendererRecordRunning()) {
+                if (recorderView != null) recorderView.stopRecord();
+            } else {
+                if (recorderView != null) recorderView.startRecord(getFilesDir() + "/demo.mp4");
             }
         });
     }

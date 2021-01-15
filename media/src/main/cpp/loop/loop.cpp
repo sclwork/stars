@@ -94,6 +94,10 @@ void renderer_record_stop() {
     log_d("renderer record stop.");
 }
 
+bool renderer_record_running() {
+    return com_ptr == nullptr ? false : com_ptr->renderer_record_running();
+}
+
 static void loop_run() {
     loop_running = true;
     log_d("hardware concurrency: %d", std::thread::hardware_concurrency());

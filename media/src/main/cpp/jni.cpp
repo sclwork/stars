@@ -107,6 +107,12 @@ JNIEnv *env, jobject thiz) {
     return 0;
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_scliang_tars_Media_jniRendererRecordRunning(
+JNIEnv *env, jobject thiz) {
+    return media::renderer_record_running();
+}
+
 #ifdef __cplusplus
 }
 #endif

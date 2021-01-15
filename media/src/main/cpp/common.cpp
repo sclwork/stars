@@ -143,10 +143,19 @@ void media::common::renderer_select_camera(int camera) {
  * run in renderer thread.
  */
 void media::common::renderer_record_start(std::string &&name) {
+    record_state = RECORD_STATE::RECORDING;
 }
 
 /*
  * run in renderer thread.
  */
 void media::common::renderer_record_stop() {
+    record_state = RECORD_STATE::NONE;
+}
+
+/*
+ * run in caller thread.
+ */
+bool media::common::renderer_record_running() {
+    return record_state == RECORD_STATE::RECORDING;
 }

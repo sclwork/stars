@@ -48,6 +48,7 @@ void renderer_draw_frame();
 void renderer_select_camera(int camera);
 void renderer_record_start(const char *name);
 void renderer_record_stop();
+bool renderer_record_running();
 
 // renderer_draw_frame tmp args
 struct frame_args {
@@ -85,6 +86,7 @@ public:
     void renderer_select_camera(int camera);
     void renderer_record_start(std::string &&name);
     void renderer_record_stop();
+    bool renderer_record_running();
 
 private:
     common(common&&) = delete;
