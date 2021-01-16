@@ -12,18 +12,6 @@
 
 namespace media {
 
-// collect_frame tmp args
-struct cache_args {
-    int32_t cache_width;
-    int32_t cache_height;
-    uint32_t *cache_cache;
-    int32_t img_width;
-    int32_t img_height;
-    uint32_t *img_cache;
-    int32_t wof;
-    int32_t hof;
-};
-
 class image_recorder: public recorder {
 public:
     image_recorder();
@@ -42,7 +30,6 @@ private:
     image_recorder& operator=(const image_recorder&) = delete;
 
 private:
-    struct cache_args cache_args;
     std::shared_ptr<image_frame> frame;
     /////////////////////////////////////////
     std::vector<std::shared_ptr<camera>> cams;

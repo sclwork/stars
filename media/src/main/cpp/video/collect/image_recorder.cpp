@@ -12,7 +12,7 @@ namespace media {
 } //namespace media
 
 media::image_recorder::image_recorder()
-:cache_args(), frame(nullptr), cams(), run_cam(nullptr) {
+:frame(nullptr), cams(), run_cam(nullptr) {
     log_d("created.");
     camera::enumerate(cams);
     log_d("--------------------");
@@ -68,44 +68,6 @@ std::shared_ptr<media::image_frame> media::image_recorder::collect_frame() {
         return frame;
     }
 
-    frame->get(&cache_args.cache_width, &cache_args.cache_height, &cache_args.cache_cache);
-    std::shared_ptr<media::image_frame> cam_cache = run_cam->get_latest_image();
-    if (cam_cache == nullptr || !cam_cache->available()) {
-        return frame;
-    }
-
-    cam_cache->get(&cache_args.img_width, &cache_args.img_height, &cache_args.img_cache);
-    if (cache_args.img_cache == nullptr) {
-        return frame;
-    }
-
-    cache_args.wof = (cache_args.cache_width - cache_args.img_width) / 2;
-    cache_args.hof = (cache_args.cache_height - cache_args.img_height) / 2;
-    if (cache_args.wof >= 0 && cache_args.hof >= 0) {
-        for (int32_t i = 0; i < cache_args.img_height; i++) {
-            memcpy(cache_args.cache_cache + ((i + cache_args.hof) * cache_args.cache_width + cache_args.wof),
-                   cache_args.img_cache + (i * cache_args.img_width),
-                   sizeof(uint32_t) * cache_args.img_width);
-        }
-    } else if (cache_args.wof < 0 && cache_args.hof >= 0) {
-        for (int32_t i = 0; i < cache_args.img_height; i++) {
-            memcpy(cache_args.cache_cache + ((i + cache_args.hof) * cache_args.cache_width),
-                   cache_args.img_cache + (i * cache_args.img_width - cache_args.wof),
-                   sizeof(uint32_t) * cache_args.cache_width);
-        }
-    } else if (cache_args.wof >= 0 && cache_args.hof < 0) {
-        for (int32_t i = 0; i < cache_args.cache_height; i++) {
-            memcpy(cache_args.cache_cache + (i * cache_args.cache_width + cache_args.wof),
-                   cache_args.img_cache + ((i - cache_args.hof) * cache_args.img_width),
-                   sizeof(uint32_t) * cache_args.img_width);
-        }
-    } else if (cache_args.wof < 0 && cache_args.hof < 0) {
-        for (int32_t i = 0; i < cache_args.cache_height; i++) {
-            memcpy(cache_args.cache_cache + (i * cache_args.cache_width),
-                   cache_args.img_cache + ((i - cache_args.hof) * cache_args.img_width - cache_args.wof),
-                   sizeof(uint32_t) * cache_args.cache_width);
-        }
-    }
-
+    run_cam->get_latest_image(frame);
     return frame;
 }

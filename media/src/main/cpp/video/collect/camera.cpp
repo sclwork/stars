@@ -15,7 +15,258 @@
 #define log_d(...)  LOG_D("Media-Native:camera", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:camera", __VA_ARGS__)
 
+/**
+ * Helper function for YUV_420 to RGB conversion. Courtesy of Tensorflow
+ * ImageClassifier Sample:
+ * https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/android/jni/yuv2rgb.cc
+ * The difference is that here we have to swap UV plane when calling it.
+ */
+#ifndef MAX
+#define MAX(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a > _b ? _a : _b;      \
+  })
+#define MIN(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a < _b ? _a : _b;      \
+  })
+#endif
+
 namespace media {
+
+// This value is 2 ^ 18 - 1, and is used to clamp the RGB values before their
+// ranges
+// are normalized to eight bits.
+const int kMaxChannelValue = 262143;
+
+static void yuv2argb_pixel(struct img_args &img_args) {
+    img_args.nY -= 16;
+    img_args.nU -= 128;
+    img_args.nV -= 128;
+    if (img_args.nY < 0) img_args.nY = 0;
+
+    img_args.nR = (int)(1192 * img_args.nY + 1634 * img_args.nV);
+    img_args.nG = (int)(1192 * img_args.nY - 833  * img_args.nV - 400 * img_args.nU);
+    img_args.nB = (int)(1192 * img_args.nY + 2066 * img_args.nU);
+
+    img_args.nR = MIN(kMaxChannelValue, MAX(0, img_args.nR));
+    img_args.nG = MIN(kMaxChannelValue, MAX(0, img_args.nG));
+    img_args.nB = MIN(kMaxChannelValue, MAX(0, img_args.nB));
+
+    img_args.nR = (img_args.nR >> 10) & 0xff;
+    img_args.nG = (img_args.nG >> 10) & 0xff;
+    img_args.nB = (img_args.nB >> 10) & 0xff;
+
+    img_args.argb = 0xff000000 | (img_args.nR << 16) | (img_args.nG << 8) | img_args.nB;
+}
+
+static void yuv2argb_out(struct img_args &img_args) {
+    if (img_args.ori == 90) {
+        img_args.frame_index = (img_args.frame_w - 1 - img_args.frame_y) + img_args.frame_x * img_args.frame_w;
+    } else if (img_args.ori == 180) {
+        img_args.frame_index = (img_args.frame_h - 1 - img_args.frame_y) * img_args.frame_w + (img_args.frame_w - 1 - img_args.frame_x);
+    } else if (img_args.ori == 270) {
+        img_args.frame_index = (img_args.frame_h - 1 - img_args.frame_x) * img_args.frame_w + img_args.frame_w - 1 - img_args.frame_y;
+    } else {
+        img_args.frame_index = img_args.frame_y * img_args.frame_w + img_args.frame_x;
+    }
+
+    img_args.frame_cache[img_args.frame_index] = img_args.argb;
+}
+
+void yuv2argb(struct img_args &img_args) {
+    if (img_args.wof >= 0 && img_args.hof >= 0) {
+        if (img_args.ori == 90 || img_args.ori == 270) {
+            img_args.frame_y = img_args.wof;
+            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
+                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.frame_x = img_args.hof;
+                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+                    img_args.nY = img_args.pY[img_args.x];
+                    img_args.nU = img_args.pU[img_args.uv_offset];
+                    img_args.nV = img_args.pV[img_args.uv_offset];
+                    yuv2argb_pixel(img_args);
+                    yuv2argb_out(img_args);
+                    img_args.frame_x++;
+                }
+                img_args.frame_y++;
+            }
+        } else {
+            img_args.frame_y = img_args.hof;
+            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
+                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.frame_x = img_args.wof;
+                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+                    img_args.nY = img_args.pY[img_args.x];
+                    img_args.nU = img_args.pU[img_args.uv_offset];
+                    img_args.nV = img_args.pV[img_args.uv_offset];
+                    yuv2argb_pixel(img_args);
+                    yuv2argb_out(img_args);
+                    img_args.frame_x++;
+                }
+                img_args.frame_y++;
+            }
+        }
+    } else if (img_args.wof < 0 && img_args.hof >= 0) {
+        if (img_args.ori == 90 || img_args.ori == 270) {
+            img_args.frame_y = 0;
+            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+                if (img_args.y < -img_args.wof || img_args.y >= img_args.frame_w - img_args.wof) {
+                    continue;
+                }
+                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
+                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.frame_x = img_args.hof;
+                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+                    img_args.nY = img_args.pY[img_args.x];
+                    img_args.nU = img_args.pU[img_args.uv_offset];
+                    img_args.nV = img_args.pV[img_args.uv_offset];
+                    yuv2argb_pixel(img_args);
+                    yuv2argb_out(img_args);
+                    img_args.frame_x++;
+                }
+                img_args.frame_y++;
+            }
+        } else {
+            img_args.frame_y = img_args.hof;
+            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
+                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.frame_x = 0;
+                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                    if (img_args.x < -img_args.wof || img_args.x >= img_args.frame_w - img_args.wof) {
+                        continue;
+                    }
+                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+                    img_args.nY = img_args.pY[img_args.x];
+                    img_args.nU = img_args.pU[img_args.uv_offset];
+                    img_args.nV = img_args.pV[img_args.uv_offset];
+                    yuv2argb_pixel(img_args);
+                    yuv2argb_out(img_args);
+                    img_args.frame_x++;
+                }
+                img_args.frame_y++;
+            }
+        }
+    } else if (img_args.wof >= 0 && img_args.hof < 0) {
+        if (img_args.ori == 90 || img_args.ori == 270) {
+            img_args.frame_y = img_args.wof;
+            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
+                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.frame_x = 0;
+                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                    if (img_args.x < -img_args.hof || img_args.x >= img_args.frame_h - img_args.hof) {
+                        continue;
+                    }
+                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+                    img_args.nY = img_args.pY[img_args.x];
+                    img_args.nU = img_args.pU[img_args.uv_offset];
+                    img_args.nV = img_args.pV[img_args.uv_offset];
+                    yuv2argb_pixel(img_args);
+                    yuv2argb_out(img_args);
+                    img_args.frame_x++;
+                }
+                img_args.frame_y++;
+            }
+        } else {
+            img_args.frame_y = 0;
+            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+                if (img_args.y < -img_args.hof || img_args.y >= img_args.frame_h - img_args.hof) {
+                    continue;
+                }
+                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
+                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.frame_x = img_args.wof;
+                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+                    img_args.nY = img_args.pY[img_args.x];
+                    img_args.nU = img_args.pU[img_args.uv_offset];
+                    img_args.nV = img_args.pV[img_args.uv_offset];
+                    yuv2argb_pixel(img_args);
+                    yuv2argb_out(img_args);
+                    img_args.frame_x++;
+                }
+                img_args.frame_y++;
+            }
+        }
+    } else if (img_args.wof < 0 && img_args.hof < 0) {
+        if (img_args.ori == 90 || img_args.ori == 270) {
+            img_args.frame_y = 0;
+            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+                if (img_args.y < -img_args.wof || img_args.y >= img_args.frame_w - img_args.wof) {
+                    continue;
+                }
+                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
+                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.frame_x = 0;
+                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                    if (img_args.x < -img_args.hof || img_args.x >= img_args.frame_h - img_args.hof) {
+                        continue;
+                    }
+                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+                    img_args.nY = img_args.pY[img_args.x];
+                    img_args.nU = img_args.pU[img_args.uv_offset];
+                    img_args.nV = img_args.pV[img_args.uv_offset];
+                    yuv2argb_pixel(img_args);
+                    yuv2argb_out(img_args);
+                    img_args.frame_x++;
+                }
+                img_args.frame_y++;
+            }
+        } else {
+            img_args.frame_y = 0;
+            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+                if (img_args.y < -img_args.hof || img_args.y >= img_args.frame_h - img_args.hof) {
+                    continue;
+                }
+                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
+                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+                img_args.frame_x = 0;
+                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                    if (img_args.x < -img_args.wof ||
+                        img_args.x >= img_args.frame_w - img_args.wof) {
+                        continue;
+                    }
+                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+                    img_args.nY = img_args.pY[img_args.x];
+                    img_args.nU = img_args.pU[img_args.uv_offset];
+                    img_args.nV = img_args.pV[img_args.uv_offset];
+                    yuv2argb_pixel(img_args);
+                    yuv2argb_out(img_args);
+                    img_args.frame_x++;
+                }
+                img_args.frame_y++;
+            }
+        }
+    }
+}
+
 } //namespace media
 
 void media::camera::enumerate(std::vector<std::shared_ptr<camera>> &cams) {
@@ -56,8 +307,7 @@ fps_req(fps), fps_range(), ori(0), af_mode(ACAMERA_CONTROL_AF_MODE_OFF),
 reader(nullptr), window(nullptr), cap_request(nullptr), out_container(nullptr),
 out_session(nullptr), cap_session(nullptr), out_target(nullptr),
 ds_callbacks({nullptr, onDisconnected, onError}),
-css_callbacks({nullptr, onClosed, onReady, onActive}),
-img_cache(nullptr) {
+css_callbacks({nullptr, onClosed, onReady, onActive}) {
     log_d("created. %s", this->id.c_str());
 }
 
@@ -70,60 +320,50 @@ std::string media::camera::get_id() {
     return std::string(id);
 }
 
-std::shared_ptr<media::image_frame> media::camera::get_latest_image() {
+void media::camera::get_latest_image(std::shared_ptr<media::image_frame> &frame) {
     media_status_t status = AImageReader_acquireLatestImage(reader, &img_args.image);
     if (status != AMEDIA_OK) {
-        return img_cache;
+        return;
     }
 
     status = AImage_getFormat(img_args.image, &img_args.format);
     if (status != AMEDIA_OK || img_args.format != AIMAGE_FORMAT_YUV_420_888) {
         AImage_delete(img_args.image);
-        return img_cache;
+        return;
     }
 
-    status = AImage_getNumberOfPlanes(img_args.image, &img_args.planeCount);
-    if (status != AMEDIA_OK || img_args.planeCount != 3) {
+    status = AImage_getNumberOfPlanes(img_args.image, &img_args.plane_count);
+    if (status != AMEDIA_OK || img_args.plane_count != 3) {
         AImage_delete(img_args.image);
-        return img_cache;
+        return;
     }
 
-    AImage_getPlaneRowStride(img_args.image, 0, &img_args.yStride);
-    AImage_getPlaneRowStride(img_args.image, 1, &img_args.uvStride);
-    AImage_getPlaneData(img_args.image, 0, &img_args.yPixel, &img_args.yLen);
-    AImage_getPlaneData(img_args.image, 1, &img_args.vPixel, &img_args.vLen);
-    AImage_getPlaneData(img_args.image, 2, &img_args.uPixel, &img_args.uLen);
-    AImage_getPlanePixelStride(img_args.image, 1, &img_args.uvPixelStride);
+    AImage_getPlaneRowStride(img_args.image, 0, &img_args.y_stride);
+    AImage_getPlaneRowStride(img_args.image, 1, &img_args.uv_stride);
+    AImage_getPlaneData(img_args.image, 0, &img_args.y_pixel, &img_args.y_len);
+    AImage_getPlaneData(img_args.image, 1, &img_args.v_pixel, &img_args.v_len);
+    AImage_getPlaneData(img_args.image, 2, &img_args.u_pixel, &img_args.u_len);
+    AImage_getPlanePixelStride(img_args.image, 1, &img_args.uv_pixel_stride);
 
-    AImage_getCropRect(img_args.image, &img_args.srcRect);
-    img_args.src_w = img_args.srcRect.right - img_args.srcRect.left;
-    img_args.src_h = img_args.srcRect.bottom - img_args.srcRect.top;
+    AImage_getCropRect(img_args.image, &img_args.src_rect);
+    img_args.src_w = img_args.src_rect.right - img_args.src_rect.left;
+    img_args.src_h = img_args.src_rect.bottom - img_args.src_rect.top;
 //    log_d("latest image size: %d,%d.", img_args.src_w, img_args.src_h);
 
     if (img_args.ori == 90 || img_args.ori == 270) {
-        if (img_cache == nullptr || !img_cache->same_size(img_args.src_h, img_args.src_w)) {
-            img_cache = std::make_shared<image_frame>(img_args.src_h, img_args.src_w);
-        }
+        img_args.img_width = img_args.src_h;
+        img_args.img_height = img_args.src_w;
     } else {
-        if (img_cache == nullptr || !img_cache->same_size(img_args.src_w, img_args.src_h)) {
-            img_cache = std::make_shared<image_frame>(img_args.src_w, img_args.src_h);
-        }
+        img_args.img_width = img_args.src_w;
+        img_args.img_height = img_args.src_h;
     }
 
-    if (!img_cache->available()) {
-        AImage_delete(img_args.image);
-        return img_cache;
-    }
-
-    img_cache->get(&img_args.img_width, &img_args.img_height, &img_args.cache);
-    if (img_args.cache == nullptr) {
-        AImage_delete(img_args.image);
-        return img_cache;
-    }
-
+    img_args.frame = frame;
+    img_args.frame->get(&img_args.frame_w, &img_args.frame_h, &img_args.frame_cache);
+    img_args.wof = (img_args.frame_w - img_args.img_width) / 2;
+    img_args.hof = (img_args.frame_h - img_args.img_height) / 2;
     yuv2argb(img_args);
     AImage_delete(img_args.image);
-    return img_cache;
 }
 
 bool media::camera::preview(int32_t req_w, int32_t req_h) {
@@ -323,7 +563,6 @@ void media::camera::close() {
         window = nullptr;
     }
 
-    img_cache.reset();
     state = RecState::None;
     log_d("Success to close CameraDevice id: %s.", id.c_str());
 }
