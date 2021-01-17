@@ -78,192 +78,160 @@ static void yuv2argb_out(struct img_args &img_args) {
     img_args.frame_cache[img_args.frame_index] = img_args.argb;
 }
 
-void yuv2argb(struct img_args &img_args) {
+static void yuv2argb_get_yuv(struct img_args &img_args) {
+    img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
+    img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+    img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+    img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+}
+
+static void yuv2argb_set_yuv(struct img_args &img_args) {
+    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+    img_args.nY = img_args.pY[img_args.x];
+    img_args.nU = img_args.pU[img_args.uv_offset];
+    img_args.nV = img_args.pV[img_args.uv_offset];
+    yuv2argb_pixel(img_args);
+    yuv2argb_out(img_args);
+}
+
+static void yuv2argb_all_in(struct img_args &img_args) {
+    if (img_args.ori == 90 || img_args.ori == 270) {
+        img_args.frame_y = img_args.wof;
+        for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+            yuv2argb_get_yuv(img_args);
+            img_args.frame_x = img_args.hof;
+            for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                yuv2argb_set_yuv(img_args);
+                img_args.frame_x++;
+            }
+            img_args.frame_y++;
+        }
+    } else {
+        img_args.frame_y = img_args.hof;
+        for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+            yuv2argb_get_yuv(img_args);
+            img_args.frame_x = img_args.wof;
+            for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                yuv2argb_set_yuv(img_args);
+                img_args.frame_x++;
+            }
+            img_args.frame_y++;
+        }
+    }
+}
+
+static void yuv2argb_all_out(struct img_args &img_args) {
+    if (img_args.ori == 90 || img_args.ori == 270) {
+        img_args.frame_y = 0;
+        for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+            if (img_args.y < -img_args.wof || img_args.y >= img_args.frame_w - img_args.wof) {
+                continue;
+            }
+            yuv2argb_get_yuv(img_args);
+            img_args.frame_x = 0;
+            for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                if (img_args.x < -img_args.hof || img_args.x >= img_args.frame_h - img_args.hof) {
+                    continue;
+                }
+                yuv2argb_set_yuv(img_args);
+                img_args.frame_x++;
+            }
+            img_args.frame_y++;
+        }
+    } else {
+        img_args.frame_y = 0;
+        for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+            if (img_args.y < -img_args.hof || img_args.y >= img_args.frame_h - img_args.hof) {
+                continue;
+            }
+            yuv2argb_get_yuv(img_args);
+            img_args.frame_x = 0;
+            for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                if (img_args.x < -img_args.wof ||
+                    img_args.x >= img_args.frame_w - img_args.wof) {
+                    continue;
+                }
+                yuv2argb_set_yuv(img_args);
+                img_args.frame_x++;
+            }
+            img_args.frame_y++;
+        }
+    }
+}
+
+static void yuv2argb_w_out_h_in(struct img_args &img_args) {
+    if (img_args.ori == 90 || img_args.ori == 270) {
+        img_args.frame_y = 0;
+        for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+            if (img_args.y < -img_args.wof || img_args.y >= img_args.frame_w - img_args.wof) {
+                continue;
+            }
+            yuv2argb_get_yuv(img_args);
+            img_args.frame_x = img_args.hof;
+            for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                yuv2argb_set_yuv(img_args);
+                img_args.frame_x++;
+            }
+            img_args.frame_y++;
+        }
+    } else {
+        img_args.frame_y = img_args.hof;
+        for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+            yuv2argb_get_yuv(img_args);
+            img_args.frame_x = 0;
+            for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                if (img_args.x < -img_args.wof || img_args.x >= img_args.frame_w - img_args.wof) {
+                    continue;
+                }
+                yuv2argb_set_yuv(img_args);
+                img_args.frame_x++;
+            }
+            img_args.frame_y++;
+        }
+    }
+}
+
+static void yuv2argb_w_in_h_out(struct img_args &img_args) {
+    if (img_args.ori == 90 || img_args.ori == 270) {
+        img_args.frame_y = img_args.wof;
+        for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+            yuv2argb_get_yuv(img_args);
+            img_args.frame_x = 0;
+            for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                if (img_args.x < -img_args.hof || img_args.x >= img_args.frame_h - img_args.hof) {
+                    continue;
+                }
+                yuv2argb_set_yuv(img_args);
+                img_args.frame_x++;
+            }
+            img_args.frame_y++;
+        }
+    } else {
+        img_args.frame_y = 0;
+        for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
+            if (img_args.y < -img_args.hof || img_args.y >= img_args.frame_h - img_args.hof) {
+                continue;
+            }
+            yuv2argb_get_yuv(img_args);
+            img_args.frame_x = img_args.wof;
+            for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
+                yuv2argb_set_yuv(img_args);
+                img_args.frame_x++;
+            }
+            img_args.frame_y++;
+        }
+    }
+}
+
+static void yuv2argb(struct img_args &img_args) {
     if (img_args.wof >= 0 && img_args.hof >= 0) {
-        if (img_args.ori == 90 || img_args.ori == 270) {
-            img_args.frame_y = img_args.wof;
-            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
-                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
-                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
-                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.frame_x = img_args.hof;
-                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
-                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
-                    img_args.nY = img_args.pY[img_args.x];
-                    img_args.nU = img_args.pU[img_args.uv_offset];
-                    img_args.nV = img_args.pV[img_args.uv_offset];
-                    yuv2argb_pixel(img_args);
-                    yuv2argb_out(img_args);
-                    img_args.frame_x++;
-                }
-                img_args.frame_y++;
-            }
-        } else {
-            img_args.frame_y = img_args.hof;
-            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
-                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
-                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
-                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.frame_x = img_args.wof;
-                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
-                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
-                    img_args.nY = img_args.pY[img_args.x];
-                    img_args.nU = img_args.pU[img_args.uv_offset];
-                    img_args.nV = img_args.pV[img_args.uv_offset];
-                    yuv2argb_pixel(img_args);
-                    yuv2argb_out(img_args);
-                    img_args.frame_x++;
-                }
-                img_args.frame_y++;
-            }
-        }
+        yuv2argb_all_in(img_args);
     } else if (img_args.wof < 0 && img_args.hof >= 0) {
-        if (img_args.ori == 90 || img_args.ori == 270) {
-            img_args.frame_y = 0;
-            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
-                if (img_args.y < -img_args.wof || img_args.y >= img_args.frame_w - img_args.wof) {
-                    continue;
-                }
-                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
-                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
-                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.frame_x = img_args.hof;
-                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
-                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
-                    img_args.nY = img_args.pY[img_args.x];
-                    img_args.nU = img_args.pU[img_args.uv_offset];
-                    img_args.nV = img_args.pV[img_args.uv_offset];
-                    yuv2argb_pixel(img_args);
-                    yuv2argb_out(img_args);
-                    img_args.frame_x++;
-                }
-                img_args.frame_y++;
-            }
-        } else {
-            img_args.frame_y = img_args.hof;
-            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
-                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
-                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
-                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.frame_x = 0;
-                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
-                    if (img_args.x < -img_args.wof || img_args.x >= img_args.frame_w - img_args.wof) {
-                        continue;
-                    }
-                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
-                    img_args.nY = img_args.pY[img_args.x];
-                    img_args.nU = img_args.pU[img_args.uv_offset];
-                    img_args.nV = img_args.pV[img_args.uv_offset];
-                    yuv2argb_pixel(img_args);
-                    yuv2argb_out(img_args);
-                    img_args.frame_x++;
-                }
-                img_args.frame_y++;
-            }
-        }
+        yuv2argb_w_out_h_in(img_args);
     } else if (img_args.wof >= 0 && img_args.hof < 0) {
-        if (img_args.ori == 90 || img_args.ori == 270) {
-            img_args.frame_y = img_args.wof;
-            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
-                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
-                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
-                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.frame_x = 0;
-                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
-                    if (img_args.x < -img_args.hof || img_args.x >= img_args.frame_h - img_args.hof) {
-                        continue;
-                    }
-                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
-                    img_args.nY = img_args.pY[img_args.x];
-                    img_args.nU = img_args.pU[img_args.uv_offset];
-                    img_args.nV = img_args.pV[img_args.uv_offset];
-                    yuv2argb_pixel(img_args);
-                    yuv2argb_out(img_args);
-                    img_args.frame_x++;
-                }
-                img_args.frame_y++;
-            }
-        } else {
-            img_args.frame_y = 0;
-            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
-                if (img_args.y < -img_args.hof || img_args.y >= img_args.frame_h - img_args.hof) {
-                    continue;
-                }
-                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
-                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
-                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.frame_x = img_args.wof;
-                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
-                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
-                    img_args.nY = img_args.pY[img_args.x];
-                    img_args.nU = img_args.pU[img_args.uv_offset];
-                    img_args.nV = img_args.pV[img_args.uv_offset];
-                    yuv2argb_pixel(img_args);
-                    yuv2argb_out(img_args);
-                    img_args.frame_x++;
-                }
-                img_args.frame_y++;
-            }
-        }
+        yuv2argb_w_in_h_out(img_args);
     } else if (img_args.wof < 0 && img_args.hof < 0) {
-        if (img_args.ori == 90 || img_args.ori == 270) {
-            img_args.frame_y = 0;
-            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
-                if (img_args.y < -img_args.wof || img_args.y >= img_args.frame_w - img_args.wof) {
-                    continue;
-                }
-                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
-                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
-                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.frame_x = 0;
-                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
-                    if (img_args.x < -img_args.hof || img_args.x >= img_args.frame_h - img_args.hof) {
-                        continue;
-                    }
-                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
-                    img_args.nY = img_args.pY[img_args.x];
-                    img_args.nU = img_args.pU[img_args.uv_offset];
-                    img_args.nV = img_args.pV[img_args.uv_offset];
-                    yuv2argb_pixel(img_args);
-                    yuv2argb_out(img_args);
-                    img_args.frame_x++;
-                }
-                img_args.frame_y++;
-            }
-        } else {
-            img_args.frame_y = 0;
-            for (img_args.y = 0; img_args.y < img_args.src_h; img_args.y++) {
-                if (img_args.y < -img_args.hof || img_args.y >= img_args.frame_h - img_args.hof) {
-                    continue;
-                }
-                img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
-                img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
-                img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-                img_args.frame_x = 0;
-                for (img_args.x = 0; img_args.x < img_args.src_w; img_args.x++) {
-                    if (img_args.x < -img_args.wof ||
-                        img_args.x >= img_args.frame_w - img_args.wof) {
-                        continue;
-                    }
-                    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
-                    img_args.nY = img_args.pY[img_args.x];
-                    img_args.nU = img_args.pU[img_args.uv_offset];
-                    img_args.nV = img_args.pV[img_args.uv_offset];
-                    yuv2argb_pixel(img_args);
-                    yuv2argb_out(img_args);
-                    img_args.frame_x++;
-                }
-                img_args.frame_y++;
-            }
-        }
+        yuv2argb_all_out(img_args);
     }
 }
 

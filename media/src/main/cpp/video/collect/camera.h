@@ -33,8 +33,6 @@ struct img_args {
     AImage *image;
 };
 
-void yuv2argb(struct img_args &img_args);
-
 class camera {
 public:
     camera(std::string id, int32_t fps);
