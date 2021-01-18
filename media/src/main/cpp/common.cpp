@@ -13,7 +13,8 @@ namespace media {
 } //namespace media
 
 media::common::common(std::string &cas_path, std::string &mnn_path)
-:frame_args(), cas_path(cas_path), renderer(nullptr), recorder(nullptr),
+:frame_args(), cas_path(cas_path), renderer(nullptr),
+img_recorder(nullptr), aud_recorder(nullptr),
 #if IMPORT_TFLITE
 tflite(new media::tflite()),
 #endif
@@ -29,7 +30,8 @@ record_state(RECORD_STATE::NONE) {
 
 media::common::~common() {
     delete renderer;
-    delete recorder;
+    delete img_recorder;
+    delete aud_recorder;
     log_d("release.");
 }
 
@@ -53,12 +55,14 @@ void media::common::renderer_release() {
  * run in renderer thread.
  */
 int32_t media::common::renderer_surface_created() {
-    delete recorder;
-    recorder = new image_recorder();
+    delete aud_recorder;
+    aud_recorder = new audio_recorder();
+    delete img_recorder;
+    img_recorder = new image_recorder();
     if (renderer) {
         renderer->surface_created();
     }
-    return recorder ? recorder->camera_count() : 0;
+    return img_recorder ? img_recorder->camera_count() : 0;
 }
 
 /*
@@ -68,8 +72,10 @@ void media::common::renderer_surface_destroyed() {
     if (renderer) {
         renderer->surface_destroyed();
     }
-    delete recorder;
-    recorder = nullptr;
+    delete img_recorder;
+    img_recorder = nullptr;
+    delete aud_recorder;
+    aud_recorder = nullptr;
 }
 
 /*
@@ -79,8 +85,8 @@ void media::common::renderer_surface_changed(int32_t w, int32_t h) {
     if (renderer) {
         renderer->surface_changed(w, h);
     }
-    if (recorder) {
-        recorder->update_size(w, h);
+    if (img_recorder) {
+        img_recorder->update_size(w, h);
     }
 }
 
@@ -88,7 +94,7 @@ void media::common::renderer_surface_changed(int32_t w, int32_t h) {
  * run in renderer thread.
  */
 void media::common::renderer_draw_frame() {
-    if (recorder == nullptr || renderer == nullptr) {
+    if (img_recorder == nullptr || renderer == nullptr) {
         return;
     }
 
@@ -97,7 +103,7 @@ void media::common::renderer_draw_frame() {
     frame_args.ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec;
 #endif
 
-    auto frame = recorder->collect_frame();
+    auto frame = img_recorder->collect_frame();
     if (frame == nullptr || !frame->available()) {
         return;
     }
@@ -134,8 +140,8 @@ void media::common::renderer_draw_frame() {
  * run in renderer thread.
  */
 void media::common::renderer_select_camera(int camera) {
-    if (recorder) {
-        recorder->select_camera(camera);
+    if (img_recorder) {
+        img_recorder->select_camera(camera);
     }
 }
 
@@ -143,7 +149,13 @@ void media::common::renderer_select_camera(int camera) {
  * run in renderer thread.
  */
 void media::common::renderer_record_start(std::string &&name) {
-    record_state = RECORD_STATE::RECORDING;
+    if (img_recorder && img_recorder->is_previewing()) {
+        log_d("record start. %s.", name.c_str());
+        if (aud_recorder) {
+            aud_recorder->start_record();
+        }
+        record_state = RECORD_STATE::RECORDING;
+    }
 }
 
 /*
@@ -151,6 +163,9 @@ void media::common::renderer_record_start(std::string &&name) {
  */
 void media::common::renderer_record_stop() {
     record_state = RECORD_STATE::NONE;
+    if (aud_recorder) {
+        aud_recorder->stop_record();
+    }
 }
 
 /*

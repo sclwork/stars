@@ -13,9 +13,9 @@ namespace media {
 } //namespace media
 
 media::image_frame::image_frame(int32_t w, int32_t h)
-:width(w), height(h) {
+:is_copy(false), width(w), height(h),
+cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
     log_d("created.");
-    cache = (uint32_t *) malloc(sizeof(uint32_t) * width * height);
     if (cache == nullptr) {
         log_e("Failed malloc image cache.");
     } else {
@@ -24,20 +24,20 @@ media::image_frame::image_frame(int32_t w, int32_t h)
 }
 
 media::image_frame::image_frame(const image_frame &frame)
-:width(frame.width), height(frame.height) {
-    log_d("created.");
-    cache = (uint32_t *) malloc(sizeof(uint32_t) * width * height);
+:is_copy(true), width(frame.width), height(frame.height),
+cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
+//    log_d("created.");
     if (cache == nullptr) {
-        log_e("Failed malloc image cache.");
+//        log_e("Failed malloc image cache.");
     } else {
-        log_d("malloc image cache size: %d,%d.", width, height);
+//        log_d("malloc image cache size: %d,%d.", width, height);
         memcpy(cache, frame.cache, sizeof(uint32_t) * width * height);
     }
 }
 
 media::image_frame::~image_frame() {
     if (cache) free(cache);
-    log_d("release.");
+    if (!is_copy) log_d("release.");
 }
 
 bool media::image_frame::same_size(int32_t w, int32_t h) const {

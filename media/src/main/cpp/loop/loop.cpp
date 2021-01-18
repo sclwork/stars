@@ -86,7 +86,7 @@ void renderer_select_camera(int camera) {
 
 void renderer_record_start(const char *name) {
     com_ptr->renderer_record_start(std::string(name));
-    log_d("renderer record start: %s.", name);
+//    log_d("renderer record start: %s.", name);
 }
 
 void renderer_record_stop() {

@@ -10,7 +10,8 @@
 #include "log.h"
 #include "proc/mnn.h"
 #include "proc/ffmpeg.h"
-#include "video/collect/recorder.h"
+#include "video/collect/image_recorder.h"
+#include "audio/collect/audio_recorder.h"
 #include "video/play/renderer.h"
 
 #define LOG_DRAW_TIME 1
@@ -99,8 +100,9 @@ private:
     //////////////////////////
     std::string cas_path;
     //////////////////////////
-    renderer   *renderer;
-    recorder   *recorder;
+    renderer       *renderer;
+    image_recorder *img_recorder;
+    audio_recorder *aud_recorder;
     //////////////////////////
 #if IMPORT_TFLITE
     std::shared_ptr<tflite>   tflite;

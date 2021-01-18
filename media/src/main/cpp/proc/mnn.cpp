@@ -47,7 +47,9 @@ static float iou(struct face_args &face_args, const cv::Rect &box0, const cv::Re
 
 } //namespace media
 
-media::mnn::mnn(std::string &blazeface_file, uint32_t threads_num):face_args() {
+media::mnn::mnn(std::string &blazeface_file, uint32_t threads_num)
+:face_args(), b_net(nullptr), b_session(nullptr), b_input(nullptr),
+b_out_scores(nullptr), b_out_boxes(nullptr), b_out_anchors(nullptr) {
     log_d("created.");
     face_args.flag_color = cv::Scalar(255, 0, 0, 255);
     std::regex re{ ";" };

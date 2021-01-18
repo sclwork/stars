@@ -35,8 +35,10 @@ private:
     image_frame& operator=(const image_frame&) = delete;
 
 private:
-    int32_t width{};
-    int32_t height{};
+    bool is_copy;
+    /////////////////
+    int32_t width;
+    int32_t height;
     uint32_t *cache;
 };
 

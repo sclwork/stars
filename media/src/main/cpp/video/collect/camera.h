@@ -16,9 +16,6 @@ namespace media {
 enum class RecState {
     None,
     Previewing,
-    Recording,
-    Paused_Preview,
-    Paused_Record,
 };
 
 // get_latest_image tmp args
