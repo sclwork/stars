@@ -31,13 +31,6 @@ void loop_start(const char *cascade, const char *mnn);
 void loop_exit();
 
 /*
- * post runnable to media main thread loop
- */
-void loop_post(void (*runnable)(void *ctx, void (*callback)(void *ctx)),
-               void *ctx = nullptr,
-               void (*callback)(void *ctx) = nullptr);
-
-/*
  * renderer
  */
 void renderer_init();

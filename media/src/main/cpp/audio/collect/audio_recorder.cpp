@@ -17,7 +17,9 @@ media::audio_recorder::audio_recorder(uint32_t channels, uint32_t sample_rate)
 channels(channels<=1?1:2), sampling_rate(sample_rate==44100?SL_SAMPLINGRATE_44_1:SL_SAMPLINGRATE_16),
 sample_rate(sampling_rate / 1000),
 pcm_data((int8_t*)malloc(sizeof(int8_t)*PCM_BUF_SIZE)),
-pcm_sdata((int16_t*)malloc(sizeof(int16_t)*(PCM_BUF_SIZE/2))) {
+sht_data((int16_t*)malloc(sizeof(int16_t)*(PCM_BUF_SIZE/2))),
+cache(std::make_shared<audio_frame>(PCM_BUF_SIZE*1024)),
+frame(std::make_shared<audio_frame>(PCM_BUF_SIZE*1024)) {
     log_d("created. channels:%d, sample_rate:%d.", this->channels, this->sample_rate);
     init_objs();
 }
@@ -35,9 +37,9 @@ media::audio_recorder::~audio_recorder() {
         free(pcm_data);
         pcm_data = nullptr;
     }
-    if (pcm_sdata) {
-        free(pcm_sdata);
-        pcm_sdata = nullptr;
+    if (sht_data) {
+        free(sht_data);
+        sht_data = nullptr;
     }
     log_d("release.");
 }
@@ -65,10 +67,16 @@ bool media::audio_recorder::enqueue(bool chk_recording) {
     return res == SL_RESULT_SUCCESS;
 }
 
-void media::audio_recorder::handle_pcm() {
-    for (int32_t i = 0; i < PCM_BUF_SIZE/2; i++) {
-        pcm_sdata[i] = ((int16_t)(pcm_data[i * 2])     & 0xff) +
-                      (((int16_t)(pcm_data[i * 2 + 1]) & 0xff) << 8);
+void media::audio_recorder::handle_frame() {
+    if (cache != nullptr) {
+        if (cache->cp_offset + PCM_BUF_SIZE > cache->size) {
+            cache->cp_offset = 0;
+        }
+        memcpy(cache->cache + cache->cp_offset, pcm_data, sizeof(int8_t)*PCM_BUF_SIZE);
+        cache->cp_offset += PCM_BUF_SIZE;
+        if (frame != nullptr && cache->cp_offset >= cache->size) {
+            memcpy(frame->cache, cache->cache, sizeof(int8_t)*frame->size);
+        }
     }
 }
 
@@ -93,6 +101,10 @@ void media::audio_recorder::stop_record() {
     }
     (*rec_eng)->SetRecordState(rec_eng, SL_RECORDSTATE_STOPPED);
     log_d("stop record.");
+}
+
+std::shared_ptr<media::audio_frame> media::audio_recorder::collect_frame() {
+    return frame;
 }
 
 void media::audio_recorder::init_objs() {
@@ -191,6 +203,6 @@ void media::audio_recorder::init_objs() {
 
 void media::audio_recorder::queue_callback(SLAndroidSimpleBufferQueueItf, void *ctx) {
     auto *rec = (audio_recorder *) ctx;
-    rec->handle_pcm();
+    rec->handle_frame();
     rec->enqueue(true);
 }

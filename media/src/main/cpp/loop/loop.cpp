@@ -3,6 +3,7 @@
 //
 
 #include <thread>
+#include "loop.h"
 #include "common.h"
 #include "safe_queue.hpp"
 

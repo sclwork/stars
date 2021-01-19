@@ -94,7 +94,7 @@ void media::common::renderer_surface_changed(int32_t w, int32_t h) {
  * run in renderer thread.
  */
 void media::common::renderer_draw_frame() {
-    if (img_recorder == nullptr || renderer == nullptr) {
+    if (img_recorder == nullptr || aud_recorder == nullptr || renderer == nullptr) {
         return;
     }
 
@@ -103,20 +103,27 @@ void media::common::renderer_draw_frame() {
     frame_args.ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec;
 #endif
 
-    auto frame = img_recorder->collect_frame();
-    if (frame == nullptr || !frame->available()) {
+    auto img_frame = img_recorder->collect_frame();
+    if (img_frame == nullptr || !img_frame->available()) {
         return;
     }
 
-    mnn->face_detect(frame, frame_args.faces);
-    mnn->flag_faces(frame, frame_args.faces, frame_args.fps);
+    auto aud_frame = aud_recorder->collect_frame();
+    if (aud_frame == nullptr || !aud_frame->available()) {
+        return;
+    }
+
+    mnn->face_detect(img_frame, frame_args.faces);
+    mnn->flag_faces(img_frame, frame_args.faces, frame_args.fps);
 //    log_d("face detect count: %ld.", frame_args.faces.size());
 
-    renderer->draw_frame(frame);
+    renderer->draw_frame(img_frame);
 
     if (record_state == RECORD_STATE::RECORDING) {
-        ffmpeg->encode_frame(std::shared_ptr<media::image_frame>(
-                new media::image_frame(*frame)));
+        ffmpeg->video_encode_frame(std::shared_ptr<media::image_frame>(
+                new media::image_frame(*img_frame)),
+                                   std::shared_ptr<media::audio_frame>(
+                new media::audio_frame(*aud_frame)));
     }
 
 #if LOG_ABLE && LOG_DRAW_TIME
@@ -151,6 +158,9 @@ void media::common::renderer_select_camera(int camera) {
 void media::common::renderer_record_start(std::string &&name) {
     if (img_recorder && img_recorder->is_previewing()) {
         log_d("record start. %s.", name.c_str());
+        if (ffmpeg != nullptr) {
+            ffmpeg->video_encode_start(name);
+        }
         if (aud_recorder) {
             aud_recorder->start_record();
         }
@@ -165,6 +175,9 @@ void media::common::renderer_record_stop() {
     record_state = RECORD_STATE::NONE;
     if (aud_recorder) {
         aud_recorder->stop_record();
+    }
+    if (ffmpeg != nullptr) {
+        ffmpeg->video_encode_stop();
     }
 }
 

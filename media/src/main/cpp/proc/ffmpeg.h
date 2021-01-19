@@ -7,6 +7,7 @@
 
 #include <memory>
 #include "image_frame.h"
+#include "audio_frame.h"
 
 namespace media {
 
@@ -16,7 +17,10 @@ public:
     ~ffmpeg();
 
 public:
-    void encode_frame(std::shared_ptr<image_frame> &&frame);
+    void video_encode_start(std::string &name);
+    void video_encode_stop();
+    void video_encode_frame(std::shared_ptr<image_frame> &&img_frame,
+                            std::shared_ptr<audio_frame> &&aud_frame);
 
 private:
     ffmpeg(ffmpeg&&) = delete;

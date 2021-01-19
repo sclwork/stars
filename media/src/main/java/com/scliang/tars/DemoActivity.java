@@ -61,7 +61,7 @@ public class DemoActivity extends AppCompatActivity {
             group.setVisibility(View.VISIBLE);
             if (mSelectedCamera < 0) {
                 if (count > 0) {
-                    rbB.setChecked(true);
+                    rbA.setChecked(true);
                 }
             } else {
                 selectCamera(mSelectedCamera);

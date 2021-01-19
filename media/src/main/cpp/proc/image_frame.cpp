@@ -17,9 +17,7 @@ media::image_frame::image_frame(int32_t w, int32_t h)
 cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
     log_d("created.");
     if (cache == nullptr) {
-        log_e("Failed malloc image cache.");
-    } else {
-        log_d("malloc image cache size: %d,%d.", width, height);
+        log_e("malloc image cache fail.");
     }
 }
 
@@ -27,10 +25,7 @@ media::image_frame::image_frame(const image_frame &frame)
 :is_copy(true), width(frame.width), height(frame.height),
 cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
 //    log_d("created.");
-    if (cache == nullptr) {
-//        log_e("Failed malloc image cache.");
-    } else {
-//        log_d("malloc image cache size: %d,%d.", width, height);
+    if (cache) {
         memcpy(cache, frame.cache, sizeof(uint32_t) * width * height);
     }
 }
