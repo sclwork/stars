@@ -98,10 +98,10 @@ void media::common::renderer_draw_frame() {
         return;
     }
 
-#if LOG_ABLE && LOG_DRAW_TIME
-    clock_gettime(CLOCK_REALTIME, &frame_args.t);
-    frame_args.ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec;
-#endif
+//#if LOG_ABLE && LOG_DRAW_TIME
+//    clock_gettime(CLOCK_REALTIME, &frame_args.t);
+//    frame_args.ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec;
+//#endif
 
     auto img_frame = img_recorder->collect_frame();
     if (img_frame == nullptr || !img_frame->available()) {
@@ -130,16 +130,15 @@ void media::common::renderer_draw_frame() {
     clock_gettime(CLOCK_REALTIME, &frame_args.t);
     frame_args.d_ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec - frame_args.ns;
     frame_args.ns = frame_args.t.tv_sec * 1000000000 + frame_args.t.tv_nsec;
-//    log_d("draw frame use ms: %.3f, %.3ffps",
-//            (float)frame_args.d_ns / 1000000.0f,
-//            1000.0f / ((float)frame_args.d_ns / 1000000.0f));
     frame_args.fps_sum += (int32_t)(1000.0f / ((float)frame_args.d_ns / 1000000.0f));
     frame_args.fps_count ++;
     if (frame_args.fps_count == 20) {
         frame_args.fps = std::to_string(frame_args.fps_sum / frame_args.fps_count) + "fps";
         frame_args.fps_sum = 0;
         frame_args.fps_count = 0;
+//        log_d("draw frame %s.", frame_args.fps.c_str());
     }
+//    log_d("draw frame ms %f.", ((float)frame_args.d_ns / 1000000.0f));
 #endif
 }
 

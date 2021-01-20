@@ -20,7 +20,6 @@ public:
     void surface_destroyed() override;
     void surface_changed(int32_t w, int32_t h) override;
     void draw_frame(std::shared_ptr<image_frame> &frame) override;
-    void get_size(int32_t *ow, int32_t *oh) override;
 
 private:
     image_renderer(image_renderer&&) = delete;

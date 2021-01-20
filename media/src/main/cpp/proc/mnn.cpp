@@ -179,6 +179,11 @@ void media::mnn::face_detect(const std::shared_ptr<image_frame> &frame,
             faces.push_back(tmp_faces[i]);
         }
     }
+
+    delete nhwc_tensor;
+    img.release();
+    image.release();
+    origin.release();
 }
 
 void media::mnn::flag_faces(const std::shared_ptr<image_frame> &frame,
@@ -191,4 +196,5 @@ void media::mnn::flag_faces(const std::shared_ptr<image_frame> &frame,
     }
     cv::putText(img, fps, cv::Point(width / 2 - 80, height - 120),
                 cv::FONT_HERSHEY_SIMPLEX, 2, face_args.flag_color, 4);
+    img.release();
 }

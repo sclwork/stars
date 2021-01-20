@@ -17,7 +17,6 @@ media::audio_recorder::audio_recorder(uint32_t channels, uint32_t sample_rate)
 channels(channels<=1?1:2), sampling_rate(sample_rate==44100?SL_SAMPLINGRATE_44_1:SL_SAMPLINGRATE_16),
 sample_rate(sampling_rate / 1000),
 pcm_data((int8_t*)malloc(sizeof(int8_t)*PCM_BUF_SIZE)),
-sht_data((int16_t*)malloc(sizeof(int16_t)*(PCM_BUF_SIZE/2))),
 cache(std::make_shared<audio_frame>(PCM_BUF_SIZE*1024)),
 frame(std::make_shared<audio_frame>(PCM_BUF_SIZE*1024)) {
     log_d("created. channels:%d, sample_rate:%d.", this->channels, this->sample_rate);
@@ -36,10 +35,6 @@ media::audio_recorder::~audio_recorder() {
     if (pcm_data) {
         free(pcm_data);
         pcm_data = nullptr;
-    }
-    if (sht_data) {
-        free(sht_data);
-        sht_data = nullptr;
     }
     log_d("release.");
 }

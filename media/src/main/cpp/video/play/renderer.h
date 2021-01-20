@@ -19,7 +19,6 @@ public:
     virtual void surface_destroyed() = 0;
     virtual void surface_changed(int32_t w, int32_t h) = 0;
     virtual void draw_frame(std::shared_ptr<image_frame> &frame) = 0;
-    virtual void get_size(int32_t *ow, int32_t *oh) = 0;
 };
 
 } //namespace media

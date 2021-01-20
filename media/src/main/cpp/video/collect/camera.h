@@ -39,7 +39,6 @@ public:
     static void enumerate(std::vector<std::shared_ptr<camera>> &cams);
 
 public:
-    std::string get_id();
     void get_latest_image(std::shared_ptr<media::image_frame> &frame);
 
 public:

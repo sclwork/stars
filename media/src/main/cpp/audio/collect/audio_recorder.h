@@ -55,7 +55,6 @@ private:
     uint32_t sample_rate;
     //////////////////////////////////////////
     int8_t  *pcm_data;
-    int16_t *sht_data;
     //////////////////////////////////////////
     std::shared_ptr<audio_frame> cache;
     std::shared_ptr<audio_frame> frame;

@@ -284,10 +284,6 @@ media::camera::~camera() {
     log_d("release. %s", id.c_str());
 }
 
-std::string media::camera::get_id() {
-    return std::string(id);
-}
-
 void media::camera::get_latest_image(std::shared_ptr<media::image_frame> &frame) {
     media_status_t status = AImageReader_acquireLatestImage(reader, &img_args.image);
     if (status != AMEDIA_OK) {
@@ -332,6 +328,7 @@ void media::camera::get_latest_image(std::shared_ptr<media::image_frame> &frame)
     img_args.hof = (img_args.frame_h - img_args.img_height) / 2;
     yuv2argb(img_args);
     AImage_delete(img_args.image);
+    img_args.image = nullptr;
 }
 
 bool media::camera::preview(int32_t req_w, int32_t req_h) {
@@ -376,6 +373,8 @@ bool media::camera::preview(int32_t req_w, int32_t req_h) {
     }
 
     if (reader) {
+        AImageReader_setImageListener(reader, nullptr);
+        AImageReader_delete(reader);
         ACameraMetadata_free(metadata);
         ACameraManager_delete(mgr);
         return false;
