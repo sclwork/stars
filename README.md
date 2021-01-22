@@ -92,6 +92,24 @@ if (recorderView != null) {
 ...
 ```
 
+<br /><br />
+
+#### Record Video
+
+```
+...
+final MediaGLView recorderView = findViewById(R.id.recorder_view);
+final TextView record = findViewById(R.id.record);
+if (record != null) record.setOnClickListener(v -> {
+    if (Media.rendererRecordRunning()) {
+        if (recorderView != null) recorderView.stopRecord();
+    } else {
+        if (recorderView != null) recorderView.startRecord(getFilesDir() + "/demo.mp4");
+    }
+});
+...
+```
+
 <br /><br /><br /><br />
 
 <!--##### simple framework-->

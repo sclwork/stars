@@ -17,14 +17,6 @@
 
 namespace media {
 
-extern void yuv2argb_pixel(struct img_args &img_args);
-extern void yuv2argb_out(struct img_args &img_args);
-extern void yuv2argb_get_yuv(struct img_args &img_args);
-extern void yuv2argb_set_yuv(struct img_args &img_args);
-extern void yuv2argb_all_in(struct img_args &img_args);
-extern void yuv2argb_all_out(struct img_args &img_args);
-extern void yuv2argb_w_out_h_in(struct img_args &img_args);
-extern void yuv2argb_w_in_h_out(struct img_args &img_args);
 extern void yuv2argb(struct img_args &img_args);
 
 } //namespace media
@@ -54,8 +46,7 @@ void media::camera::enumerate(std::vector<std::shared_ptr<camera>> &cams) {
 
     cams.clear();
     for (int32_t i = 0; i < cameraIdList->numCameras; i++) {
-        cams.push_back(std::shared_ptr<camera>(new camera(
-                std::string(cameraIdList->cameraIds[i]), 25)));
+        cams.push_back(std::make_shared<camera>(std::string(cameraIdList->cameraIds[i]), 25));
     }
 
     ACameraManager_delete(manager);

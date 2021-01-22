@@ -138,7 +138,7 @@ void media::common::renderer_draw_frame() {
         frame_args.fps_count = 0;
 //        log_d("draw frame %s.", frame_args.fps.c_str());
     }
-//    log_d("draw frame ms %f.", ((float)frame_args.d_ns / 1000000.0f));
+//    log_d("draw frame ms %.2f.", ((float)frame_args.d_ns / 1000000.0f));
 #endif
 }
 
