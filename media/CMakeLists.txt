@@ -25,6 +25,21 @@ target_link_libraries(
         mp3lame
         ${log-lib})
 
+# yuv
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/jniLibs/${ANDROID_ABI})
+include_directories(jniLibs/include/libyuv)
+aux_source_directory(src/main/cpp/yuv YUV_SRC_LIST)
+add_library(
+        libyuv
+        SHARED
+        ${YUV_SRC_LIST})
+find_library(
+        log-lib
+        log)
+target_link_libraries(
+        libyuv
+        ${log-lib})
+
 # media
 include_directories(
         jniLibs/include
@@ -141,6 +156,7 @@ target_link_libraries( # Specifies the target library.
         mnn_cl
         mnn_gl
         mnn_vulkan
+        libyuv
         # Links the target library to the log library
         # included in the NDK.
         ${log-lib}

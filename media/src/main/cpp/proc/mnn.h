@@ -29,7 +29,7 @@ public:
     ~mnn();
 
 public:
-    void face_detect(const std::shared_ptr<image_frame> &frame,
+    void detect_faces(const std::shared_ptr<image_frame> &frame,
             std::vector<cv::Rect> &faces, const int32_t min_face = 64);
 
 public:

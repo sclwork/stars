@@ -86,16 +86,34 @@ void media::camera::get_latest_image(std::shared_ptr<media::image_frame> &frame)
     }
 
     AImage_getPlaneRowStride(img_args.image, 0, &img_args.y_stride);
-    AImage_getPlaneRowStride(img_args.image, 1, &img_args.uv_stride);
+    AImage_getPlaneRowStride(img_args.image, 1, &img_args.vu_stride);
     AImage_getPlaneData(img_args.image, 0, &img_args.y_pixel, &img_args.y_len);
     AImage_getPlaneData(img_args.image, 1, &img_args.v_pixel, &img_args.v_len);
     AImage_getPlaneData(img_args.image, 2, &img_args.u_pixel, &img_args.u_len);
-    AImage_getPlanePixelStride(img_args.image, 1, &img_args.uv_pixel_stride);
+    AImage_getPlanePixelStride(img_args.image, 1, &img_args.vu_pixel_stride);
 
     AImage_getCropRect(img_args.image, &img_args.src_rect);
     img_args.src_w = img_args.src_rect.right - img_args.src_rect.left;
     img_args.src_h = img_args.src_rect.bottom - img_args.src_rect.top;
 //    log_d("latest image size: %d,%d.", img_args.src_w, img_args.src_h);
+
+    img_args.argb_pixel = (uint8_t *)malloc(sizeof(uint8_t) * img_args.src_w * img_args.src_h * 4);
+    if (img_args.argb_pixel == nullptr) {
+        if (img_args.vu_pixel == nullptr) {
+            AImage_delete(img_args.image);
+            return;
+        }
+    }
+
+    img_args.vu_pixel = (uint8_t *)malloc(sizeof(uint8_t) * (img_args.v_len + img_args.u_len));
+    if (img_args.vu_pixel == nullptr) {
+        AImage_delete(img_args.image);
+        free(img_args.argb_pixel);
+        return;
+    }
+
+    memcpy(img_args.vu_pixel,                       img_args.v_pixel, sizeof(uint8_t) * img_args.v_len);
+    memcpy(img_args.vu_pixel + img_args.v_len, img_args.u_pixel, sizeof(uint8_t) * img_args.u_len);
 
     if (img_args.ori == 90 || img_args.ori == 270) {
         img_args.img_width = img_args.src_h;
@@ -111,6 +129,8 @@ void media::camera::get_latest_image(std::shared_ptr<media::image_frame> &frame)
     img_args.hof = (img_args.frame_h - img_args.img_height) / 2;
     yuv2argb(img_args);
     AImage_delete(img_args.image);
+    free(img_args.vu_pixel);
+    free(img_args.argb_pixel);
     img_args.image = nullptr;
 }
 

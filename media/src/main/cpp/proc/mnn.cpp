@@ -91,7 +91,7 @@ media::mnn::~mnn() {
     log_d("release.");
 }
 
-void media::mnn::face_detect(const std::shared_ptr<image_frame> &frame,
+void media::mnn::detect_faces(const std::shared_ptr<image_frame> &frame,
         std::vector<cv::Rect> &faces, const int32_t min_face) {
     int32_t width, height; uint32_t *data;
     frame->get(&width, &height, &data);

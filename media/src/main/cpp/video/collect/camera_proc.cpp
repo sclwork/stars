@@ -9,6 +9,7 @@
 #include <media/NdkImageReader.h>
 #include <camera/NdkCameraDevice.h>
 #include <camera/NdkCameraManager.h>
+#include <libyuv.h>
 #include "log.h"
 #include "camera.h"
 
@@ -80,16 +81,16 @@ static void yuv2argb_out(struct img_args &img_args) {
 
 static void yuv2argb_get_yuv(struct img_args &img_args) {
     img_args.pY = img_args.y_pixel + img_args.y_stride * (img_args.y + img_args.src_rect.top) + img_args.src_rect.left;
-    img_args.uv_row_start = img_args.uv_stride * ((img_args.y + img_args.src_rect.top) >> 1);
-    img_args.pU = img_args.u_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
-    img_args.pV = img_args.v_pixel + img_args.uv_row_start + (img_args.src_rect.left >> 1);
+    img_args.vu_row_start = img_args.vu_stride * ((img_args.y + img_args.src_rect.top) >> 1);
+    img_args.pU = img_args.u_pixel + img_args.vu_row_start + (img_args.src_rect.left >> 1);
+    img_args.pV = img_args.v_pixel + img_args.vu_row_start + (img_args.src_rect.left >> 1);
 }
 
 static void yuv2argb_set_yuv(struct img_args &img_args) {
-    img_args.uv_offset = (img_args.x >> 1) * img_args.uv_pixel_stride;
+    img_args.vu_offset = (img_args.x >> 1) * img_args.vu_pixel_stride;
     img_args.nY = img_args.pY[img_args.x];
-    img_args.nU = img_args.pU[img_args.uv_offset];
-    img_args.nV = img_args.pV[img_args.uv_offset];
+    img_args.nU = img_args.pU[img_args.vu_offset];
+    img_args.nV = img_args.pV[img_args.vu_offset];
     yuv2argb_pixel(img_args);
     yuv2argb_out(img_args);
 }
@@ -223,16 +224,76 @@ static void yuv2argb_w_in_h_out(struct img_args &img_args) {
     }
 }
 
-void yuv2argb(struct img_args &img_args) {
-    if (img_args.wof >= 0 && img_args.hof >= 0) {
-        yuv2argb_all_in(img_args);
-    } else if (img_args.wof < 0 && img_args.hof >= 0) {
-        yuv2argb_w_out_h_in(img_args);
-    } else if (img_args.wof >= 0 && img_args.hof < 0) {
-        yuv2argb_w_in_h_out(img_args);
-    } else if (img_args.wof < 0 && img_args.hof < 0) {
-        yuv2argb_all_out(img_args);
+void yuv2argb_use_libyuv(struct img_args &img_args) {
+    int32_t res = libyuv::NV21ToARGB(img_args.y_pixel, img_args.y_stride, img_args.vu_pixel, img_args.vu_stride,
+                                     img_args.argb_pixel, img_args.src_w, img_args.src_w, img_args.src_h);
+//    log_d("libyuv::NV21ToARGB: %d.", res);
+    if (res != 0) {
+        return;
     }
+
+    libyuv::RotationModeEnum r;
+    if (img_args.ori == 90) {
+        r = libyuv::RotationModeEnum ::kRotate90;
+    } else if (img_args.ori == 180) {
+        r = libyuv::RotationModeEnum ::kRotate180;
+    } else if (img_args.ori == 270) {
+        r = libyuv::RotationModeEnum ::kRotate270;
+    } else {
+        r = libyuv::RotationModeEnum ::kRotate0;
+    }
+    auto *dst_argb = (uint8_t *)malloc(sizeof(uint8_t) * img_args.src_w * img_args.src_h * 4);
+    if (dst_argb == nullptr) {
+        return;
+    }
+
+    res = libyuv::ARGBRotate(img_args.argb_pixel, img_args.src_w, dst_argb, img_args.img_width, img_args.src_w, img_args.src_h, r);
+//    log_d("libyuv::ARGBRotate: %d.", res);
+    if (res != 0) {
+        free(dst_argb);
+        return;
+    }
+
+    if (img_args.wof >= 0 && img_args.hof >= 0) {
+        for (int32_t i = 0; i < img_args.img_height; i++) {
+            memcpy(img_args.frame_cache + ((i + img_args.hof) * img_args.frame_w + img_args.wof),
+                   dst_argb + (i * img_args.img_width),
+                   sizeof(uint32_t) * img_args.img_width);
+        }
+    } else if (img_args.wof < 0 && img_args.hof >= 0) {
+        for (int32_t i = 0; i < img_args.img_height; i++) {
+            memcpy(img_args.frame_cache + ((i + img_args.hof) * img_args.frame_w),
+                   dst_argb + (i * img_args.img_width - img_args.wof),
+                   sizeof(uint32_t) * img_args.frame_w);
+        }
+    } else if (img_args.wof >= 0 && img_args.hof < 0) {
+        for (int32_t i = 0; i < img_args.frame_h; i++) {
+            memcpy(img_args.frame_cache + (i * img_args.frame_w + img_args.wof),
+                   dst_argb + ((i - img_args.hof) * img_args.img_width),
+                   sizeof(uint32_t) * img_args.img_width);
+        }
+    } else if (img_args.wof < 0 && img_args.hof < 0) {
+        for (int32_t i = 0; i < img_args.frame_h; i++) {
+            memcpy(img_args.frame_cache + (i * img_args.frame_w),
+                   dst_argb + ((i - img_args.hof) * img_args.img_width - img_args.wof),
+                   sizeof(uint32_t) * img_args.frame_w);
+        }
+    }
+
+    free(dst_argb);
+}
+
+void yuv2argb(struct img_args &img_args) {
+//    if (img_args.wof >= 0 && img_args.hof >= 0) {
+//        yuv2argb_all_in(img_args);
+//    } else if (img_args.wof < 0 && img_args.hof >= 0) {
+//        yuv2argb_w_out_h_in(img_args);
+//    } else if (img_args.wof >= 0 && img_args.hof < 0) {
+//        yuv2argb_w_in_h_out(img_args);
+//    } else if (img_args.wof < 0 && img_args.hof < 0) {
+//        yuv2argb_all_out(img_args);
+//    }
+    yuv2argb_use_libyuv(img_args);
 }
 
 } //namespace media

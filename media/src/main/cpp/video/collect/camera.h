@@ -21,9 +21,9 @@ enum class RecState {
 // get_latest_image tmp args
 struct img_args {
     int32_t wof, hof, frame_x, frame_y, frame_w, frame_h, frame_index, i, j;
-    int32_t x, y, format, plane_count, y_stride, uv_stride, uv_pixel_stride, y_len, u_len, v_len, ori;
-    int32_t src_w, src_h, img_width, img_height, uv_row_start, uv_offset, nY, nU, nV, nR, nG, nB;
-    uint8_t *y_pixel, *u_pixel, *v_pixel, *pY, *pU, *pV;
+    int32_t x, y, format, plane_count, y_stride, vu_stride, vu_pixel_stride, y_len, u_len, v_len, ori;
+    int32_t src_w, src_h, img_width, img_height, vu_row_start, vu_offset, nY, nU, nV, nR, nG, nB;
+    uint8_t *y_pixel, *u_pixel, *v_pixel, *vu_pixel, *argb_pixel, *pY, *pU, *pV;
     std::shared_ptr<media::image_frame> frame;
     AImageCropRect src_rect;
     uint32_t *frame_cache, argb;

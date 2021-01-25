@@ -113,7 +113,7 @@ void media::common::renderer_draw_frame() {
         return;
     }
 
-    mnn->face_detect(img_frame, frame_args.faces);
+    mnn->detect_faces(img_frame, frame_args.faces);
     mnn->flag_faces(img_frame, frame_args.faces, frame_args.fps);
 //    log_d("face detect count: %ld.", frame_args.faces.size());
 
@@ -136,7 +136,7 @@ void media::common::renderer_draw_frame() {
         frame_args.fps = std::to_string(frame_args.fps_sum / frame_args.fps_count) + "fps";
         frame_args.fps_sum = 0;
         frame_args.fps_count = 0;
-//        log_d("draw frame %s.", frame_args.fps.c_str());
+        log_d("draw frame %s.", frame_args.fps.c_str());
     }
 //    log_d("draw frame ms %.2f.", ((float)frame_args.d_ns / 1000000.0f));
 #endif
