@@ -74,6 +74,10 @@ public:
         return queue.empty();
     }
 
+    int32_t size() const {
+        return queue.size();
+    }
+
 private:
     safe_queue(safe_queue&&) = delete;
     safe_queue(const safe_queue&) = delete;

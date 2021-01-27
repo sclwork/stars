@@ -19,7 +19,7 @@ public:
     void surface_created() override;
     void surface_destroyed() override;
     void surface_changed(int32_t w, int32_t h) override;
-    void draw_frame(std::shared_ptr<image_frame> &frame) override;
+    void draw_frame(const std::shared_ptr<image_frame> &frame) override;
 
 private:
     image_renderer(image_renderer&&) = delete;

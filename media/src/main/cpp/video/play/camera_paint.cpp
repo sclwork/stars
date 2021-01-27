@@ -95,7 +95,7 @@ void media::camera_paint::set_canvas_size(int32_t width, int32_t height) {
     log_d("canvas size: %d,%d %0.4f", cvs_width, cvs_height, cvs_ratio);
 }
 
-void media::camera_paint::draw(std::shared_ptr<image_frame> &frame) {
+void media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
     if (frame == nullptr) {
         return;
     }

@@ -10,21 +10,6 @@ endif()
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g -ggdb -pthread")
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall -pthread")
 
-# lamemp3
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/jniLibs/${ANDROID_ABI})
-include_directories(src/main/cpp/lamemp3 src/main/cpp/lamemp3/lame)
-aux_source_directory(src/main/cpp/lamemp3 LAME_SRC_LIST)
-add_library(
-        mp3lame
-        SHARED
-        ${LAME_SRC_LIST})
-find_library(
-        log-lib
-        log)
-target_link_libraries(
-        mp3lame
-        ${log-lib})
-
 # yuv
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/jniLibs/${ANDROID_ABI})
 include_directories(jniLibs/include/libyuv)
@@ -78,6 +63,10 @@ set_target_properties(opencv4 PROPERTIES IMPORTED_LOCATION
 add_library(tflite SHARED IMPORTED)
 set_target_properties(tflite PROPERTIES IMPORTED_LOCATION
         ${CMAKE_SOURCE_DIR}/jniLibs/${CMAKE_ANDROID_ARCH_ABI}/libtensorflowlite_jni.so)
+
+add_library(lamemp3 SHARED IMPORTED)
+set_target_properties(lamemp3 PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/jniLibs/${CMAKE_ANDROID_ARCH_ABI}/libmp3lame.so)
 
 add_library(mnn SHARED IMPORTED)
 set_target_properties(mnn PROPERTIES IMPORTED_LOCATION
@@ -151,6 +140,7 @@ target_link_libraries( # Specifies the target library.
         swscale
         opencv4
         tflite
+        lamemp3
         mnn
         mnn_expr
         mnn_cl

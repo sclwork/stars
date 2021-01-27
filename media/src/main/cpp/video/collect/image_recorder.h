@@ -5,6 +5,7 @@
 #ifndef STARS_IMAGE_RECORDER_H
 #define STARS_IMAGE_RECORDER_H
 
+#include <mutex>
 #include <string>
 #include "proc/image_frame.h"
 #include "camera.h"
@@ -17,11 +18,26 @@ public:
     ~image_recorder();
 
 public:
+    void set_name(std::string &&n);
+    std::string get_name() const;
+
+public:
+    void destroy();
+    void set_recording(bool ing);
+
+public:
     int32_t camera_count() const;
+    bool is_recording() const;
     bool is_previewing() const;
     bool select_camera(int camera);
     void update_size(int32_t w, int32_t h);
     std::shared_ptr<image_frame> collect_frame();
+
+public:
+    int32_t  get_fps() const;
+    uint32_t get_width() const;
+    uint32_t get_height() const;
+    uint32_t get_channels() const { return 4; }
 
 private:
     image_recorder(image_recorder&&) = delete;
@@ -30,11 +46,16 @@ private:
     image_recorder& operator=(const image_recorder&) = delete;
 
 private:
+    int32_t fps;
+    bool recording;
     bool previewing;
+    std::string name;
     std::shared_ptr<image_frame> frame;
     /////////////////////////////////////////
     std::vector<std::shared_ptr<camera>> cams;
     std::shared_ptr<camera>run_cam;
+    /////////////////////////////////////////
+    mutable std::mutex collect_mutex;
 };
 
 } //namespace media

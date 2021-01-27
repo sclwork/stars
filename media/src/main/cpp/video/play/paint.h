@@ -16,7 +16,7 @@ public:
 
 public:
     virtual void set_canvas_size(int32_t width, int32_t height) = 0;
-    virtual void draw(std::shared_ptr<image_frame> &frame) = 0;
+    virtual void draw(const std::shared_ptr<image_frame> &frame) = 0;
 };
 
 } //namespace media

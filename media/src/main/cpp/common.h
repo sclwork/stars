@@ -5,6 +5,7 @@
 #ifndef STARS_COMMON_H
 #define STARS_COMMON_H
 
+#include <map>
 #include <time.h>
 #include <string>
 #include "log.h"
@@ -14,7 +15,6 @@
 #include "audio/collect/audio_recorder.h"
 #include "video/play/renderer.h"
 
-#define LOG_DRAW_TIME 1
 #define IMPORT_TFLITE 1
 
 #if IMPORT_TFLITE
@@ -44,22 +44,32 @@ void renderer_record_start(const char *name);
 void renderer_record_stop();
 bool renderer_record_running();
 
-// renderer_draw_frame tmp args
-struct frame_args {
-#if LOG_ABLE && LOG_DRAW_TIME
-    struct timespec t;
-    int32_t d_ns;
-    long ns;
-    int32_t fps_sum;
-    int32_t fps_count;
-    std::string fps;
-#endif
-    std::vector<cv::Rect> faces;
+class show_frame {
+public:
+    show_frame() = default;
+    ~show_frame() = default;
+
+public:
+    void set_frame(std::shared_ptr<image_frame> &&frm);
+    std::shared_ptr<image_frame> get_frame() const;
+    std::mutex &get_mutex();
+
+private:
+    std::shared_ptr<image_frame> frame;
+    mutable std::mutex           frame_mutex;
 };
 
-enum class RECORD_STATE {
-    NONE,
-    RECORDING,
+class mnns {
+public:
+    mnns(std::string &mnn_path);
+    ~mnns() = default;
+
+public:
+    std::shared_ptr<mnn> get_mnn(std::__thread_id id);
+
+private:
+    std::shared_ptr<mnn> mnn_arr[3];
+    std::__thread_id thrd_ids[3];
 };
 
 /**
@@ -77,7 +87,7 @@ public:
     void renderer_surface_destroyed();
     void renderer_surface_changed(int32_t w, int32_t h);
     void renderer_draw_frame();
-    void renderer_select_camera(int camera);
+    void renderer_select_camera(int32_t camera);
     void renderer_record_start(std::string &&name);
     void renderer_record_stop();
     bool renderer_record_running();
@@ -89,21 +99,21 @@ private:
     common& operator=(const common&) = delete;
 
 private:
-    struct frame_args frame_args;
-    //////////////////////////
     std::string cas_path;
     //////////////////////////
-    renderer       *renderer;
-    image_recorder *img_recorder;
-    audio_recorder *aud_recorder;
+    std::shared_ptr<renderer>       renderer;
+    std::shared_ptr<image_recorder> img_recorder;
+    std::shared_ptr<audio_recorder> aud_recorder;
+    std::shared_ptr<show_frame>     shw_frame;
     //////////////////////////
+#if LOG_ABLE && LOG_DRAW_TIME
+    long draw_t;
+#endif
 #if IMPORT_TFLITE
     std::shared_ptr<tflite>   tflite;
 #endif
-    std::shared_ptr<mnn>      mnn;
+    std::shared_ptr<mnns>     mnns;
     std::shared_ptr<ffmpeg>   ffmpeg;
-    //////////////////////////////////////
-    std::atomic<RECORD_STATE> record_state;
 };
 
 } //namespace media

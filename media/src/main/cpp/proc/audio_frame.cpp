@@ -27,6 +27,7 @@ cache((int8_t*)malloc(sizeof(int8_t)*size)), cp_offset(0) {
 //    log_d("created.");
     if (cache) {
         memcpy(cache, frame.cache, sizeof(int8_t)*size);
+//        log_d("copy completed. %d.", size);
     }
 }
 

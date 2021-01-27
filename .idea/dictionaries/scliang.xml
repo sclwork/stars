@@ -1,6 +1,8 @@
 <component name="ProjectDictionaryState">
   <dictionary name="scliang">
     <words>
+      <w>avcodec</w>
+      <w>avformat</w>
       <w>blazeface</w>
       <w>coords</w>
       <w>essl</w>
@@ -8,7 +10,9 @@
       <w>ffps</w>
       <w>frontalface</w>
       <w>haarcascade</w>
+      <w>libyuv</w>
       <w>mediump</w>
+      <w>mnns</w>
       <w>nhwc</w>
       <w>nonface</w>
       <w>objs</w>
@@ -17,9 +21,11 @@
       <w>proc</w>
       <w>prog</w>
       <w>scliang</w>
+      <w>sctcam</w>
       <w>tensorflow</w>
       <w>tflite</w>
       <w>thiz</w>
+      <w>thrd</w>
       <w>webrtc</w>
       <w>xcenter</w>
       <w>xmax</w>

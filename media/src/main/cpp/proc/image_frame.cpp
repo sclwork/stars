@@ -27,6 +27,7 @@ cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
 //    log_d("created.");
     if (cache) {
         memcpy(cache, frame.cache, sizeof(uint32_t) * width * height);
+//        log_d("copy completed. %d,%d.", width, height);
     }
 }
 

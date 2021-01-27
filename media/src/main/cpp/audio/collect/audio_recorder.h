@@ -12,6 +12,7 @@
 
 namespace media {
 
+// PCM Size=采样率*采样时间*采样位深/8*通道数（Bytes）
 const int32_t PERIOD_TIME  = 10;  // 10ms
 const int32_t PCM_BUF_SIZE = 320; // 320bytes
 
@@ -21,10 +22,16 @@ public:
     ~audio_recorder();
 
 public:
+    void destroy();
     bool recording() const;
     bool start_record();
     void stop_record();
-    std::shared_ptr<audio_frame> collect_frame();
+
+public:
+    uint32_t get_channels() const;
+    uint32_t get_sample_rate() const;
+    uint32_t get_frame_size() const;
+    std::shared_ptr<audio_frame> collect_frame(bool *changed);
 
 private:
     audio_recorder(audio_recorder&&) = delete;
@@ -56,6 +63,8 @@ private:
     //////////////////////////////////////////
     int8_t  *pcm_data;
     //////////////////////////////////////////
+    uint32_t                     frm_size;
+    std::atomic_bool             frm_changed;
     std::shared_ptr<audio_frame> cache;
     std::shared_ptr<audio_frame> frame;
 };

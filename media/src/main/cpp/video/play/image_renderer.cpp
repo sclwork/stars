@@ -39,7 +39,7 @@ void media::image_renderer::surface_changed(int32_t w, int32_t h) {
     }
 }
 
-void media::image_renderer::draw_frame(std::shared_ptr<image_frame> &frame) {
+void media::image_renderer::draw_frame(const std::shared_ptr<image_frame> &frame) {
     if (paint == nullptr || frame == nullptr) {
         return;
     }

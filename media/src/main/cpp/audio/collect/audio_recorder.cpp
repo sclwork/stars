@@ -17,8 +17,9 @@ media::audio_recorder::audio_recorder(uint32_t channels, uint32_t sample_rate)
 channels(channels<=1?1:2), sampling_rate(sample_rate==44100?SL_SAMPLINGRATE_44_1:SL_SAMPLINGRATE_16),
 sample_rate(sampling_rate / 1000),
 pcm_data((int8_t*)malloc(sizeof(int8_t)*PCM_BUF_SIZE)),
-cache(std::make_shared<audio_frame>(PCM_BUF_SIZE*1024)),
-frame(std::make_shared<audio_frame>(PCM_BUF_SIZE*1024)) {
+frm_size(PCM_BUF_SIZE*sample_rate/100), frm_changed(true),
+cache(std::make_shared<audio_frame>(frm_size)),
+frame(std::make_shared<audio_frame>(frm_size)) {
     log_d("created. channels:%d, sample_rate:%d.", this->channels, this->sample_rate);
     init_objs();
 }
@@ -37,6 +38,10 @@ media::audio_recorder::~audio_recorder() {
         pcm_data = nullptr;
     }
     log_d("release.");
+}
+
+void media::audio_recorder::destroy() {
+    log_d("destroy.");
 }
 
 bool media::audio_recorder::recordable() const {
@@ -71,6 +76,7 @@ void media::audio_recorder::handle_frame() {
         cache->cp_offset += PCM_BUF_SIZE;
         if (frame != nullptr && cache->cp_offset >= cache->size) {
             memcpy(frame->cache, cache->cache, sizeof(int8_t)*frame->size);
+            frm_changed = true;
         }
     }
 }
@@ -98,7 +104,21 @@ void media::audio_recorder::stop_record() {
     log_d("stop record.");
 }
 
-std::shared_ptr<media::audio_frame> media::audio_recorder::collect_frame() {
+uint32_t media::audio_recorder::get_channels() const {
+    return channels;
+}
+
+uint32_t media::audio_recorder::get_sample_rate() const {
+    return sample_rate;
+}
+
+uint32_t media::audio_recorder::get_frame_size() const {
+    return frm_size;
+}
+
+std::shared_ptr<media::audio_frame> media::audio_recorder::collect_frame(bool *changed) {
+    *changed = frm_changed;
+    frm_changed = false;
     return frame;
 }
 
@@ -172,7 +192,7 @@ void media::audio_recorder::init_objs() {
     }
     (*rec_eng)->SetPositionUpdatePeriod(rec_eng, PERIOD_TIME);
     (*rec_eng)->GetPositionUpdatePeriod(rec_eng, &period);
-    log_d("get audio recorder period millisecond: %d", period);
+    log_d("audio recorder period millisecond: %dms", period);
     res = (*rec_obj)->GetInterface(rec_obj, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &rec_queue);
     if (res != SL_RESULT_SUCCESS) {
         (*eng_obj)->Destroy(eng_obj);

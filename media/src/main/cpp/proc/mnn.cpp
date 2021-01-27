@@ -186,15 +186,12 @@ void media::mnn::detect_faces(const std::shared_ptr<image_frame> &frame,
     origin.release();
 }
 
-void media::mnn::flag_faces(const std::shared_ptr<image_frame> &frame,
-        std::vector<cv::Rect> &faces, std::string &fps) const {
+void media::mnn::flag_faces(const std::shared_ptr<image_frame> &frame, std::vector<cv::Rect> &faces) const {
     int32_t width, height; uint32_t *data;
     frame->get(&width, &height, &data);
     cv::Mat img(height, width, CV_8UC4, (unsigned char *) data);
     for (const auto &face : faces) {
         cv::rectangle(img, face, face_args.flag_color, 4);
     }
-    cv::putText(img, fps, cv::Point(width / 2 - 80, height - 120),
-                cv::FONT_HERSHEY_SIMPLEX, 2, face_args.flag_color, 4);
     img.release();
 }

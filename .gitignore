@@ -19,7 +19,3 @@ media/jniLibs/arm64-v8a/libmedia.so
 media/jniLibs/armeabi-v7a/libmedia.so
 media/jniLibs/x86/libmedia.so
 media/jniLibs/x86_64/libmedia.so
-media/jniLibs/arm64-v8a/libmp3lame.so
-media/jniLibs/armeabi-v7a/libmp3lame.so
-media/jniLibs/x86/libmp3lame.so
-media/jniLibs/x86_64/libmp3lame.so
