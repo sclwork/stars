@@ -13,7 +13,7 @@ namespace media {
 } //namespace media
 
 media::image_frame::image_frame(int32_t w, int32_t h)
-:is_copy(false), width(w), height(h),
+:is_copy(false), ori(0), width(w), height(h),
 cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
     log_d("created.");
     if (cache == nullptr) {
@@ -22,7 +22,7 @@ cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
 }
 
 media::image_frame::image_frame(const image_frame &frame)
-:is_copy(true), width(frame.width), height(frame.height),
+:is_copy(true), ori(frame.ori), width(frame.width), height(frame.height),
 cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
 //    log_d("created.");
     if (cache) {
@@ -42,6 +42,14 @@ bool media::image_frame::same_size(int32_t w, int32_t h) const {
 
 bool media::image_frame::available() const {
     return cache != nullptr;
+}
+
+void media::image_frame::set_ori(int32_t o) {
+    ori = o;
+}
+
+int media::image_frame::get_ori() const {
+    return ori;
 }
 
 void media::image_frame::get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache) const {

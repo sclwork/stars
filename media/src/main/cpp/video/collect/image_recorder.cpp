@@ -12,7 +12,7 @@ namespace media {
 } //namespace media
 
 media::image_recorder::image_recorder()
-:fps(0), recording(false), previewing(false), name(),
+:fps(0), recording(false), previewing(false),
 frame(nullptr), cams(), run_cam(nullptr), collect_mutex() {
     log_d("created.");
     camera::enumerate(cams);
@@ -27,14 +27,6 @@ media::image_recorder::~image_recorder() {
     run_cam = nullptr;
     previewing = false;
     log_d("release.");
-}
-
-void media::image_recorder::set_name(std::string &&n) {
-    name = n;
-}
-
-std::string media::image_recorder::get_name() const {
-    return std::string(name);
 }
 
 int32_t media::image_recorder::camera_count() const {

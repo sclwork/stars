@@ -22,6 +22,8 @@ public:
     bool available() const;
 
 public:
+    void set_ori(int32_t o);
+    int get_ori() const;
     void get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache = nullptr) const;
 
 #if DRAW_TEST_FRAME
@@ -37,6 +39,7 @@ private:
 private:
     bool is_copy;
     /////////////////
+    int32_t ori;
     int32_t width;
     int32_t height;
     uint32_t *cache;

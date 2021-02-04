@@ -5,6 +5,9 @@
 #ifndef STARS_LOOP_H
 #define STARS_LOOP_H
 
+#define USE_CONCURRENT_QUEUE
+#define USE_SINGLE_THREAD
+
 namespace media {
 
 /*

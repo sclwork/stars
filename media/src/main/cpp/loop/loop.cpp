@@ -6,6 +6,7 @@
 #include "loop.h"
 #include "common.h"
 #include "safe_queue.hpp"
+#include "concurrent_queue.h"
 
 #define log_d(...)  LOG_D("Media-Native:loop", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:loop", __VA_ARGS__)
@@ -48,15 +49,29 @@ private:
  */
 static std::unique_ptr<common> com_ptr;
 static std::atomic_bool        loop_main_running(false);
+#ifdef USE_CONCURRENT_QUEUE
+static moodycamel::ConcurrentQueue<ln> queue_main;
+#else
 static safe_queue<ln>          queue_main;
+#endif
 static std::atomic_bool        loop_collect_a_running(false);
+#ifndef USE_SINGLE_THREAD
 static std::atomic_bool        loop_collect_b_running(false);
 static std::atomic_bool        loop_collect_c_running(false);
+#endif
+#ifdef USE_CONCURRENT_QUEUE
+static moodycamel::ConcurrentQueue<ln> queue_collect;
+#else
 static safe_queue<ln>          queue_collect;
+#endif
 static std::atomic_bool        loop_encode_a_running(false);
 static std::atomic_bool        loop_encode_b_running(false);
 static std::atomic_bool        loop_encode_c_running(false);
+#ifdef USE_CONCURRENT_QUEUE
+static moodycamel::ConcurrentQueue<ln> queue_encode;
+#else
 static safe_queue<ln>          queue_encode;
+#endif
 
 void renderer_init() {
     com_ptr->renderer_init();
@@ -112,13 +127,26 @@ static void loop_main_run() {
     log_d("hardware concurrency: %d", std::thread::hardware_concurrency());
     log_d("main loop running...");
     while (true) {
+#ifdef USE_CONCURRENT_QUEUE
+        ln n;
+        bool h = queue_main.try_dequeue(n);
+        if (!h) { continue; }
+        if (n.is_exit()) { break; }
+        n.run();
+#else
         auto n = queue_main.wait_and_pop();
         if (n->is_exit()) { break; }
         n->run();
+#endif
     }
 
+#ifndef USE_SINGLE_THREAD
     if (!loop_collect_a_running && !loop_collect_b_running && !loop_collect_c_running &&
         !loop_encode_a_running && !loop_encode_b_running && !loop_encode_c_running) {
+#else
+    if (!loop_collect_a_running && !loop_encode_a_running &&
+        !loop_encode_a_running && !loop_encode_b_running && !loop_encode_c_running) {
+#endif
         common *com = com_ptr.release();
         delete com;
     }
@@ -130,32 +158,59 @@ static void loop_collect_a_run() {
     loop_collect_a_running = true;
     log_d("collect_a loop running...");
     while (true) {
+#ifdef USE_CONCURRENT_QUEUE
+        ln n;
+        bool h = queue_collect.try_dequeue(n);
+        if (!h) { continue; }
+        if (n.is_exit()) { break; }
+        n.run();
+#else
         auto n = queue_collect.wait_and_pop();
         if (n->is_exit()) { break; }
         n->run();
-//        log_d("loop_collect_a_run has count: %d.", queue_collect.size());
+#endif
     }
 
+#ifndef USE_SINGLE_THREAD
     if (!loop_collect_b_running && !loop_collect_c_running &&
         !loop_main_running && !loop_encode_a_running && !loop_encode_b_running && !loop_encode_c_running) {
+#else
+    if (!loop_main_running && !loop_encode_a_running && !loop_encode_b_running && !loop_encode_c_running) {
+#endif
         common *com = com_ptr.release();
         delete com;
     }
     loop_collect_a_running = false;
     log_d("collect_a loop exited...");
+#ifndef USE_SINGLE_THREAD
     if (loop_collect_a_running || loop_collect_b_running || loop_collect_c_running) {
+#else
+    if (loop_collect_a_running) {
+#endif
+#ifdef USE_CONCURRENT_QUEUE
+        queue_collect.enqueue(ln::create_exit_ln());
+#else
         queue_collect.push(ln::create_exit_ln());
+#endif
     }
 }
 
+#ifndef USE_SINGLE_THREAD
 static void loop_collect_b_run() {
     loop_collect_b_running = true;
     log_d("collect_b loop running...");
     while (true) {
+#ifdef USE_CONCURRENT_QUEUE
+        ln n;
+        bool h = queue_collect.try_dequeue(n);
+        if (!h) { continue; }
+        if (n.is_exit()) { break; }
+        n.run();
+#else
         auto n = queue_collect.wait_and_pop();
         if (n->is_exit()) { break; }
         n->run();
-//        log_d("loop_collect_b_run has count: %d.", queue_collect.size());
+#endif
     }
 
     if (!loop_collect_a_running && !loop_collect_c_running &&
@@ -166,18 +221,31 @@ static void loop_collect_b_run() {
     loop_collect_b_running = false;
     log_d("collect_b loop exited...");
     if (loop_collect_a_running || loop_collect_b_running || loop_collect_c_running) {
+#ifdef USE_CONCURRENT_QUEUE
+        queue_collect.enqueue(ln::create_exit_ln());
+#else
         queue_collect.push(ln::create_exit_ln());
+#endif
     }
 }
+#endif
 
+#ifndef USE_SINGLE_THREAD
 static void loop_collect_c_run() {
     loop_collect_c_running = true;
     log_d("collect_c loop running...");
     while (true) {
+#ifdef USE_CONCURRENT_QUEUE
+        ln n;
+        bool h = queue_collect.try_dequeue(n);
+        if (!h) { continue; }
+        if (n.is_exit()) { break; }
+        n.run();
+#else
         auto n = queue_collect.wait_and_pop();
         if (n->is_exit()) { break; }
         n->run();
-//        log_d("loop_collect_c_run has count: %d.", queue_collect.size());
+#endif
     }
 
     if (!loop_collect_a_running && !loop_collect_b_running &&
@@ -188,29 +256,51 @@ static void loop_collect_c_run() {
     loop_collect_c_running = false;
     log_d("collect_c loop exited...");
     if (loop_collect_a_running || loop_collect_b_running || loop_collect_c_running) {
+#ifdef USE_CONCURRENT_QUEUE
+        queue_collect.enqueue(ln::create_exit_ln());
+#else
         queue_collect.push(ln::create_exit_ln());
+#endif
     }
 }
+#endif
 
 static void loop_encode_a_run() {
     loop_encode_a_running = true;
     log_d("encode_a loop running...");
     while (true) {
+#ifdef USE_CONCURRENT_QUEUE
+        ln n;
+        bool h = queue_encode.try_dequeue(n);
+        if (!h) { continue; }
+        if (n.is_exit()) { break; }
+        n.run();
+#else
         auto n = queue_encode.wait_and_pop();
         if (n->is_exit()) { break; }
         n->run();
+#endif
     }
 
+#ifndef USE_SINGLE_THREAD
     if (!loop_main_running &&
         !loop_encode_b_running && !loop_encode_c_running &&
         !loop_collect_a_running && !loop_collect_b_running && !loop_collect_c_running) {
+#else
+    if (!loop_main_running &&
+        !loop_encode_b_running && !loop_encode_c_running && !loop_collect_a_running) {
+#endif
         common *com = com_ptr.release();
         delete com;
     }
     loop_encode_a_running = false;
     log_d("encode_a loop exited...");
     if (loop_encode_a_running || loop_encode_b_running || loop_encode_c_running) {
+#ifdef USE_CONCURRENT_QUEUE
+        queue_encode.enqueue(ln::create_exit_ln());
+#else
         queue_encode.push(ln::create_exit_ln());
+#endif
     }
 }
 
@@ -218,21 +308,38 @@ static void loop_encode_b_run() {
     loop_encode_b_running = true;
     log_d("encode_b loop running...");
     while (true) {
+#ifdef USE_CONCURRENT_QUEUE
+        ln n;
+        bool h = queue_encode.try_dequeue(n);
+        if (!h) { continue; }
+        if (n.is_exit()) { break; }
+        n.run();
+#else
         auto n = queue_encode.wait_and_pop();
         if (n->is_exit()) { break; }
         n->run();
+#endif
     }
 
+#ifndef USE_SINGLE_THREAD
     if (!loop_main_running &&
         !loop_encode_a_running && !loop_encode_c_running &&
         !loop_collect_a_running && !loop_collect_b_running && !loop_collect_c_running) {
+#else
+    if (!loop_main_running &&
+        !loop_encode_a_running && !loop_encode_c_running && !loop_collect_a_running) {
+#endif
         common *com = com_ptr.release();
         delete com;
     }
     loop_encode_b_running = false;
     log_d("encode_b loop exited...");
     if (loop_encode_a_running || loop_encode_b_running || loop_encode_c_running) {
+#ifdef USE_CONCURRENT_QUEUE
+        queue_encode.enqueue(ln::create_exit_ln());
+#else
         queue_encode.push(ln::create_exit_ln());
+#endif
     }
 }
 
@@ -240,21 +347,38 @@ static void loop_encode_c_run() {
     loop_encode_c_running = true;
     log_d("encode_c loop running...");
     while (true) {
+#ifdef USE_CONCURRENT_QUEUE
+        ln n;
+        bool h = queue_encode.try_dequeue(n);
+        if (!h) { continue; }
+        if (n.is_exit()) { break; }
+        n.run();
+#else
         auto n = queue_encode.wait_and_pop();
         if (n->is_exit()) { break; }
         n->run();
+#endif
     }
 
+#ifndef USE_SINGLE_THREAD
     if (!loop_main_running &&
         !loop_encode_a_running && !loop_encode_b_running &&
         !loop_collect_a_running && !loop_collect_b_running && !loop_collect_c_running) {
+#else
+    if (!loop_main_running &&
+        !loop_encode_a_running && !loop_encode_b_running && !loop_collect_a_running) {
+#endif
         common *com = com_ptr.release();
         delete com;
     }
     loop_encode_c_running = false;
     log_d("encode_c loop exited...");
     if (loop_encode_a_running || loop_encode_b_running || loop_encode_c_running) {
+#ifdef USE_CONCURRENT_QUEUE
+        queue_encode.enqueue(ln::create_exit_ln());
+#else
         queue_encode.push(ln::create_exit_ln());
+#endif
     }
 }
 
@@ -272,10 +396,12 @@ void media::loop_start(const char *cascade, const char *mnn) {
     main_t.detach();
     std::thread collect_a_t(loop_collect_a_run);
     collect_a_t.detach();
+#ifndef USE_SINGLE_THREAD
     std::thread collect_b_t(loop_collect_b_run);
     collect_b_t.detach();
     std::thread collect_c_t(loop_collect_c_run);
     collect_c_t.detach();
+#endif
     std::thread encode_a_t(loop_encode_a_run);
     encode_a_t.detach();
     std::thread encode_b_t(loop_encode_b_run);
@@ -286,20 +412,42 @@ void media::loop_start(const char *cascade, const char *mnn) {
 
 void media::loop_exit() {
     if (loop_encode_a_running || loop_encode_b_running || loop_encode_c_running) {
+#ifdef USE_CONCURRENT_QUEUE
+        queue_encode.enqueue(ln::create_exit_ln());
+#else
         queue_encode.push(ln::create_exit_ln());
+#endif
     }
 
+#ifndef USE_SINGLE_THREAD
     if (loop_collect_a_running || loop_collect_b_running || loop_collect_c_running) {
+#else
+    if (loop_collect_a_running) {
+#endif
+#ifdef USE_CONCURRENT_QUEUE
+        queue_collect.enqueue(ln::create_exit_ln());
+#else
         queue_collect.push(ln::create_exit_ln());
+#endif
     }
 
     if (loop_main_running) {
+#ifdef USE_CONCURRENT_QUEUE
+        queue_main.enqueue(ln::create_exit_ln());
+#else
         queue_main.push(ln::create_exit_ln());
+#endif
     }
 
+#ifndef USE_SINGLE_THREAD
     if (!loop_main_running &&
         !loop_encode_a_running && !loop_encode_b_running && !loop_encode_c_running  &&
         !loop_collect_a_running && !loop_collect_b_running && !loop_collect_c_running) {
+#else
+    if (!loop_main_running &&
+        !loop_encode_a_running && !loop_encode_b_running && !loop_encode_c_running &&
+        !loop_collect_a_running) {
+#endif
         common *com = com_ptr.release();
         delete com;
     }
@@ -316,13 +464,21 @@ void media::loop_post_main(void (*runnable)(void*, void (*)(void*)),
         return;
     }
 
+#ifdef USE_CONCURRENT_QUEUE
+    queue_main.enqueue(ln(runnable, ctx, callback));
+#else
     queue_main.push(ln(runnable, ctx, callback));
+#endif
 }
 
 void media::loop_post_collect(void (*runnable)(void*, void (*)(void*)),
                               void *ctx,
                               void (*callback)(void*)) {
+#ifndef USE_SINGLE_THREAD
     if (!loop_collect_a_running && !loop_collect_b_running && !loop_collect_c_running) {
+#else
+    if (!loop_collect_a_running) {
+#endif
         return;
     }
 
@@ -330,11 +486,19 @@ void media::loop_post_collect(void (*runnable)(void*, void (*)(void*)),
         return;
     }
 
+#ifdef USE_CONCURRENT_QUEUE
+    queue_collect.enqueue(ln(runnable, ctx, callback));
+#else
     queue_collect.push(ln(runnable, ctx, callback));
+#endif
 }
 
 int32_t media::loop_collect_count() {
+#ifdef USE_CONCURRENT_QUEUE
+    return queue_collect.size_approx();
+#else
     return queue_collect.size();
+#endif
 }
 
 void media::loop_post_encode(void (*runnable)(void*, void (*)(void*)),
@@ -348,5 +512,9 @@ void media::loop_post_encode(void (*runnable)(void*, void (*)(void*)),
         return;
     }
 
+#ifdef USE_CONCURRENT_QUEUE
+    queue_encode.enqueue(ln(runnable, ctx, callback));
+#else
     queue_encode.push(ln(runnable, ctx, callback));
+#endif
 }

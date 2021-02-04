@@ -18,10 +18,6 @@ public:
     ~image_recorder();
 
 public:
-    void set_name(std::string &&n);
-    std::string get_name() const;
-
-public:
     void destroy();
     void set_recording(bool ing);
 
@@ -49,7 +45,6 @@ private:
     int32_t fps;
     bool recording;
     bool previewing;
-    std::string name;
     std::shared_ptr<image_frame> frame;
     /////////////////////////////////////////
     std::vector<std::shared_ptr<camera>> cams;

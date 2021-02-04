@@ -26,13 +26,22 @@ std::mutex &media::show_frame::get_mutex() {
     return frame_mutex;
 }
 
-media::mnns::mnns(std::string &mnn_path):mnn_arr(), thrd_ids() {
+media::mnns::mnns(std::string &mnn_path):
+#ifndef USE_SINGLE_THREAD
+mnn_arr(), thrd_ids()
+#else
+mnn(std::make_shared<media::mnn>(mnn_path, 1))
+#endif
+{
+#ifndef USE_SINGLE_THREAD
     mnn_arr[0] = std::make_shared<media::mnn>(mnn_path, 1);
     mnn_arr[1] = std::make_shared<media::mnn>(mnn_path, 1);
     mnn_arr[2] = std::make_shared<media::mnn>(mnn_path, 1);
+#endif
 }
 
 std::shared_ptr<media::mnn> media::mnns::get_mnn(std::__thread_id id) {
+#ifndef USE_SINGLE_THREAD
     std::__thread_id z;
     for (int32_t i = 0; i < 3; ++i) {
         if (z == thrd_ids[i]) {
@@ -43,6 +52,9 @@ std::shared_ptr<media::mnn> media::mnns::get_mnn(std::__thread_id id) {
         }
     }
     return mnn_arr[0];
+#else
+    return mnn;
+#endif
 }
 
 media::common::common(std::string &cas_path, std::string &mnn_path)
@@ -63,6 +75,10 @@ media::common::~common() {
     renderer.reset();
     img_recorder.reset();
     aud_recorder.reset();
+    shw_frame.reset();
+    tflite.reset();
+    mnns.reset();
+    ffmpeg.reset();
     log_d("release.");
 }
 
@@ -135,8 +151,10 @@ public:
         long ens = 0;
         struct timespec st{0,0};
         clock_gettime(CLOCK_REALTIME, &st);
+        long cns = st.tv_sec * 1000000000 + st.tv_nsec;
+        long ans = cns;
 #endif
-        if (image == nullptr || audio == nullptr) {
+        if (image == nullptr) {
             return;
         }
 
@@ -157,23 +175,25 @@ public:
             mnn->flag_faces(img_frame, faces);
 //            log_d("face detect count: %ld.", faces.size());
         }
+#if LOG_ABLE && LOG_DRAW_TIME
+        clock_gettime(CLOCK_REALTIME, &st);
+        cns = st.tv_sec * 1000000000 + st.tv_nsec - cns;
+//        log_d("record_collect collect_frame time: %.2fms.", sns / (float)1000000.0f);
+#endif
 
         if (image->is_recording()) {
 #if LOG_ABLE && LOG_DRAW_TIME
             struct timespec et{0,0};
             clock_gettime(CLOCK_REALTIME, &et);
+            ens = et.tv_sec * 1000000000 + et.tv_nsec;
 #endif
-            bool aud_changed;
-            auto aud_frame = audio->collect_frame(&aud_changed);
-            aud_changed = aud_frame && aud_frame->available() && aud_changed;
-            ffmpeg::video_encode_frame(image->get_name(),
-                                       {image->get_width(),image->get_height(),image->get_channels(),(uint32_t) image->get_fps()},
-                                       {audio->get_channels(),audio->get_sample_rate(),audio->get_frame_size()},
-                                       std::shared_ptr<media::ffmpeg>(ffmpeg),
+            bool aud_changed = false;
+            auto aud_frame = audio == nullptr ? nullptr : audio->collect_frame(&aud_changed);
+            aud_changed = aud_frame != nullptr && aud_frame->available() && aud_changed;
+            ffmpeg::video_encode_frame(std::shared_ptr<media::ffmpeg>(ffmpeg),
                                        std::make_shared<media::image_frame>(*img_frame),
                                        aud_changed?std::make_shared<media::audio_frame>(*aud_frame): nullptr);
 #if LOG_ABLE && LOG_DRAW_TIME
-            ens = et.tv_sec * 1000000000 + et.tv_nsec;
             clock_gettime(CLOCK_REALTIME, &et);
             ens = et.tv_sec * 1000000000 + et.tv_nsec - ens;
 #endif
@@ -182,10 +202,10 @@ public:
         }
 
 #if LOG_ABLE && LOG_DRAW_TIME
-        long sns = st.tv_sec * 1000000000 + st.tv_nsec;
         clock_gettime(CLOCK_REALTIME, &st);
-        sns = st.tv_sec * 1000000000 + st.tv_nsec - sns;
-//        log_d("record_collect time: %.2fms, %.2fms.", ens / (float)1000000.0f, sns / (float)1000000.0f);
+        ans = st.tv_sec * 1000000000 + st.tv_nsec - ans;
+//        log_d("record_collect collect_frame time: %.2fms, encode_frame time: %.2fms, all time: %.2fms.",
+//                cns / (float)1000000.0f, ens / (float)1000000.0f, ans / (float)1000000.0f);
 #endif
         if (shw_frame != nullptr) {
             std::lock_guard<std::mutex> lock(shw_frame->get_mutex());
@@ -207,7 +227,7 @@ private:
  * run in renderer thread.
  */
 void media::common::renderer_draw_frame() {
-    if (loop_collect_count() < 24) {
+    if (loop_collect_count() < 3) {
         auto *ctx = new record_collect_ctx(
                 std::forward<std::shared_ptr<media::show_frame>>(shw_frame),
                 std::forward<std::shared_ptr<media::ffmpeg>>(ffmpeg),
@@ -244,8 +264,17 @@ void media::common::renderer_select_camera(int32_t camera) {
  * run in renderer thread.
  */
 void media::common::renderer_record_start(std::string &&name) {
+    if (ffmpeg != nullptr && img_recorder != nullptr && aud_recorder != nullptr) {
+        ffmpeg->set_video_name(std::forward<std::string>(name));
+        ffmpeg->set_video_image_args({img_recorder->get_width(),
+                                           img_recorder->get_height(),
+                                           img_recorder->get_channels(),
+                                           (uint32_t) img_recorder->get_fps()});
+        ffmpeg->set_video_audio_args({aud_recorder->get_channels(),
+                                           aud_recorder->get_sample_rate(),
+                                           aud_recorder->get_frame_size()});
+    }
     if (img_recorder != nullptr && img_recorder->is_previewing()) {
-        img_recorder->set_name(std::forward<std::string>(name));
         img_recorder->set_recording(true);
     }
     if (aud_recorder != nullptr) {

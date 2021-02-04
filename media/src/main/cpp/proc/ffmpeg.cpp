@@ -14,31 +14,6 @@
 
 namespace media {
 
-class video_start_ctx {
-public:
-    explicit video_start_ctx(std::string &&n,
-                             ff_image_args &&img,
-                             ff_audio_args &&aud,
-                             std::shared_ptr<ffmpeg> &&f)
-                                :name(n), image(img), audio(aud), ffmpeg(f) {}
-    ~video_start_ctx() = default;
-
-public:
-    void run() {
-        if (ffmpeg != nullptr) {
-            ffmpeg->video_encode_start(std::forward<std::string>(name),
-                                       std::forward<ff_image_args>(image),
-                                       std::forward<ff_audio_args>(audio));
-        }
-    }
-
-private:
-    std::string             name;
-    ff_image_args           image;
-    ff_audio_args           audio;
-    std::shared_ptr<ffmpeg> ffmpeg;
-};
-
 class video_stop_ctx {
 public:
     explicit video_stop_ctx(std::shared_ptr<ffmpeg> &&f):ffmpeg(f) {}
@@ -83,22 +58,9 @@ private:
 /*
  * run in media collect thread.
  */
-void media::ffmpeg::video_encode_frame(std::string                  &&n,
-                                       ff_image_args                &&img,
-                                       ff_audio_args                &&aud,
-                                       std::shared_ptr<ffmpeg>      &&ff,
+void media::ffmpeg::video_encode_frame(std::shared_ptr<ffmpeg>      &&ff,
                                        std::shared_ptr<image_frame> &&img_frame,
                                        std::shared_ptr<audio_frame> &&aud_frame) {
-    if (!ff->video_encode_available()) {
-        auto *ctx = new video_start_ctx(std::forward<std::string>(n),
-                                        std::forward<ff_image_args>(img),
-                                        std::forward<ff_audio_args>(aud),
-                                        std::forward<std::shared_ptr<ffmpeg>>(ff));
-        loop_post_encode([](void *ctx, void(*callback)(void*)) {
-            ((video_start_ctx*)ctx)->run();
-            delete ((video_start_ctx*)ctx);
-        }, ctx, nullptr);
-    }
     auto *ctx = new video_encode_ctx(std::forward<std::shared_ptr<ffmpeg>>(ff),
                                      std::forward<std::shared_ptr<image_frame>>(img_frame),
                                      std::forward<std::shared_ptr<audio_frame>>(aud_frame));
@@ -112,16 +74,14 @@ void media::ffmpeg::video_encode_frame(std::string                  &&n,
  * run in media collect thread.
  */
 void media::ffmpeg::video_encode_idle(std::shared_ptr<ffmpeg> &&ff) {
-    if (ff->video_encode_available()) {
-        auto *ctx = new video_stop_ctx(std::forward<std::shared_ptr<ffmpeg>>(ff));
-        loop_post_encode([](void *ctx, void(*callback)(void *)) {
-            ((video_stop_ctx *) ctx)->run();
-            delete ((video_stop_ctx *) ctx);
-        }, ctx, nullptr);
-    }
+    auto *ctx = new video_stop_ctx(std::forward<std::shared_ptr<ffmpeg>>(ff));
+    loop_post_encode([](void *ctx, void(*callback)(void *)) {
+        ((video_stop_ctx *) ctx)->run();
+        delete ((video_stop_ctx *) ctx);
+    }, ctx, nullptr);
 }
 
-media::ffmpeg::ffmpeg():mp4(nullptr), mp4_mutex() {
+media::ffmpeg::ffmpeg():mp4_arr(), mp4_thrd_ids(), mp4_name(), mp4_img_args(), mp4_aud_args() {
     log_d("created.");
 }
 
@@ -129,40 +89,39 @@ media::ffmpeg::~ffmpeg() {
     log_d("release.");
 }
 
-/*
- * run in media collect thread
- */
-bool media::ffmpeg::video_encode_available() const {
-    std::lock_guard<std::mutex> lock(mp4_mutex);
-    return mp4 != nullptr;
+void media::ffmpeg::set_video_name(std::string &&n) {
+    mp4_name = n;
 }
 
-/*
- * run in media encode thread
- */
-void media::ffmpeg::video_encode_start(std::string   &&name,
-                                       ff_image_args &&image_args,
-                                       ff_audio_args &&audio_args) {
-    std::lock_guard<std::mutex> lock(mp4_mutex);
-    if (mp4 == nullptr) {
-        mp4 = std::make_shared<media::ffmpeg_mp4>(std::forward<std::string>(name),
-                                                  std::forward<ff_image_args>(image_args),
-                                                  std::forward<ff_audio_args>(audio_args));
-        mp4->reset_tmp_files();
-        mp4->init_image_encode();
-        mp4->init_audio_encode();
-    }
+void media::ffmpeg::set_video_image_args(ff_image_args &&img) {
+    mp4_img_args = img;
+}
+
+void media::ffmpeg::set_video_audio_args(ff_audio_args &&aud) {
+    mp4_aud_args = aud;
 }
 
 /*
  * run in media encode thread
  */
 void media::ffmpeg::video_encode_stop() {
-    std::lock_guard<std::mutex> lock(mp4_mutex);
-    if (mp4 != nullptr) {
-        mp4->close_image_encode();
-        mp4->close_audio_encode();
-        mp4.reset();
+    std::__thread_id z;
+    std::__thread_id id = std::this_thread::get_id();
+    int mi = -1;
+    for (int32_t i = 0; i < 3; ++i) {
+        if (z == mp4_thrd_ids[i]) {
+            mp4_thrd_ids[i] = id;
+            mi = i;
+            break;
+        } else if (id == mp4_thrd_ids[i]) {
+            mi = i;
+            break;
+        }
+    }
+    if (mi >= 0 && mp4_arr[mi] != nullptr) {
+        mp4_arr[mi]->close_image_encode();
+        mp4_arr[mi]->close_audio_encode();
+        mp4_arr[mi].reset();
     }
 }
 
@@ -171,9 +130,30 @@ void media::ffmpeg::video_encode_stop() {
  */
 void media::ffmpeg::video_encode_frame(std::shared_ptr<image_frame> &&img_frame,
                                        std::shared_ptr<audio_frame> &&aud_frame) {
-    std::lock_guard<std::mutex> lock(mp4_mutex);
-    if (mp4 != nullptr) {
-        mp4->append_av_frame(std::forward<std::shared_ptr<image_frame>>(img_frame),
-                             std::forward<std::shared_ptr<audio_frame>>(aud_frame));
+    std::__thread_id z;
+    std::__thread_id id = std::this_thread::get_id();
+    int mi = -1;
+    for (int32_t i = 0; i < 3; ++i) {
+        if (z == mp4_thrd_ids[i]) {
+            mp4_thrd_ids[i] = id;
+            mi = i;
+            break;
+        } else if (id == mp4_thrd_ids[i]) {
+            mi = i;
+            break;
+        }
+    }
+    if (mi >= 0 && mp4_arr[mi] == nullptr) {
+        mp4_arr[mi] = std::make_shared<media::ffmpeg_mp4>(mi,
+                                                          std::forward<std::string>(mp4_name),
+                                                          std::forward<ff_image_args>(mp4_img_args),
+                                                          std::forward<ff_audio_args>(mp4_aud_args));
+        mp4_arr[mi]->reset_tmp_files();
+        mp4_arr[mi]->init_image_encode();
+        mp4_arr[mi]->init_audio_encode();
+    }
+    if (mi >= 0 && mp4_arr[mi] != nullptr) {
+        mp4_arr[mi]->append_av_frame(std::forward<std::shared_ptr<image_frame>>(img_frame),
+                                     std::forward<std::shared_ptr<audio_frame>>(aud_frame));
     }
 }

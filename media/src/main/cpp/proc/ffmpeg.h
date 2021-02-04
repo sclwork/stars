@@ -38,7 +38,7 @@ typedef struct ff_audio_args {
 
 class ffmpeg_mp4 {
 public:
-    ffmpeg_mp4(std::string &&n, ff_image_args &&img, ff_audio_args &&aud);
+    ffmpeg_mp4(int32_t id, std::string &&n, ff_image_args &&img, ff_audio_args &&aud);
     ~ffmpeg_mp4();
 
 public:
@@ -63,6 +63,7 @@ private:
     ffmpeg_mp4& operator=(const ffmpeg_mp4&) = delete;
 
 private:
+    int32_t _id;
     std::string _tmp;
     //////////////////////////
     std::string name;
@@ -94,21 +95,17 @@ public:
     ~ffmpeg();
 
 public:
+    void set_video_name(std::string &&n);
+    void set_video_image_args(ff_image_args &&img);
+    void set_video_audio_args(ff_audio_args &&aud);
+
+public:
     static void video_encode_idle(std::shared_ptr<ffmpeg>      &&ff);
-    static void video_encode_frame(std::string                  &&n,
-                                   ff_image_args                &&img,
-                                   ff_audio_args                &&aud,
-                                   std::shared_ptr<ffmpeg>      &&ff,
+    static void video_encode_frame(std::shared_ptr<ffmpeg>      &&ff,
                                    std::shared_ptr<image_frame> &&img_frame,
                                    std::shared_ptr<audio_frame> &&aud_frame);
 
 public:
-    bool video_encode_available() const;
-
-public:
-    void video_encode_start(std::string   &&name,
-                            ff_image_args &&image_args,
-                            ff_audio_args &&audio_args);
     void video_encode_stop();
     void video_encode_frame(std::shared_ptr<image_frame> &&img_frame,
                             std::shared_ptr<audio_frame> &&aud_frame);
@@ -120,8 +117,11 @@ private:
     ffmpeg& operator=(const ffmpeg&) = delete;
 
 private:
-    std::shared_ptr<ffmpeg_mp4> mp4;
-    mutable std::mutex          mp4_mutex;
+    std::shared_ptr<ffmpeg_mp4> mp4_arr[3];
+    std::__thread_id            mp4_thrd_ids[3];
+    std::string                 mp4_name;
+    ff_image_args               mp4_img_args;
+    ff_audio_args               mp4_aud_args;
 };
 
 } //namespace media

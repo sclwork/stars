@@ -68,8 +68,12 @@ public:
     std::shared_ptr<mnn> get_mnn(std::__thread_id id);
 
 private:
+#ifndef USE_SINGLE_THREAD
     std::shared_ptr<mnn> mnn_arr[3];
     std::__thread_id thrd_ids[3];
+#else
+    std::shared_ptr<mnn> mnn;
+#endif
 };
 
 /**

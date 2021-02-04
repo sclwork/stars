@@ -67,6 +67,12 @@ sampler_location(0),sampler_matrix(0),cvs_width(0),cvs_height(0),cvs_ratio(0), m
                        1.0f,  0.0f,  };
     memcpy(texture_coords, tcs, sizeof(GLfloat) * 8);
 
+    GLfloat tcs_mirror[] = {  1.0f,  0.0f,
+                              1.0f,  1.0f,
+                              0.0f,  1.0f,
+                              0.0f,  0.0f,  };
+    memcpy(texture_coords_mirror, tcs_mirror, sizeof(GLfloat) * 8);
+
     GLushort is[6] = {  0, 1, 2,
                         0, 2, 3,  };
     memcpy(indices, is, sizeof(GLushort) * 6);
@@ -100,6 +106,7 @@ void media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
         return;
     }
 
+    int32_t ori = frame->get_ori();
     int32_t width, height; uint32_t *data;
     frame->get(&width, &height, &data);
 
@@ -124,7 +131,8 @@ void media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
     // Load the vertex position
     glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), vertices_coords);
     // Load the texture coordinate
-    glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof (GLfloat), texture_coords);
+    glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof (GLfloat),
+            ori == 270 ? texture_coords_mirror : texture_coords);
 
     glEnableVertexAttribArray (0);
     glEnableVertexAttribArray (1);

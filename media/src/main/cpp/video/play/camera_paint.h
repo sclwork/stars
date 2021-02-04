@@ -48,6 +48,7 @@ private:
     glm::mat4 matrix;
     GLfloat   vertices_coords[12]{};
     GLfloat   texture_coords[8]{};
+    GLfloat   texture_coords_mirror[8]{};
     GLushort  indices[6]{};
 };
 
