@@ -130,7 +130,7 @@ static void loop_main_run() {
 #ifdef USE_CONCURRENT_QUEUE
         ln n;
         bool h = queue_main.try_dequeue(n);
-        if (!h) { continue; }
+        if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
         if (n.is_exit()) { break; }
         n.run();
 #else
@@ -161,7 +161,7 @@ static void loop_collect_a_run() {
 #ifdef USE_CONCURRENT_QUEUE
         ln n;
         bool h = queue_collect.try_dequeue(n);
-        if (!h) { continue; }
+        if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
         if (n.is_exit()) { break; }
         n.run();
 #else
@@ -203,7 +203,7 @@ static void loop_collect_b_run() {
 #ifdef USE_CONCURRENT_QUEUE
         ln n;
         bool h = queue_collect.try_dequeue(n);
-        if (!h) { continue; }
+        if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
         if (n.is_exit()) { break; }
         n.run();
 #else
@@ -238,7 +238,7 @@ static void loop_collect_c_run() {
 #ifdef USE_CONCURRENT_QUEUE
         ln n;
         bool h = queue_collect.try_dequeue(n);
-        if (!h) { continue; }
+        if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
         if (n.is_exit()) { break; }
         n.run();
 #else
@@ -272,7 +272,7 @@ static void loop_encode_a_run() {
 #ifdef USE_CONCURRENT_QUEUE
         ln n;
         bool h = queue_encode.try_dequeue(n);
-        if (!h) { continue; }
+        if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
         if (n.is_exit()) { break; }
         n.run();
 #else
@@ -311,7 +311,7 @@ static void loop_encode_b_run() {
 #ifdef USE_CONCURRENT_QUEUE
         ln n;
         bool h = queue_encode.try_dequeue(n);
-        if (!h) { continue; }
+        if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
         if (n.is_exit()) { break; }
         n.run();
 #else
@@ -350,7 +350,7 @@ static void loop_encode_c_run() {
 #ifdef USE_CONCURRENT_QUEUE
         ln n;
         bool h = queue_encode.try_dequeue(n);
-        if (!h) { continue; }
+        if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
         if (n.is_exit()) { break; }
         n.run();
 #else

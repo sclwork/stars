@@ -422,7 +422,7 @@ void media::ffmpeg_mp4::encode_image_frame(int32_t w, int32_t h, uint32_t *data)
         return;
     }
 
-    log_d("encode_image_frame avcodec_send_frame success.");
+//    log_d("encode_image_frame avcodec_send_frame success.");
 
     while (true) {
         AVPacket *pkt = av_packet_alloc();
@@ -441,7 +441,7 @@ void media::ffmpeg_mp4::encode_image_frame(int32_t w, int32_t h, uint32_t *data)
             break;
         }
 
-        log_d("encode_image_frame avcodec_receive_packet success.");
+//        log_d("encode_image_frame avcodec_receive_packet success.");
 
         av_packet_free(&pkt);
     }
