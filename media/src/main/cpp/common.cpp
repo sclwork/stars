@@ -72,13 +72,6 @@ mnns(std::make_shared<media::mnns>(mnn_path)), ffmpeg(std::make_shared<media::ff
 }
 
 media::common::~common() {
-    renderer.reset();
-    img_recorder.reset();
-    aud_recorder.reset();
-    shw_frame.reset();
-    tflite.reset();
-    mnns.reset();
-    ffmpeg.reset();
     log_d("release.");
 }
 
@@ -197,8 +190,6 @@ public:
             clock_gettime(CLOCK_REALTIME, &et);
             ens = et.tv_sec * 1000000000 + et.tv_nsec - ens;
 #endif
-        } else {
-            ffmpeg::video_encode_idle(std::shared_ptr<media::ffmpeg>(ffmpeg));
         }
 
 #if LOG_ABLE && LOG_DRAW_TIME
@@ -229,11 +220,11 @@ private:
 void media::common::renderer_draw_frame() {
     if (loop_collect_count() < 3) {
         auto *ctx = new record_collect_ctx(
-                std::forward<std::shared_ptr<media::show_frame>>(shw_frame),
-                std::forward<std::shared_ptr<media::ffmpeg>>(ffmpeg),
-                std::forward<std::shared_ptr<media::mnns>>(mnns),
-                std::forward<std::shared_ptr<image_recorder>>(img_recorder),
-                std::forward<std::shared_ptr<audio_recorder>>(aud_recorder));
+                std::shared_ptr<media::show_frame>(shw_frame),
+                std::shared_ptr<media::ffmpeg>(ffmpeg),
+                std::shared_ptr<media::mnns>(mnns),
+                std::shared_ptr<image_recorder>(img_recorder),
+                std::shared_ptr<audio_recorder>(aud_recorder));
         loop_post_collect([](void *ctx, void(*callback)(void *)) {
             ((record_collect_ctx *) ctx)->run();
             delete ((record_collect_ctx *) ctx);
@@ -292,6 +283,7 @@ void media::common::renderer_record_stop() {
     if (aud_recorder != nullptr) {
         aud_recorder->stop_record();
     }
+    ffmpeg::video_encode_stop(std::shared_ptr<media::ffmpeg>(ffmpeg));
 }
 
 /*

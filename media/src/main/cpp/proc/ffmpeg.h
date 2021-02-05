@@ -43,14 +43,18 @@ public:
 
 public:
     void reset_tmp_files();
-    void append_av_frame(std::shared_ptr<image_frame> &&img_frame,
-                         std::shared_ptr<audio_frame> &&aud_frame);
+    void encode_frame(std::shared_ptr<image_frame> &&img_frame,
+                      std::shared_ptr<audio_frame> &&aud_frame);
 
 public:
     void init_image_encode();
     void init_audio_encode();
     void close_image_encode();
     void close_audio_encode();
+
+public:
+    void request_stop();
+    bool check_req_stop();
 
 private:
     void encode_image_frame(int32_t w, int32_t h, uint32_t *data);
@@ -64,6 +68,7 @@ private:
 
 private:
     int32_t _id;
+    bool req_stop;
     std::string _tmp;
     //////////////////////////
     std::string name;
@@ -100,7 +105,7 @@ public:
     void set_video_audio_args(ff_audio_args &&aud);
 
 public:
-    static void video_encode_idle(std::shared_ptr<ffmpeg>      &&ff);
+    static void video_encode_stop(std::shared_ptr<ffmpeg>       &&ff);
     static void video_encode_frame(std::shared_ptr<ffmpeg>      &&ff,
                                    std::shared_ptr<image_frame> &&img_frame,
                                    std::shared_ptr<audio_frame> &&aud_frame);
@@ -109,6 +114,7 @@ public:
     void video_encode_stop();
     void video_encode_frame(std::shared_ptr<image_frame> &&img_frame,
                             std::shared_ptr<audio_frame> &&aud_frame);
+    void video_encode_complete();
 
 private:
     ffmpeg(ffmpeg&&) = delete;
