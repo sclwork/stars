@@ -26,24 +26,14 @@ std::mutex &media::show_frame::get_mutex() {
     return frame_mutex;
 }
 
-media::mnns::mnns(std::string &mnn_path):
-#ifndef USE_SINGLE_THREAD
-mnn_arr(), thrd_ids()
-#else
-mnn(std::make_shared<media::mnn>(mnn_path, 1))
-#endif
-{
-#ifndef USE_SINGLE_THREAD
+media::mnns::mnns(std::string &mnn_path):mnn_arr(), thrd_ids() {
     mnn_arr[0] = std::make_shared<media::mnn>(mnn_path, 1);
     mnn_arr[1] = std::make_shared<media::mnn>(mnn_path, 1);
-    mnn_arr[2] = std::make_shared<media::mnn>(mnn_path, 1);
-#endif
 }
 
 std::shared_ptr<media::mnn> media::mnns::get_mnn(std::__thread_id id) {
-#ifndef USE_SINGLE_THREAD
     std::__thread_id z;
-    for (int32_t i = 0; i < 3; ++i) {
+    for (int32_t i = 0; i < 2; ++i) {
         if (z == thrd_ids[i]) {
             thrd_ids[i] = id;
             return mnn_arr[i];
@@ -52,9 +42,6 @@ std::shared_ptr<media::mnn> media::mnns::get_mnn(std::__thread_id id) {
         }
     }
     return mnn_arr[0];
-#else
-    return mnn;
-#endif
 }
 
 media::common::common(std::string &cas_path, std::string &mnn_path)

@@ -149,7 +149,7 @@ void media::ffmpeg::video_encode_frame(std::shared_ptr<image_frame> &&img_frame,
     std::__thread_id z;
     std::__thread_id id = std::this_thread::get_id();
     int mi = -1;
-    for (int32_t i = 0; i < 3; ++i) {
+    for (int32_t i = 0; i < 4; ++i) {
         if (z == mp4_thrd_ids[i]) {
             mp4_thrd_ids[i] = id;
             mi = i;

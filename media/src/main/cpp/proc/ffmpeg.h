@@ -123,8 +123,8 @@ private:
     ffmpeg& operator=(const ffmpeg&) = delete;
 
 private:
-    std::shared_ptr<ffmpeg_mp4> mp4_arr[3];
-    std::__thread_id            mp4_thrd_ids[3];
+    std::shared_ptr<ffmpeg_mp4> mp4_arr[4];
+    std::__thread_id            mp4_thrd_ids[4];
     std::string                 mp4_name;
     ff_image_args               mp4_img_args;
     ff_audio_args               mp4_aud_args;

@@ -55,10 +55,7 @@ static moodycamel::ConcurrentQueue<ln> queue_main;
 static safe_queue<ln>          queue_main;
 #endif
 static std::atomic_bool        loop_collect_a_running(false);
-#ifndef USE_SINGLE_THREAD
 static std::atomic_bool        loop_collect_b_running(false);
-static std::atomic_bool        loop_collect_c_running(false);
-#endif
 #ifdef USE_CONCURRENT_QUEUE
 static moodycamel::ConcurrentQueue<ln> queue_collect;
 #else
@@ -67,6 +64,7 @@ static safe_queue<ln>          queue_collect;
 static std::atomic_bool        loop_encode_a_running(false);
 static std::atomic_bool        loop_encode_b_running(false);
 static std::atomic_bool        loop_encode_c_running(false);
+static std::atomic_bool        loop_encode_d_running(false);
 #ifdef USE_CONCURRENT_QUEUE
 static moodycamel::ConcurrentQueue<ln> queue_encode;
 #else
@@ -141,18 +139,15 @@ static void loop_collect_a_run() {
 
     loop_collect_a_running = false;
     log_d("collect_a loop exited...");
-#ifndef USE_SINGLE_THREAD
-    if (loop_collect_a_running || loop_collect_b_running || loop_collect_c_running) {
+    if (loop_collect_a_running || loop_collect_b_running) {
 #ifdef USE_CONCURRENT_QUEUE
         queue_collect.enqueue(ln::create_exit_ln());
 #else
         queue_collect.push(ln::create_exit_ln());
 #endif
     }
-#endif
 }
 
-#ifndef USE_SINGLE_THREAD
 static void loop_collect_b_run() {
     loop_collect_b_running = true;
     log_d("collect_b loop running...");
@@ -172,7 +167,7 @@ static void loop_collect_b_run() {
 
     loop_collect_b_running = false;
     log_d("collect_b loop exited...");
-    if (loop_collect_a_running || loop_collect_b_running || loop_collect_c_running) {
+    if (loop_collect_a_running || loop_collect_b_running) {
 #ifdef USE_CONCURRENT_QUEUE
         queue_collect.enqueue(ln::create_exit_ln());
 #else
@@ -180,37 +175,6 @@ static void loop_collect_b_run() {
 #endif
     }
 }
-#endif
-
-#ifndef USE_SINGLE_THREAD
-static void loop_collect_c_run() {
-    loop_collect_c_running = true;
-    log_d("collect_c loop running...");
-    while (true) {
-#ifdef USE_CONCURRENT_QUEUE
-        ln n;
-        bool h = queue_collect.try_dequeue(n);
-        if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
-        if (n.is_exit()) { break; }
-        n.run();
-#else
-        auto n = queue_collect.wait_and_pop();
-        if (n->is_exit()) { break; }
-        n->run();
-#endif
-    }
-
-    loop_collect_c_running = false;
-    log_d("collect_c loop exited...");
-    if (loop_collect_a_running || loop_collect_b_running || loop_collect_c_running) {
-#ifdef USE_CONCURRENT_QUEUE
-        queue_collect.enqueue(ln::create_exit_ln());
-#else
-        queue_collect.push(ln::create_exit_ln());
-#endif
-    }
-}
-#endif
 
 static void loop_encode_a_run() {
     loop_encode_a_running = true;
@@ -231,7 +195,8 @@ static void loop_encode_a_run() {
 
     loop_encode_a_running = false;
     log_d("encode_a loop exited...");
-    if (loop_encode_a_running || loop_encode_b_running || loop_encode_c_running) {
+    if (loop_encode_a_running || loop_encode_b_running ||
+        loop_encode_c_running || loop_encode_d_running) {
 #ifdef USE_CONCURRENT_QUEUE
         queue_encode.enqueue(ln::create_exit_ln());
 #else
@@ -259,7 +224,8 @@ static void loop_encode_b_run() {
 
     loop_encode_b_running = false;
     log_d("encode_b loop exited...");
-    if (loop_encode_a_running || loop_encode_b_running || loop_encode_c_running) {
+    if (loop_encode_a_running || loop_encode_b_running ||
+        loop_encode_c_running || loop_encode_d_running) {
 #ifdef USE_CONCURRENT_QUEUE
         queue_encode.enqueue(ln::create_exit_ln());
 #else
@@ -287,7 +253,37 @@ static void loop_encode_c_run() {
 
     loop_encode_c_running = false;
     log_d("encode_c loop exited...");
-    if (loop_encode_a_running || loop_encode_b_running || loop_encode_c_running) {
+    if (loop_encode_a_running || loop_encode_b_running ||
+        loop_encode_c_running || loop_encode_d_running) {
+#ifdef USE_CONCURRENT_QUEUE
+        queue_encode.enqueue(ln::create_exit_ln());
+#else
+        queue_encode.push(ln::create_exit_ln());
+#endif
+    }
+}
+
+static void loop_encode_d_run() {
+    loop_encode_d_running = true;
+    log_d("encode_d loop running...");
+    while (true) {
+#ifdef USE_CONCURRENT_QUEUE
+        ln n;
+        bool h = queue_encode.try_dequeue(n);
+        if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
+        if (n.is_exit()) { break; }
+        n.run();
+#else
+        auto n = queue_encode.wait_and_pop();
+        if (n->is_exit()) { break; }
+        n->run();
+#endif
+    }
+
+    loop_encode_d_running = false;
+    log_d("encode_d loop exited...");
+    if (loop_encode_a_running || loop_encode_b_running ||
+        loop_encode_c_running || loop_encode_d_running) {
 #ifdef USE_CONCURRENT_QUEUE
         queue_encode.enqueue(ln::create_exit_ln());
 #else
@@ -302,13 +298,11 @@ static void loop_main_run() {
     log_d("main loop running...");
 
     std::thread collect_a_t(loop_collect_a_run);
-#ifndef USE_SINGLE_THREAD
     std::thread collect_b_t(loop_collect_b_run);
-    std::thread collect_c_t(loop_collect_c_run);
-#endif
     std::thread encode_a_t(loop_encode_a_run);
     std::thread encode_b_t(loop_encode_b_run);
     std::thread encode_c_t(loop_encode_c_run);
+    std::thread encode_d_t(loop_encode_d_run);
 
     while (true) {
 #ifdef USE_CONCURRENT_QUEUE
@@ -325,18 +319,17 @@ static void loop_main_run() {
     }
 
     collect_a_t.join();
-#ifndef USE_SINGLE_THREAD
     collect_b_t.join();
-    collect_c_t.join();
-#endif
     encode_a_t.join();
     encode_b_t.join();
     encode_c_t.join();
+    encode_d_t.join();
 
     common *com = com_ptr.release();
     delete com;
     loop_main_running = false;
     log_d("main loop exited...");
+    log_d("==================================================");
 }
 
 } //namespace media
@@ -346,6 +339,7 @@ void media::loop_start(const char *cascade, const char *mnn) {
         return;
     }
 
+    log_d("==================================================");
     std::string c(cascade); std::string m(mnn);
     com_ptr.reset(new common(c, m));
 
@@ -354,7 +348,8 @@ void media::loop_start(const char *cascade, const char *mnn) {
 }
 
 void media::loop_exit() {
-    if (loop_encode_a_running || loop_encode_b_running || loop_encode_c_running) {
+    if (loop_encode_a_running || loop_encode_b_running ||
+        loop_encode_c_running || loop_encode_d_running) {
 #ifdef USE_CONCURRENT_QUEUE
         queue_encode.enqueue(ln::create_exit_ln());
 #else
@@ -362,11 +357,7 @@ void media::loop_exit() {
 #endif
     }
 
-#ifndef USE_SINGLE_THREAD
-    if (loop_collect_a_running || loop_collect_b_running || loop_collect_c_running) {
-#else
-    if (loop_collect_a_running) {
-#endif
+    if (loop_collect_a_running || loop_collect_b_running) {
 #ifdef USE_CONCURRENT_QUEUE
         queue_collect.enqueue(ln::create_exit_ln());
 #else
@@ -404,11 +395,7 @@ void media::loop_post_main(void (*runnable)(void*, void (*)(void*)),
 void media::loop_post_collect(void (*runnable)(void*, void (*)(void*)),
                               void *ctx,
                               void (*callback)(void*)) {
-#ifndef USE_SINGLE_THREAD
-    if (!loop_collect_a_running && !loop_collect_b_running && !loop_collect_c_running) {
-#else
-    if (!loop_collect_a_running) {
-#endif
+    if (!loop_collect_a_running && !loop_collect_b_running) {
         return;
     }
 
@@ -434,7 +421,8 @@ int32_t media::loop_collect_count() {
 void media::loop_post_encode(void (*runnable)(void*, void (*)(void*)),
                              void *ctx,
                              void (*callback)(void*)) {
-    if (!loop_encode_a_running && !loop_encode_b_running && !loop_encode_c_running) {
+    if (!loop_encode_a_running && !loop_encode_b_running &&
+        !loop_encode_c_running && !loop_encode_d_running) {
         return;
     }
 
