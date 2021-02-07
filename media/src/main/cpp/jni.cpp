@@ -3,7 +3,7 @@
 //
 
 #include <jni.h>
-#include "common.h"
+#include "jni_bridge.h"
 
 #define log_d(...)  LOG_D("Media-Native:jni", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:jni", __VA_ARGS__)
@@ -53,7 +53,8 @@ JNIEXPORT jint JNICALL
 Java_com_scliang_tars_Media_jniRendererSurfaceCreated(
 JNIEnv *env, jobject thiz) {
 //    log_d("RecorderJNI [RendererSurfaceCreated]");
-    return media::renderer_surface_created();
+    media::renderer_surface_created();
+    return 0;
 }
 
 JNIEXPORT jint JNICALL
@@ -79,38 +80,6 @@ JNIEnv *env, jobject thiz) {
 //    log_d("RecorderJNI [RendererDrawFrame]");
     media::renderer_draw_frame();
     return 0;
-}
-
-JNIEXPORT jint JNICALL
-Java_com_scliang_tars_Media_jniRendererSelectCamera(
-JNIEnv *env, jobject thiz,
-jint camera) {
-//    log_d("RecorderJNI [SelectCamera %d]", camera);
-    media::renderer_select_camera(camera);
-    return 0;
-}
-
-JNIEXPORT jint JNICALL
-Java_com_scliang_tars_Media_jniRendererRecordStart(
-JNIEnv *env, jobject thiz,
-jstring name) {
-    const char* c_name = env->GetStringUTFChars(name, nullptr);
-    media::renderer_record_start(c_name);
-    env->ReleaseStringUTFChars(name, c_name);
-    return 0;
-}
-
-JNIEXPORT jint JNICALL
-Java_com_scliang_tars_Media_jniRendererRecordStop(
-JNIEnv *env, jobject thiz) {
-    media::renderer_record_stop();
-    return 0;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_scliang_tars_Media_jniRendererRecordRunning(
-JNIEnv *env, jobject thiz) {
-    return media::renderer_record_running();
 }
 
 #ifdef __cplusplus

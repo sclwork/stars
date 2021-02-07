@@ -10,59 +10,59 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <RadioGroup
-        android:id="@+id/camera_ids"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="30dp"
-        android:orientation="vertical"
-        android:layout_alignParentBottom="true"
-        android:visibility="invisible">
+<!--    <RadioGroup-->
+<!--        android:id="@+id/camera_ids"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_margin="30dp"-->
+<!--        android:orientation="vertical"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:visibility="invisible">-->
 
-        <RadioButton
-            android:id="@+id/camera_a"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cam-A" />
+<!--        <RadioButton-->
+<!--            android:id="@+id/camera_a"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Cam-A" />-->
 
-        <RadioButton
-            android:id="@+id/camera_b"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cam-B" />
+<!--        <RadioButton-->
+<!--            android:id="@+id/camera_b"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Cam-B" />-->
 
-        <RadioButton
-            android:id="@+id/camera_c"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cam-C" />
+<!--        <RadioButton-->
+<!--            android:id="@+id/camera_c"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Cam-C" />-->
 
-        <RadioButton
-            android:id="@+id/camera_d"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cam-D" />
+<!--        <RadioButton-->
+<!--            android:id="@+id/camera_d"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Cam-D" />-->
 
-        <RadioButton
-            android:id="@+id/camera_e"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cam-E" />
+<!--        <RadioButton-->
+<!--            android:id="@+id/camera_e"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Cam-E" />-->
 
-        <RadioButton
-            android:id="@+id/camera_f"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cam-F" />
+<!--        <RadioButton-->
+<!--            android:id="@+id/camera_f"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Cam-F" />-->
 
-    </RadioGroup>
+<!--    </RadioGroup>-->
 
-    <Button
-        android:id="@+id/record"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="60dp" />
+<!--    <Button-->
+<!--        android:id="@+id/record"-->
+<!--        android:layout_width="72dp"-->
+<!--        android:layout_height="72dp"-->
+<!--        android:layout_centerHorizontal="true"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:layout_marginBottom="100dp" />-->
 
 </RelativeLayout>

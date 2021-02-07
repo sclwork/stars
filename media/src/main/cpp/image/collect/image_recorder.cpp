@@ -12,8 +12,7 @@ namespace media {
 } //namespace media
 
 media::image_recorder::image_recorder()
-:fps(0), recording(false), previewing(false),
-frame(nullptr), cams(), run_cam(nullptr), collect_mutex() {
+:fps(0), previewing(false), frame(nullptr), cams(), run_cam(nullptr) {
     log_d("created.");
     camera::enumerate(cams);
 //    log_d("--------------------");
@@ -33,28 +32,11 @@ int32_t media::image_recorder::camera_count() const {
     return cams.size();
 }
 
-void media::image_recorder::destroy() {
-    std::lock_guard<std::mutex> lock(collect_mutex);
-    if (run_cam) { run_cam->close(); }
-    run_cam = nullptr;
-    previewing = false;
-    log_d("destroy.");
-}
-
-void media::image_recorder::set_recording(bool ing) {
-    recording = ing;
-}
-
-bool media::image_recorder::is_recording() const {
-    return recording;
-}
-
 bool media::image_recorder::is_previewing() const {
     return previewing;
 }
 
 bool media::image_recorder::select_camera(int camera) {
-    std::lock_guard<std::mutex> lock(collect_mutex);
     if (camera < 0 || camera >= cams.size()) {
         previewing = false;
         return false;
@@ -78,7 +60,6 @@ bool media::image_recorder::select_camera(int camera) {
 }
 
 void media::image_recorder::update_size(int32_t w, int32_t h) {
-    std::lock_guard<std::mutex> lock(collect_mutex);
     previewing = false;
     // check reset cache
     if (frame == nullptr || !frame->same_size(w, h)) {
@@ -114,7 +95,6 @@ uint32_t media::image_recorder::get_height() const {
 }
 
 std::shared_ptr<media::image_frame> media::image_recorder::collect_frame() {
-    std::lock_guard<std::mutex> lock(collect_mutex);
     if (frame == nullptr || !frame->available() || run_cam == nullptr) {
         return frame;
     }

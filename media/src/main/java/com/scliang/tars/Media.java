@@ -3,6 +3,7 @@ package com.scliang.tars;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.opengl.GLSurfaceView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RawRes;
@@ -12,6 +13,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
 public class Media {
 
@@ -70,7 +74,122 @@ public class Media {
         r.mInit = false;
     }
 
-    public static void rendererInit() {
+    /**
+     * setup preview GLSurfaceView
+     */
+    public static void setMediaGLView(MediaGLView glView) {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        if (glView == null) {
+            return;
+        }
+
+        RecorderRenderer renderer = new RecorderRenderer(new MediaGLView.OnRendererListener() {
+            @Override
+            public void onRendererInit() {
+                Media.rendererInit();
+            }
+
+            @Override
+            public void onRendererRelease() {
+                Media.rendererRelease();
+            }
+
+            @Override
+            public void onRendererSurfaceCreated() {
+                Media.rendererSurfaceCreated();
+            }
+
+            @Override
+            public void onRendererSurfaceChanged(int width, int height) {
+                Media.rendererSurfaceChanged(width, height);
+            }
+
+            @Override
+            public void onRendererSurfaceDestroyed() {
+                Media.rendererSurfaceDestroyed();
+            }
+
+            @Override
+            public void onRendererDrawFrame() {
+                Media.rendererDrawFrame();
+            }
+        });
+
+        glView.detachedFromWindowRunnable = ()->{glView.queueEvent(renderer::release);};
+        glView.surfaceDestroyedRunnable = ()->{glView.queueEvent(renderer::onSurfaceDestroyed);};
+        glView.setEGLContextClientVersion(3);
+        glView.setRenderer(renderer);
+        glView.queueEvent(renderer::init);
+        glView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        r.mGLView = new SoftReference<>(glView);
+    }
+
+    public static void onStart() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
+        if (glView != null) glView.onResume();
+    }
+
+    public static void onStop() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
+        if (glView != null) glView.onPause();
+    }
+
+    private static class RecorderRenderer implements GLSurfaceView.Renderer {
+        private final MediaGLView.OnRendererListener mOnRendererListener;
+
+        public RecorderRenderer(MediaGLView.OnRendererListener listener) {
+            mOnRendererListener = listener;
+        }
+
+        public final void init() {
+            if (mOnRendererListener != null)
+                mOnRendererListener.onRendererInit();
+        }
+
+        public final void release() {
+            if (mOnRendererListener != null)
+                mOnRendererListener.onRendererRelease();
+        }
+
+        @Override
+        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+            if (mOnRendererListener != null)
+                mOnRendererListener.onRendererSurfaceCreated();
+        }
+
+        @Override
+        public void onSurfaceChanged(GL10 gl, int width, int height) {
+            if (mOnRendererListener != null)
+                mOnRendererListener.onRendererSurfaceChanged(width, height);
+        }
+
+        public void onSurfaceDestroyed() {
+            if (mOnRendererListener != null)
+                mOnRendererListener.onRendererSurfaceDestroyed();
+        }
+
+        @Override
+        public void onDrawFrame(GL10 gl) {
+            if (mOnRendererListener != null)
+                mOnRendererListener.onRendererDrawFrame();
+        }
+    }
+
+    private static void rendererInit() {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
@@ -79,7 +198,7 @@ public class Media {
         r.jniRendererInit();
     }
 
-    public static void rendererRelease() {
+    private static void rendererRelease() {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
@@ -88,16 +207,16 @@ public class Media {
         r.jniRendererRelease();
     }
 
-    public static int rendererSurfaceCreated() {
+    private static void rendererSurfaceCreated() {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
-            return 0;
+            return;
 
-        return r.jniRendererSurfaceCreated();
+        r.jniRendererSurfaceCreated();
     }
 
-    public static void rendererSurfaceChanged(int width, int height) {
+    private static void rendererSurfaceChanged(int width, int height) {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
@@ -106,7 +225,7 @@ public class Media {
         r.jniRendererSurfaceChanged(width, height);
     }
 
-    public static void rendererSurfaceDestroyed() {
+    private static void rendererSurfaceDestroyed() {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
@@ -115,49 +234,13 @@ public class Media {
         r.jniRendererSurfaceDestroyed();
     }
 
-    public static void rendererDrawFrame() {
+    private static void rendererDrawFrame() {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
             return;
 
         r.jniRendererDrawFrame();
-    }
-
-    public static void rendererSelectCamera(int camera) {
-        final Media r = SingletonHolder.INSTANCE;
-        // must init [success] first
-        if (!r.mInit)
-            return;
-
-        r.jniRendererSelectCamera(camera);
-    }
-
-    public static void rendererRecordStart(String name) {
-        final Media r = SingletonHolder.INSTANCE;
-        // must init [success] first
-        if (!r.mInit)
-            return;
-
-        r.jniRendererRecordStart(name);
-    }
-
-    public static void rendererRecordStop() {
-        final Media r = SingletonHolder.INSTANCE;
-        // must init [success] first
-        if (!r.mInit)
-            return;
-
-        r.jniRendererRecordStop();
-    }
-
-    public static boolean rendererRecordRunning() {
-        final Media r = SingletonHolder.INSTANCE;
-        // must init [success] first
-        if (!r.mInit)
-            return false;
-
-        return r.jniRendererRecordRunning();
     }
 
 
@@ -283,10 +366,6 @@ public class Media {
     private native int jniRendererSurfaceChanged(int width, int height);
     private native int jniRendererSurfaceDestroyed();
     private native int jniRendererDrawFrame();
-    private native int jniRendererSelectCamera(int camera);
-    private native int jniRendererRecordStart(String name);
-    private native int jniRendererRecordStop();
-    private native boolean jniRendererRecordRunning();
 
 
 
@@ -294,6 +373,7 @@ public class Media {
     ///////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////
     private SoftReference<Context> mContext;
+    private SoftReference<MediaGLView> mGLView;
     private void setContext(Context context) { mContext = new SoftReference<>(context); }
     private Context getContext() { return mContext == null ? null : mContext.get(); }
     private static class SingletonHolder { private static final Media INSTANCE = new Media(); }

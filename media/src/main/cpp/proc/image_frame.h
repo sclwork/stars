@@ -7,11 +7,12 @@
 
 #include <cstdint>
 
-#define DRAW_TEST_FRAME 0
-
 namespace media {
 
 class image_frame {
+public:
+    static image_frame *make_default(int32_t w, int32_t h);
+
 public:
     image_frame(int32_t w, int32_t h);
     image_frame(const image_frame &frame);
@@ -23,13 +24,8 @@ public:
 
 public:
     void set_ori(int32_t o);
-    int get_ori() const;
+    bool use_mirror() const;
     void get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache = nullptr) const;
-
-#if DRAW_TEST_FRAME
-public:
-    void setup_test_data(int32_t w, int32_t h);
-#endif
 
 private:
     image_frame(image_frame&&) = delete;

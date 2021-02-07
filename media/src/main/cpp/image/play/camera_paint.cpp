@@ -15,8 +15,8 @@ const double MATH_PI = 3.1415926535897932384626433832802;
 } //namespace media
 
 media::camera_paint::camera_paint()
-:texture(GL_NONE),vertex_shader(GL_NONE),fragment_shader(GL_NONE),program(GL_NONE),
-sampler_location(0),sampler_matrix(0),cvs_width(0),cvs_height(0),cvs_ratio(0), matrix(glm::mat4{}) {
+:texture(GL_NONE), vertex_shader(GL_NONE), fragment_shader(GL_NONE), program(GL_NONE),
+sampler_location(0), sampler_matrix(0), cvs_width(0), cvs_height(0), cvs_ratio(0), matrix(glm::mat4{}) {
     glGenTextures  (1, &texture);
     glBindTexture  (GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
@@ -106,7 +106,7 @@ void media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
         return;
     }
 
-    int32_t ori = frame->get_ori();
+    bool mirror = frame->use_mirror();
     int32_t width, height; uint32_t *data;
     frame->get(&width, &height, &data);
 
@@ -132,7 +132,7 @@ void media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
     glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), vertices_coords);
     // Load the texture coordinate
     glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof (GLfloat),
-            ori == 270 ? texture_coords_mirror : texture_coords);
+                           mirror ? texture_coords_mirror : texture_coords);
 
     glEnableVertexAttribArray (0);
     glEnableVertexAttribArray (1);

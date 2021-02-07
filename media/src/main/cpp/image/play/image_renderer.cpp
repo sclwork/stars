@@ -12,7 +12,7 @@
 namespace media {
 } //namespace media
 
-media::image_renderer::image_renderer():width(0),height(0),paint(nullptr) {
+media::image_renderer::image_renderer():width(0), height(0), paint(nullptr) {
     log_d("created.");
 }
 

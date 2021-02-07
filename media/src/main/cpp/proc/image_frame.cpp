@@ -12,6 +12,14 @@
 namespace media {
 } //namespace media
 
+media::image_frame *media::image_frame::make_default(int32_t w, int32_t h) {
+    auto *frame = new image_frame(w, h);
+    if (frame->available()) {
+        memset(frame->cache, 0xff222222, sizeof(int32_t) * w * h);
+    }
+    return frame;
+}
+
 media::image_frame::image_frame(int32_t w, int32_t h)
 :is_copy(false), ori(0), width(w), height(h),
 cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
@@ -48,8 +56,8 @@ void media::image_frame::set_ori(int32_t o) {
     ori = o;
 }
 
-int media::image_frame::get_ori() const {
-    return ori;
+bool media::image_frame::use_mirror() const {
+    return ori == 270;
 }
 
 void media::image_frame::get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache) const {

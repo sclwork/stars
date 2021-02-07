@@ -41,20 +41,14 @@ protected void onCreate(Bundle savedInstanceState) {
 @Override
 protected void onStart() {
     super.onStart();
-    final MediaGLView recorderView = findViewById(R.id.recorder_view);
-    if (recorderView != null) {
-        recorderView.onResume(); // resume
-    }
+    Media.onStart(); // start/resume media.
     ...
 }
 
 @Override
 protected void onStop() {
     super.onStop();
-    final MediaGLView recorderView = findViewById(R.id.recorder_view);
-    if (recorderView != null) {
-        recorderView.onPause(); // pause
-    }
+    Media.onStop(); // stop/pause media.
     ...
 }
 
@@ -67,58 +61,6 @@ protected void onDestroy() {
 ```
 
 <br /><br />
-
-#### Select Camera
-
-```
-...
-final MediaGLView recorderView = findViewById(R.id.recorder_view);
-if (recorderView != null) {
-    recorderView.setOnCameraCountListener(count -> {
-        ...
-        // count: camera count
-        ...
-    }
-}
-...
-```
-
-```
-...
-final MediaGLView recorderView = findViewById(R.id.recorder_view);
-if (recorderView != null) {
-    recorderView.selectCamera(camera); // select camera [0,count)
-}
-...
-```
-
-<br /><br />
-
-#### Record Video
-
-```
-...
-final MediaGLView recorderView = findViewById(R.id.recorder_view);
-final TextView record = findViewById(R.id.record);
-if (record != null) record.setOnClickListener(v -> {
-    if (Media.rendererRecordRunning()) {
-        if (recorderView != null) recorderView.stopRecord();
-    } else {
-        if (recorderView != null) recorderView.startRecord(getFilesDir() + "/demo.mp4");
-    }
-});
-...
-```
-
-<br /><br /><br /><br />
-
-<!--##### simple framework-->
-
-<!--<span><div style="text-align: center;">-->
-<!--![video-collect](image/video-collect.png)-->
-<!--</div></span>-->
-
-<!--<br /><br />-->
 
 ---
 

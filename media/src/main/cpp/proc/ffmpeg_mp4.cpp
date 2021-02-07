@@ -4,8 +4,7 @@
 
 #include <cstdio>
 #include "log.h"
-#include "loop/loop.h"
-#include "ffmpeg.h"
+#include "ffmpeg_mp4.h"
 
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_mp4", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_mp4", __VA_ARGS__)
@@ -14,7 +13,8 @@ namespace media {
 } //namespace media
 
 media::ffmpeg_mp4::ffmpeg_mp4(int32_t id, std::string &&n, ff_image_args &&img, ff_audio_args &&aud)
-:_id(id), req_stop(false), _tmp(std::string(n).replace(n.find(".mp4"), 4, "")), name(n), image(img), audio(aud),
+:_id(id), req_stop(false), _tmp(std::string(n).replace(n.find(".mp4"), 4, "")),
+name(_tmp + "_" + std::to_string(id) + ".mp4"), image(img), audio(aud),
 f_rgb_name(_tmp + "_" + std::to_string(id) + ".rgb"), f_264_name(_tmp + "_" + std::to_string(id) + ".h264"),
 f_pcm_name(_tmp + "_" + std::to_string(id) + ".pcm"), f_aac_name(_tmp + "_" + std::to_string(id) + ".aac"), pts(0),
 if_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr), i_sws_ctx(nullptr),
@@ -420,46 +420,46 @@ void media::ffmpeg_mp4::close_audio_encode() {
  * run in media encode thread
  */
 void media::ffmpeg_mp4::encode_image_frame(int32_t w, int32_t h, uint32_t *data) {
-//    memcpy(i_rgb_frm->data[0], data, i_rgb_frm->linesize[0]);
-//    int32_t res = sws_scale(i_sws_ctx, i_rgb_frm->data, i_rgb_frm->linesize,
-//            0, h, i_yuv_frm->data, i_yuv_frm->linesize);
-//    if (res <= 0) {
-//        log_e("encode_image_frame sws_scale fail[%d].", res);
-//        return;
-//    }
-//
-//    i_yuv_frm->pts = pts;
-//    res = avcodec_send_frame(ic_ctx, i_yuv_frm);
-//    if (res < 0) {
-////        char err[64];
-////        av_strerror(res, err, 64);
-////        log_e("encode_image_frame avcodec_send_frame fail[%d]%s.", res, err);
-//        return;
-//    }
-//
-////    log_d("encode_image_frame avcodec_send_frame success.");
-//
-//    while (true) {
-//        AVPacket *pkt = av_packet_alloc();
-//        if (pkt == nullptr) {
-//            log_e("encode_image_frame av_packet_alloc fail.");
-//            return;
-//        }
-//        av_init_packet(pkt);
-//
-//        res = avcodec_receive_packet(ic_ctx, pkt);
-//        if (res < 0) {
-//            av_packet_free(&pkt);
-////            char err[64];
-////            av_strerror(res, err, 64);
-////            log_e("encode_image_frame avcodec_receive_packet fail[%d]%s.", res, err);
-//            break;
-//        }
-//
-////        log_d("encode_image_frame avcodec_receive_packet success.");
-//
-//        av_packet_free(&pkt);
-//    }
+    memcpy(i_rgb_frm->data[0], data, i_rgb_frm->linesize[0]);
+    int32_t res = sws_scale(i_sws_ctx, i_rgb_frm->data, i_rgb_frm->linesize,
+            0, h, i_yuv_frm->data, i_yuv_frm->linesize);
+    if (res <= 0) {
+        log_e("encode_image_frame sws_scale fail[%d].", res);
+        return;
+    }
+
+    i_yuv_frm->pts = pts;
+    res = avcodec_send_frame(ic_ctx, i_yuv_frm);
+    if (res < 0) {
+//        char err[64];
+//        av_strerror(res, err, 64);
+//        log_e("encode_image_frame avcodec_send_frame fail[%d]%s.", res, err);
+        return;
+    }
+
+//    log_d("encode_image_frame avcodec_send_frame success.");
+
+    while (true) {
+        AVPacket *pkt = av_packet_alloc();
+        if (pkt == nullptr) {
+            log_e("encode_image_frame av_packet_alloc fail.");
+            return;
+        }
+        av_init_packet(pkt);
+
+        res = avcodec_receive_packet(ic_ctx, pkt);
+        if (res < 0) {
+            av_packet_free(&pkt);
+//            char err[64];
+//            av_strerror(res, err, 64);
+//            log_e("encode_image_frame avcodec_receive_packet fail[%d]%s.", res, err);
+            break;
+        }
+
+//        log_d("encode_image_frame avcodec_receive_packet success.");
+
+        av_packet_free(&pkt);
+    }
 }
 
 /*
