@@ -40,10 +40,6 @@ media::audio_recorder::~audio_recorder() {
     log_d("release.");
 }
 
-void media::audio_recorder::destroy() {
-    log_d("destroy.");
-}
-
 bool media::audio_recorder::recordable() const {
     return rec_obj   != nullptr &&
            rec_eng   != nullptr &&

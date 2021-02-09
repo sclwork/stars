@@ -15,7 +15,16 @@ public:
     virtual ~paint() {}
 
 public:
+    /**
+     * setup canvas size
+     * @param width canvas width
+     * @param height canvas height
+     */
     virtual void set_canvas_size(int32_t width, int32_t height) = 0;
+    /**
+     * draw image frame
+     * @param frame image frame
+     */
     virtual void draw(const std::shared_ptr<image_frame> &frame) = 0;
 };
 

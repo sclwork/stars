@@ -20,7 +20,16 @@ public:
     ~camera_paint();
 
 public:
+    /**
+     * setup canvas size
+     * @param width canvas width
+     * @param height canvas height
+     */
     void set_canvas_size(int32_t width, int32_t height) override;
+    /**
+     * draw image frame
+     * @param frame image frame
+     */
     void draw(const std::shared_ptr<image_frame> &frame) override;
 
 private:

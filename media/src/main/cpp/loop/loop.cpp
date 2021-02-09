@@ -40,9 +40,9 @@ private:
 static std::unique_ptr<common> com_ptr;
 static std::atomic_bool        loop_main_running(false);
 #ifdef USE_CONCURRENT_QUEUE
-static moodycamel::ConcurrentQueue<ln> queue_main;
+static moodycamel::ConcurrentQueue<ln> mainQ;
 #else
-static safe_queue<ln>          queue_main;
+static safe_queue<ln> mainQ;
 #endif
 
 void renderer_init() {
@@ -83,12 +83,12 @@ static void loop_main_run() {
     while (true) {
 #ifdef USE_CONCURRENT_QUEUE
         ln n;
-        bool h = queue_main.try_dequeue(n);
+        bool h = mainQ.try_dequeue(n);
         if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
         if (n.is_exit()) { break; }
         n.run();
 #else
-        auto n = queue_main.wait_and_pop();
+        auto n = mainQ.wait_and_pop();
         if (n->is_exit()) { break; }
         n->run();
 #endif
@@ -119,9 +119,9 @@ void media::loop_start(const char *cascade, const char *mnn) {
 void media::loop_exit() {
     if (loop_main_running) {
 #ifdef USE_CONCURRENT_QUEUE
-        queue_main.enqueue(ln::create_exit_ln());
+        mainQ.enqueue(ln::create_exit_ln());
 #else
-        queue_main.push(ln::create_exit_ln());
+        mainQ.push(ln::create_exit_ln());
 #endif
     }
 }
@@ -138,8 +138,8 @@ void media::loop_post_main(void (*runnable)(void*, void (*)(void*)),
     }
 
 #ifdef USE_CONCURRENT_QUEUE
-    queue_main.enqueue(ln(runnable, ctx, callback));
+    mainQ.enqueue(ln(runnable, ctx, callback));
 #else
-    queue_main.push(ln(runnable, ctx, callback));
+    mainQ.push(ln(runnable, ctx, callback));
 #endif
 }

@@ -62,7 +62,7 @@ bool media::image_recorder::select_camera(int camera) {
 void media::image_recorder::update_size(int32_t w, int32_t h) {
     previewing = false;
     // check reset cache
-    if (frame == nullptr || !frame->same_size(w, h)) {
+    if (frame == nullptr || !frame->available() || !frame->same_size(w, h)) {
         frame = std::make_shared<image_frame>(w, h);
     }
     // restart cam

@@ -36,13 +36,32 @@ public:
     ~camera();
 
 public:
+    /**
+     * enumerate all cameras
+     * @param cams all cameras
+     */
     static void enumerate(std::vector<std::shared_ptr<camera>> &cams);
 
 public:
+    /**
+     * get latest image from camera
+     * call after {@link preview}
+     * @param frame [out] latest image frame
+     */
     void get_latest_image(std::shared_ptr<media::image_frame> &frame);
 
 public:
+    /**
+     * start camera preview
+     * @param req_w requested image width
+     * @param req_h requested image height
+     * @param out_fps [out] camera fps
+     * @return true: start preview success
+     */
     bool preview(int32_t req_w, int32_t req_h, int32_t *out_fps);
+    /**
+     * close camera preview
+     */
     void close();
 
 private:

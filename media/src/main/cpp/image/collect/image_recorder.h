@@ -18,16 +18,49 @@ public:
     ~image_recorder();
 
 public:
+    /**
+     * @return camera count
+     */
     int32_t camera_count() const;
+    /**
+     * @return true: selected camera and previewing
+     */
     bool is_previewing() const;
+    /**
+     * select camera with index
+     * @param camera index [0, camera_count)
+     * @return true: select camera success
+     */
     bool select_camera(int camera);
+    /**
+     * update image frame size
+     * if image_frame is nullptr or not available or not same size then create new image_frame
+     * @param w frame width
+     * @param h frame height
+     */
     void update_size(int32_t w, int32_t h);
+    /**
+     * from selected camera collect an image frame
+     * @return collect success image_frame, all return image_frame is same address
+     */
     std::shared_ptr<image_frame> collect_frame();
 
 public:
+    /**
+     * @return selected camera fps
+     */
     int32_t  get_fps() const;
+    /**
+     * @return image_frame width
+     */
     uint32_t get_width() const;
+    /**
+     * @return image_frame height
+     */
     uint32_t get_height() const;
+    /**
+     * @return image_frame image channels argb:4
+     */
     uint32_t get_channels() const { return 4; }
 
 private:

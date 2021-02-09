@@ -18,8 +18,21 @@ public:
     ~audio_frame();
 
 public:
+    /**
+     * check audio available
+     */
     bool available() const;
+    /**
+     * get audio frame args/pcm data
+     * @param out_size [out] audio pcm data size
+     * @param out_cache [out] audio pcm data pointer
+     */
     void get(int32_t *out_size, int8_t **out_cache = nullptr) const;
+    /**
+     * get audio frame pcm short data
+     * @param out_size [out] audio pcm short data size
+     * @return audio frame pcm short data pointer
+     */
     std::shared_ptr<int16_t> get(int32_t *out_size);
 
 private:

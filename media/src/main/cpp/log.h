@@ -7,13 +7,13 @@
 
 #include <android/log.h>
 
-/*
+/**
  * log able: 0/1
  */
 #define LOG_ABLE      1
 #define LOG_DRAW_TIME 1
 
-/*
+/**
  * log debug info
  */
 #if LOG_ABLE
@@ -22,7 +22,7 @@
 #define LOG_D(tag, ...)
 #endif
 
-/*
+/**
  * log error info
  */
 #if LOG_ABLE

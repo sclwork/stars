@@ -19,12 +19,34 @@ public:
     ~image_frame();
 
 public:
+    /**
+     * check frame size
+     * @param w frame width
+     * @param h frame height
+     * @return true: same size
+     */
     bool same_size(int32_t w, int32_t h) const;
+    /**
+     * check image frame available
+     */
     bool available() const;
 
 public:
+    /**
+     * setup camera/image orientation
+     * @param o orientation:[0|90|180|270]
+     */
     void set_ori(int32_t o);
+    /**
+     * @return true: if camera/image orientation is 270
+     */
     bool use_mirror() const;
+    /**
+     * get image frame args/data pointer
+     * @param out_w [out] frame width
+     * @param out_h [out] frame height
+     * @param out_cache [out] frame data pointer
+     */
     void get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache = nullptr) const;
 
 private:

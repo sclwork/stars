@@ -13,7 +13,7 @@ namespace media {
 } //namespace media
 
 media::ffmpeg_mp4::ffmpeg_mp4(int32_t id, std::string &&n, ff_image_args &&img, ff_audio_args &&aud)
-:_id(id), req_stop(false), _tmp(std::string(n).replace(n.find(".mp4"), 4, "")),
+:_id(id), _tmp(std::string(n).replace(n.find(".mp4"), 4, "")),
 name(_tmp + "_" + std::to_string(id) + ".mp4"), image(img), audio(aud),
 f_rgb_name(_tmp + "_" + std::to_string(id) + ".rgb"), f_264_name(_tmp + "_" + std::to_string(id) + ".h264"),
 f_pcm_name(_tmp + "_" + std::to_string(id) + ".pcm"), f_aac_name(_tmp + "_" + std::to_string(id) + ".aac"), pts(0),
@@ -69,21 +69,6 @@ void media::ffmpeg_mp4::encode_frame(std::shared_ptr<image_frame> &&img_frame,
         encode_audio_frame();
     }
     ++pts;
-}
-
-void media::ffmpeg_mp4::request_stop() {
-    req_stop = true;
-    log_d("[%d] request stop.", _id);
-}
-
-/*
- * run in media encode thread
- */
-bool media::ffmpeg_mp4::check_req_stop() {
-    if (req_stop) {
-        log_d("[%d] -check- request stoped.", _id);
-    }
-    return req_stop;
 }
 
 void media::ffmpeg_mp4::init_image_encode() {

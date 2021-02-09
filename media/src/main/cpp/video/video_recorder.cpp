@@ -15,3 +15,11 @@ media::video_recorder::video_recorder() {
 media::video_recorder::~video_recorder() {
     log_d("release.");
 }
+
+void media::video_recorder::start_preview(int32_t w, int32_t h,
+                                          void (*callback)(std::shared_ptr<image_frame>&)) {
+
+}
+
+void media::video_recorder::stop_preview() {
+}

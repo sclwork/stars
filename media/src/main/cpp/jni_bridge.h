@@ -9,14 +9,14 @@
 
 namespace media {
 
-/*
+/**
  * [call from jni] media main thread loop start/exit
  * create/release global thread objects[common/queue_main]
  */
 void loop_start(const char *cascade, const char *mnn);
 void loop_exit();
 
-/*
+/**
  * [call from jni] renderer thread
  * call to global common
  */

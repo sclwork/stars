@@ -42,19 +42,35 @@ public:
     ~ffmpeg_mp4();
 
 public:
+    /**
+     * reset tmp files:[.pcm, .acc, .argb, .yuv, .mp4]
+     */
     void reset_tmp_files();
+    /**
+     * encode image frame and audio frame [to mp4 file]
+     * @param img_frame image frame
+     * @param aud_frame audio frame
+     */
     void encode_frame(std::shared_ptr<image_frame> &&img_frame,
                       std::shared_ptr<audio_frame> &&aud_frame);
 
 public:
+    /**
+     * init ffmpeg image encode codec
+     */
     void init_image_encode();
+    /**
+     * init ffmpeg audio encode codec
+     */
     void init_audio_encode();
+    /**
+     * close ffmpeg image encode codec
+     */
     void close_image_encode();
+    /**
+     * close ffmpeg audio encode codec
+     */
     void close_audio_encode();
-
-public:
-    void request_stop();
-    bool check_req_stop();
 
 private:
     void encode_image_frame(int32_t w, int32_t h, uint32_t *data);
@@ -68,7 +84,6 @@ private:
 
 private:
     int32_t _id;
-    bool req_stop;
     std::string _tmp;
     //////////////////////////
     std::string name;

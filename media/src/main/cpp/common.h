@@ -9,11 +9,8 @@
 #include <time.h>
 #include <string>
 #include "log.h"
-#include "proc/mnn.h"
-#include "proc/ffmpeg.h"
-#include "image/collect/image_recorder.h"
-#include "audio/collect/audio_recorder.h"
-#include "image/play/renderer.h"
+#include "image/play/image_renderer.h"
+#include "video/video_recorder.h"
 
 namespace media {
 
@@ -25,16 +22,38 @@ public:
     common(std::string &&cascade, std::string &&mnn);
     ~common();
 
-/*
- * run in renderer thread.
- */
 public:
+    /**
+     * run in renderer thread.
+     */
     void renderer_init();
+    /**
+     * run in renderer thread.
+     */
     void renderer_release();
+    /**
+     * run in renderer thread.
+     */
     void renderer_surface_created();
+    /**
+     * run in renderer thread.
+     */
     void renderer_surface_destroyed();
+    /**
+     * run in renderer thread.
+     */
     void renderer_surface_changed(int32_t w, int32_t h);
+    /**
+     * run in renderer thread.
+     */
     void renderer_draw_frame();
+
+private:
+    /*
+     * run in caller thread.
+     * copy from frm to renderer.
+     */
+    void renderer_updt_frame(const image_frame &frm);
 
 private:
     common(common&&) = delete;
@@ -43,8 +62,8 @@ private:
     common& operator=(const common&) = delete;
 
 private:
-    renderer *renderer;
-    std::shared_ptr<image_frame> shw_frame;
+    std::shared_ptr<image_renderer> renderer;
+    std::shared_ptr<video_recorder> vid_rec;
 };
 
 } //namespace media
