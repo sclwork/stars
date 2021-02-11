@@ -15,7 +15,7 @@ namespace media {
 media::image_frame *media::image_frame::make_default(int32_t w, int32_t h) {
     auto *frame = new image_frame(w, h);
     if (frame->available()) {
-        memset(frame->cache, 0xff222222, sizeof(int32_t) * w * h);
+        memset(frame->cache, 0xff000000, sizeof(int32_t) * w * h);
     }
     return frame;
 }

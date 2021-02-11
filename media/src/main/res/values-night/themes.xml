@@ -16,7 +16,7 @@
     </style>
     <!-- Video theme -->
     <style name="Theme.Stars.Video">
-        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowFullscreen">false</item>
         <item name="android:windowTranslucentNavigation">true</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <!-- Status bar color. -->

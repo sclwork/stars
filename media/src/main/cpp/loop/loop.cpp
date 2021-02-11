@@ -98,7 +98,6 @@ static void loop_main_run() {
     delete com;
     loop_main_running = false;
     log_d("main loop exited...");
-    log_d("==================================================");
 }
 
 } //namespace media
