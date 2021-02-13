@@ -25,7 +25,7 @@ typedef struct _sparams {
     std::shared_ptr<std::atomic_bool> runnable;
     void (*callback)(std::shared_ptr<media::image_frame>&&);
     _sparams(int32_t w, int32_t h, int32_t camera,
-             std::shared_ptr<std::atomic_bool> runnable,
+             std::shared_ptr<std::atomic_bool> &runnable,
              void (*callback)(std::shared_ptr<image_frame>&&))
         :w(w), h(h), camera(camera), runnable(runnable), callback(callback) {}
 } _sparams;
@@ -46,7 +46,7 @@ static void img_collect_run(_sparams *sp) {
     while (runnable != nullptr && *runnable) {
         auto frame = img->collect_frame();
         callback(std::forward<std::shared_ptr<media::image_frame>>(frame));
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        std::this_thread::sleep_for(std::chrono::milliseconds(4));
     }
     delete img;
     log_d("camera %d collect stoped ...", camera);

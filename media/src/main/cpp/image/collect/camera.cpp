@@ -46,7 +46,7 @@ void media::camera::enumerate(std::vector<std::shared_ptr<camera>> &cams) {
 
     cams.clear();
     for (int32_t i = 0; i < cameraIdList->numCameras; i++) {
-        cams.push_back(std::make_shared<camera>(std::string(cameraIdList->cameraIds[i]), 25));
+        cams.push_back(std::make_shared<camera>(std::string(cameraIdList->cameraIds[i]), 30));
     }
 
     ACameraManager_delete(manager);
