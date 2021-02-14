@@ -14,7 +14,7 @@ namespace media {
 } //namespace media
 
 media::common::common(std::string &&cas_path, std::string &&mnn_path)
-:renderer(nullptr), vid_rec(nullptr) {
+:mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr) {
     gcom = this;
     log_d("cas_path:%s.", cas_path.c_str());
     log_d("mnn_path:%s.", mnn_path.c_str());
@@ -33,7 +33,7 @@ media::common::~common() {
  */
 void media::common::renderer_init() {
     renderer = std::make_shared<image_renderer>();
-    vid_rec = std::make_shared<video_recorder>();
+    vid_rec = std::make_shared<video_recorder>(mnn_path);
 }
 
 /*

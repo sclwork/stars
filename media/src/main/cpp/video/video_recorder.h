@@ -14,7 +14,7 @@ namespace media {
 
 class video_recorder {
 public:
-    video_recorder();
+    video_recorder(std::string &mnn_path);
     ~video_recorder();
 
 public:
@@ -38,6 +38,9 @@ private:
     video_recorder(const video_recorder&) = delete;
     video_recorder& operator=(video_recorder&&) = delete;
     video_recorder& operator=(const video_recorder&) = delete;
+
+private:
+    std::string mnn_path;
 };
 
 } //namespace media

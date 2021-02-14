@@ -62,6 +62,7 @@ private:
     common& operator=(const common&) = delete;
 
 private:
+    std::string mnn_path;
     std::shared_ptr<image_renderer> renderer;
     std::shared_ptr<video_recorder> vid_rec;
 };
