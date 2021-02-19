@@ -21,6 +21,10 @@ extern void yuv2argb(struct img_args &img_args);
 
 } //namespace media
 
+bool media::camera::equal(const camera &lc, const camera &rc) {
+    return lc.id == rc.id;
+}
+
 void media::camera::enumerate(std::vector<std::shared_ptr<camera>> &cams) {
     ACameraManager *manager = ACameraManager_create();
     if (manager == nullptr) {
@@ -132,7 +136,7 @@ void media::camera::get_latest_image(std::shared_ptr<media::image_frame> &frame)
 }
 
 bool media::camera::preview(int32_t req_w, int32_t req_h, int32_t *out_fps) {
-    if (dev) {
+    if (dev || state == RecState::Previewing) {
         log_e("camera device is running.");
         return false;
     }

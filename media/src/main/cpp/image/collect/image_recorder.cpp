@@ -23,7 +23,10 @@ media::image_recorder::image_recorder()
 }
 
 media::image_recorder::~image_recorder() {
-    run_cam = nullptr;
+    if (run_cam != nullptr) {
+        run_cam->close();
+        run_cam = nullptr;
+    }
     previewing = false;
     log_d("release.");
 }
@@ -42,7 +45,7 @@ bool media::image_recorder::select_camera(int camera) {
         return false;
     }
 
-    if (run_cam) {
+    if (run_cam != nullptr) {
         run_cam->close();
         run_cam = nullptr;
     }
@@ -66,7 +69,7 @@ void media::image_recorder::update_size(int32_t w, int32_t h) {
         frame = std::make_shared<image_frame>(w, h);
     }
     // restart cam
-    if (run_cam) {
+    if (run_cam != nullptr) {
         run_cam->close();
         previewing = run_cam->preview(w, h, &fps);
     }

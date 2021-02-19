@@ -37,6 +37,13 @@ public:
 
 public:
     /**
+     * check lc.id == rc.id
+     * @param lc left camera
+     * @param rc right camera
+     * @return true: lc.id == rc.id
+     */
+    static bool equal(const camera &lc, const camera &rc);
+    /**
      * enumerate all cameras
      * @param cams all cameras
      */
