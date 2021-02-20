@@ -10,15 +10,6 @@
 #define log_d(...)  LOG_D("Media-Native:video_recorder", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:video_recorder", __VA_ARGS__)
 
-media::video_recorder::video_recorder(std::string &mnn_path):mnn_path(mnn_path) {
-    log_d("created.");
-}
-
-media::video_recorder::~video_recorder() {
-    stop_preview();
-    log_d("release.");
-}
-
 namespace media {
 
 class sparams {
@@ -91,6 +82,15 @@ static void img_collect_run(sparams *sp) {
 }
 
 } //namespace media
+
+media::video_recorder::video_recorder(std::string &mnn_path):mnn_path(mnn_path) {
+    log_d("created.");
+}
+
+media::video_recorder::~video_recorder() {
+    stop_preview();
+    log_d("release.");
+}
 
 void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image_frame>&&),
                                           int32_t w, int32_t h,
