@@ -19,3 +19,7 @@ media/jniLibs/arm64-v8a/libmedia.so
 media/jniLibs/armeabi-v7a/libmedia.so
 media/jniLibs/x86/libmedia.so
 media/jniLibs/x86_64/libmedia.so
+media/jniLibs/arm64-v8a/liblibyuv.so
+media/jniLibs/armeabi-v7a/liblibyuv.so
+media/jniLibs/x86/liblibyuv.so
+media/jniLibs/x86_64/liblibyuv.so
