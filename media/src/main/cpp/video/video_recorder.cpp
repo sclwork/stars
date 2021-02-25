@@ -79,6 +79,7 @@ static void img_collect_run(sparams *sp) {
     }
     sp->deactivate();
     log_d("camera %d collect stoped ...", sp->camera_id());
+    delete sp;
 }
 
 } //namespace media
@@ -105,7 +106,7 @@ void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto *ctx = new sparams(w, h, camera, mnn_path, runnable, callback);
-    st_sps.push_back(std::shared_ptr<sparams>(ctx));
+    st_sps.push_back(std::shared_ptr<sparams>(ctx, [](void*){})); // delete sp in img_collect_run
     std::thread collect_t(img_collect_run, ctx);
     collect_t.detach();
 }
