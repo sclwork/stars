@@ -19,7 +19,7 @@ class frame {
 public:
     frame():image(nullptr), audio(nullptr) {}
     frame(std::shared_ptr<image_frame> &&img, std::shared_ptr<audio_frame> &&aud)
-     :image(std::make_shared<image_frame>(*img)), audio(aud != nullptr ? std::make_shared<audio_frame>(*aud) : nullptr) {}
+     :image(img), audio(aud != nullptr ? aud : nullptr) {}
     ~frame() = default;
 
 private:
