@@ -65,7 +65,7 @@ b_out_scores(nullptr), b_out_boxes(nullptr), b_out_anchors(nullptr) {
         } else {
             MNN::ScheduleConfig config;
             config.numThread = threads_num;
-            config.type = MNNForwardType::MNN_FORWARD_CPU;
+            config.type = MNNForwardType::MNN_FORWARD_AUTO;
             config.backupType = MNNForwardType::MNN_FORWARD_OPENCL;
 
             MNN::BackendConfig backendConfig;

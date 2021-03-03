@@ -52,7 +52,7 @@ public:
     }
 
     void activate() {
-        mnn = new media::mnn(mnn_path, 4);
+        mnn = new media::mnn(mnn_path, 1);
         image = new image_recorder();
         image->update_size(w, h);
         image->select_camera(camera);
@@ -88,6 +88,10 @@ public:
         if (recording != nullptr) {
             *(recording) = recing;
         }
+        if (audio != nullptr) {
+            if (recing) { audio->start_record(); }
+            else { audio->stop_record(); }
+        }
     }
 
     void copy_args(ff_image_args &img, ff_audio_args &aud) const {
@@ -108,11 +112,15 @@ public:
         mnn->detect_faces(img_frame, faces);
         mnn->flag_faces(img_frame, faces);
         if (recording != nullptr && *recording && frameQ != nullptr) {
-            bool changed = true;
+            bool changed = false;
             aud_frame = audio->collect_frame(&changed);
             auto frame = media::frame(std::forward<std::shared_ptr<image_frame>>(img_frame),
                                       std::forward<std::shared_ptr<audio_frame>>(changed ? aud_frame : nullptr));
+#ifdef USE_CONCURRENT_QUEUE
             frameQ->enqueue(frame);
+#else
+            frameQ->push(frame);
+#endif
         }
         callback(std::forward<std::shared_ptr<media::image_frame>>(img_frame));
         gettimeofday(&tv, nullptr);
@@ -150,14 +158,25 @@ private:
 class encode_params {
 public:
     encode_params(
+        std::string &&name,
+        ff_image_args &&img_args, ff_audio_args &&aud_args,
         std::shared_ptr<std::atomic_bool> &runnable,
 #ifdef USE_CONCURRENT_QUEUE
         std::shared_ptr<moodycamel::ConcurrentQueue<frame>> &&fQ
 #else
         std::shared_ptr<safe_queue<frame>> &&fQ
 #endif
-    ):_mux(), runnable(runnable), frameQ(fQ) { log_d("encode params created."); }
-    ~encode_params() { log_d("encode params release."); }
+    ):_mux(), runnable(runnable),
+    mp4(std::make_shared<ffmpeg_mp4>(0, std::forward<std::string>(name),
+            std::forward<ff_image_args>(img_args), std::forward<ff_audio_args>(aud_args))),
+    frameQ(fQ) {
+        if (mp4 != nullptr) mp4->init();
+        log_d("encode params created.");
+    }
+    ~encode_params() {
+        if (mp4 != nullptr) mp4->uninit();
+        log_d("encode params release.");
+    }
 
 public:
     bool running() const {
@@ -175,13 +194,24 @@ public:
     void run() {
         if (frameQ != nullptr) {
             frame f;
-            if (frameQ->try_dequeue(f)) {}
+#ifdef USE_CONCURRENT_QUEUE
+            if (frameQ->try_dequeue(f)) {
+#else
+            if (frameQ->try_pop(f)) {
+#endif
+                if (mp4 != nullptr) mp4->encode_frame(
+                        std::forward<std::shared_ptr<image_frame>>(f.image),
+                        std::forward<std::shared_ptr<audio_frame>>(f.audio));
+            } else {
+                std::this_thread::sleep_for(std::chrono::microseconds(10));
+            }
         }
     }
 
 private:
     mutable std::mutex _mux;
     std::shared_ptr<std::atomic_bool> runnable;
+    std::shared_ptr<ffmpeg_mp4> mp4;
 #ifdef USE_CONCURRENT_QUEUE
     std::shared_ptr<moodycamel::ConcurrentQueue<frame>> frameQ;
 #else
@@ -223,6 +253,7 @@ frameQ(std::make_shared<safe_queue<frame>>())
 
 media::video_recorder::~video_recorder() {
     stop_preview();
+    stop_record();
     log_d("release.");
 }
 
@@ -284,7 +315,8 @@ void media::video_recorder::start_record(std::string &&mp4_file) {
         }
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
-    auto *ctx = new encode_params(runnable,
+    auto *ctx = new encode_params(std::forward<std::string>(mp4_file),
+            std::forward<ff_image_args>(img_args), std::forward<ff_audio_args>(aud_args), runnable,
 #ifdef USE_CONCURRENT_QUEUE
             std::forward<std::shared_ptr<moodycamel::ConcurrentQueue<frame>>>(frameQ)
 #else
