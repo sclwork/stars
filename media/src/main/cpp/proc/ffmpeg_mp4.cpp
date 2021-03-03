@@ -83,7 +83,7 @@ void media::ffmpeg_mp4::init_image_encode() {
     i_sws_ctx = sws_getContext(image.width, image.height, AV_PIX_FMT_ARGB, image.width, image.height,
             AV_PIX_FMT_YUV420P, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (i_sws_ctx == nullptr) {
-        log_d("init_image_encode sws_getContext fail.");
+        log_e("init_image_encode sws_getContext fail.");
         return;
     }
 

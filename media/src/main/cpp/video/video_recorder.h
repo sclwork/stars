@@ -8,9 +8,24 @@
 #include <memory>
 #include <stdint.h>
 #include "proc/image_frame.h"
-#include "image/collect/image_recorder.h"
+#include "proc/audio_frame.h"
+#include "loop/config.h"
+#include "loop/safe_queue.hpp"
+#include "loop/concurrent_queue.h"
 
 namespace media {
+
+class frame {
+public:
+    frame():image(nullptr), audio(nullptr) {}
+    frame(std::shared_ptr<image_frame> &&img, std::shared_ptr<audio_frame> &&aud)
+     :image(std::make_shared<image_frame>(*img)), audio(aud != nullptr ? std::make_shared<audio_frame>(*aud) : nullptr) {}
+    ~frame() = default;
+
+private:
+    std::shared_ptr<image_frame> image;
+    std::shared_ptr<audio_frame> audio;
+};
 
 class video_recorder {
 public:
@@ -56,6 +71,11 @@ private:
 private:
     std::string mnn_path;
     std::atomic_bool recing;
+#ifdef USE_CONCURRENT_QUEUE
+    std::shared_ptr<moodycamel::ConcurrentQueue<frame>> frameQ;
+#else
+    std::shared_ptr<safe_queue<frame>> frameQ;
+#endif
 };
 
 } //namespace media
