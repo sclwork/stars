@@ -148,6 +148,46 @@ public class Media {
         if (glView != null) glView.onPause();
     }
 
+    /**
+     * Start Video Record
+     */
+    public static void startVideoRecord(@NonNull String mp4File) {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        // jni start video record
+        r.jniStartVideoRecord(mp4File);
+    }
+
+    /**
+     * Stop Video Record
+     */
+    public static void stopVideoRecord() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        // jni stop video record
+        r.jniStopVideoRecord();
+    }
+
+    /**
+     * Check VideoRecord Running
+     * @return true: recording
+     */
+    public static boolean isVideoRecording() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return false;
+
+        // jni check video record running
+        return r.jniVideoRecording();
+    }
+
     private static class RecorderRenderer implements GLSurfaceView.Renderer {
         private final MediaGLView.OnRendererListener mOnRendererListener;
 
@@ -366,6 +406,10 @@ public class Media {
     private native int jniRendererSurfaceChanged(int width, int height);
     private native int jniRendererSurfaceDestroyed();
     private native int jniRendererDrawFrame();
+    ///////////////////////////////////////////////////////////
+    private native int     jniStartVideoRecord(@NonNull String mp4File);
+    private native int     jniStopVideoRecord();
+    private native boolean jniVideoRecording();
 
 
 
@@ -378,5 +422,5 @@ public class Media {
     private Context getContext() { return mContext == null ? null : mContext.get(); }
     private static class SingletonHolder { private static final Media INSTANCE = new Media(); }
     private Media() { }
-    private boolean mInit;
+    private boolean mInit, mVideoRecording;
 }

@@ -40,22 +40,17 @@ media::ffmpeg_mp4::~ffmpeg_mp4() {
     log_d("[%d] release.", _id);
 }
 
-void media::ffmpeg_mp4::reset_tmp_files() {
-    std::remove(f_rgb_name.c_str());
-    std::remove(f_264_name.c_str());
-    std::remove(f_pcm_name.c_str());
-    std::remove(f_aac_name.c_str());
-    std::remove(name.c_str());
-    fclose(fopen(f_rgb_name.c_str(), "wb+"));
-    fclose(fopen(f_264_name.c_str(), "wb+"));
-    fclose(fopen(f_pcm_name.c_str(), "wb+"));
-    fclose(fopen(f_aac_name.c_str(), "wb+"));
-    fclose(fopen(name.c_str(), "wb+"));
+void media::ffmpeg_mp4::init() {
+    reset_tmp_files();
+    init_image_encode();
+    init_audio_encode();
 }
 
-/*
- * run in media encode thread
- */
+void media::ffmpeg_mp4::uninit() {
+    close_audio_encode();
+    close_image_encode();
+}
+
 void media::ffmpeg_mp4::encode_frame(std::shared_ptr<image_frame> &&img_frame,
                                      std::shared_ptr<audio_frame> &&aud_frame) {
     if (img_frame != nullptr && img_frame->available()) {
@@ -69,6 +64,19 @@ void media::ffmpeg_mp4::encode_frame(std::shared_ptr<image_frame> &&img_frame,
         encode_audio_frame();
     }
     ++pts;
+}
+
+void media::ffmpeg_mp4::reset_tmp_files() {
+    std::remove(f_rgb_name.c_str());
+    std::remove(f_264_name.c_str());
+    std::remove(f_pcm_name.c_str());
+    std::remove(f_aac_name.c_str());
+    std::remove(name.c_str());
+    fclose(fopen(f_rgb_name.c_str(), "wb+"));
+    fclose(fopen(f_264_name.c_str(), "wb+"));
+    fclose(fopen(f_pcm_name.c_str(), "wb+"));
+    fclose(fopen(f_aac_name.c_str(), "wb+"));
+    fclose(fopen(name.c_str(), "wb+"));
 }
 
 void media::ffmpeg_mp4::init_image_encode() {

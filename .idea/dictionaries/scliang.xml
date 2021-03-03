@@ -9,6 +9,7 @@
       <w>ffmpeg</w>
       <w>ffps</w>
       <w>frontalface</w>
+      <w>gcom</w>
       <w>haarcascade</w>
       <w>libyuv</w>
       <w>mediump</w>
@@ -20,6 +21,7 @@
       <w>opensl</w>
       <w>proc</w>
       <w>prog</w>
+      <w>recing</w>
       <w>runnables</w>
       <w>scliang</w>
       <w>sctcam</w>
@@ -29,6 +31,8 @@
       <w>tflite</w>
       <w>thiz</w>
       <w>thrd</w>
+      <w>uninit</w>
+      <w>unrunning</w>
       <w>updt</w>
       <w>webrtc</w>
       <w>xcenter</w>

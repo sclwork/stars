@@ -26,6 +26,14 @@ public class DemoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         final MediaGLView recorderView = findViewById(R.id.recorder_view);
         Media.setMediaGLView(recorderView);
+        final View record = findViewById(R.id.record);
+        if (record != null) record.setOnClickListener(v -> {
+            if (Media.isVideoRecording()) {
+                Media.stopVideoRecord();
+            } else {
+                Media.startVideoRecord(getFilesDir() + "/demo.mp4");
+            }
+        });
 //        if (recorderView != null) recorderView.setOnCameraCountListener(count -> {
 //            RadioGroup group = findViewById(R.id.camera_ids);
 //            group.setVisibility(View.INVISIBLE);

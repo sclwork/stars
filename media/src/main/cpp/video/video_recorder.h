@@ -32,6 +32,20 @@ public:
       * stop video preview
       */
      void stop_preview();
+     /**
+      * start video record save to mp4 file
+      * @param mp4_file mp4 file path
+      */
+     void start_record(std::string &&mp4_file);
+     /**
+      * stop video record
+      */
+     void stop_record();
+     /**
+      * check record is running
+      * @return true: recording
+      */
+     bool recording() const { return recing; }
 
 private:
     video_recorder(video_recorder&&) = delete;
@@ -41,6 +55,7 @@ private:
 
 private:
     std::string mnn_path;
+    std::atomic_bool recing;
 };
 
 } //namespace media

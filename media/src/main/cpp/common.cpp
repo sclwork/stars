@@ -97,3 +97,32 @@ void media::common::renderer_updt_frame(const media::image_frame &frm) {
         renderer->updt_frame(std::make_shared<media::image_frame>(frm));
     }
 }
+
+/*
+ * run in media main loop thread.
+ */
+void media::common::video_record_start(std::string &&mp4_file) {
+    if (vid_rec != nullptr) {
+        vid_rec->start_record(std::forward<std::string>(mp4_file));
+    }
+}
+
+/*
+ * run in media main loop thread.
+ */
+void media::common::video_record_stop() {
+    if (vid_rec != nullptr) {
+        vid_rec->stop_record();
+    }
+}
+
+/*
+ * run in caller thread.
+ */
+bool media::common::video_recording() {
+    if (vid_rec != nullptr) {
+        return vid_rec->recording();
+    } else {
+        return false;
+    }
+}

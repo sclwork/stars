@@ -67,7 +67,7 @@ public:
         ms = tv.tv_sec * 1000 + tv.tv_usec / 1000 - ms;
         ms = fps_ms - ms;
         if (ms > 0) {
-            log_d("need wait time: %ldms.", ms);
+//            log_d("need wait time: %ldms.", ms);
             std::this_thread::sleep_for(std::chrono::milliseconds(ms));
         }
     }
@@ -97,7 +97,8 @@ static void img_collect_run(sparams *sp) {
 
 } //namespace media
 
-media::video_recorder::video_recorder(std::string &mnn_path):mnn_path(mnn_path) {
+media::video_recorder::video_recorder(std::string &mnn_path)
+:mnn_path(mnn_path), recing(false) {
     log_d("created.");
 }
 
@@ -131,4 +132,14 @@ void media::video_recorder::stop_preview() {
         }
     }
     st_sps.clear();
+}
+
+void media::video_recorder::start_record(std::string &&mp4_file) {
+    log_d("start video record[%s].", mp4_file.c_str());
+    recing = true;
+}
+
+void media::video_recorder::stop_record() {
+    log_d("stop video record.");
+    recing = false;
 }

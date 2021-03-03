@@ -82,6 +82,32 @@ JNIEnv *env, jobject thiz) {
     return 0;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniStartVideoRecord(
+JNIEnv *env, jobject thiz,
+jstring mp4File) {
+    const char *mp4_file = env->GetStringUTFChars(mp4File, nullptr);
+    // start video record
+    media::video_record_start(mp4_file);
+    env->ReleaseStringUTFChars(mp4File, mp4_file);
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniStopVideoRecord(
+JNIEnv *env, jobject thiz) {
+    // stop video record
+    media::video_record_stop();
+    return 0;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_scliang_tars_Media_jniVideoRecording(
+JNIEnv *env, jobject thiz) {
+    // check video recording
+    return media::video_recording();
+}
+
 #ifdef __cplusplus
 }
 #endif

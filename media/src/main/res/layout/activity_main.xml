@@ -57,12 +57,12 @@
 
 <!--    </RadioGroup>-->
 
-<!--    <Button-->
-<!--        android:id="@+id/record"-->
-<!--        android:layout_width="72dp"-->
-<!--        android:layout_height="72dp"-->
-<!--        android:layout_centerHorizontal="true"-->
-<!--        android:layout_alignParentBottom="true"-->
-<!--        android:layout_marginBottom="100dp" />-->
+    <Button
+        android:id="@+id/record"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="100dp" />
 
 </RelativeLayout>

@@ -75,6 +75,25 @@ void renderer_draw_frame() {
 //    d("renderer draw frame.");
 }
 
+void video_record_start(const char *mp4_file) {
+    loop_post_main([](void*c, void (*cb)(void*)) {
+        const char *file = (char *) c;
+        com_ptr->video_record_start(std::string(file));
+//        log_d("start video record[%s].", file);
+    }, (void *) mp4_file, nullptr);
+}
+
+void video_record_stop() {
+    loop_post_main([](void*c, void (*cb)(void*)) {
+        com_ptr->video_record_stop();
+//        log_d("stop video record.");
+    }, nullptr, nullptr);
+}
+
+bool video_recording() {
+    return com_ptr->video_recording();
+}
+
 static void loop_main_run() {
     loop_main_running = true;
     log_d("hardware concurrency: %d", std::thread::hardware_concurrency());

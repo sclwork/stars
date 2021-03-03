@@ -43,9 +43,13 @@ public:
 
 public:
     /**
-     * reset tmp files:[.pcm, .acc, .argb, .yuv, .mp4]
+     * init/start mp4 encoder
      */
-    void reset_tmp_files();
+    void init();
+    /**
+     * uninit/stop mpe encoder
+     */
+    void uninit();
     /**
      * encode image frame and audio frame [to mp4 file]
      * @param img_frame image frame
@@ -54,20 +58,24 @@ public:
     void encode_frame(std::shared_ptr<image_frame> &&img_frame,
                       std::shared_ptr<audio_frame> &&aud_frame);
 
-public:
-    /**
+private:
+    /*
+     * reset tmp files:[.pcm, .acc, .argb, .yuv, .mp4]
+     */
+    void reset_tmp_files();
+    /*
      * init ffmpeg image encode codec
      */
     void init_image_encode();
-    /**
+    /*
      * init ffmpeg audio encode codec
      */
     void init_audio_encode();
-    /**
+    /*
      * close ffmpeg image encode codec
      */
     void close_image_encode();
-    /**
+    /*
      * close ffmpeg audio encode codec
      */
     void close_audio_encode();
