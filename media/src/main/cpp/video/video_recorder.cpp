@@ -301,9 +301,6 @@ void media::video_recorder::start_record(std::string &&mp4_file) {
             break;
         }
     }
-//    mp4 = std::make_shared<ffmpeg_mp4>(0, std::forward<std::string>(mp4_file),
-//            std::forward<ff_image_args>(img_args), std::forward<ff_audio_args>(aud_args));
-//    if (mp4 != nullptr) mp4->init();
     for (auto &cp : st_cps) {
         if (cp != nullptr) {
             cp->set_record(true);
@@ -336,8 +333,6 @@ void media::video_recorder::stop_record() {
             cp->set_record(false);
         }
     }
-//    if (mp4 != nullptr) mp4->uninit();
-//    mp4.reset();
     recing = false;
     for (auto &ep : st_eps) {
         if (ep != nullptr) {
