@@ -81,8 +81,8 @@ private:
     void close_audio_encode();
 
 private:
-    void encode_image_frame(int32_t w, int32_t h, uint32_t *data);
-    void encode_audio_frame();
+    void encode_image_frame(int32_t w, int32_t h, const uint32_t* const data);
+    void encode_audio_frame(int32_t count, const int8_t* const data);
 
 private:
     ffmpeg_mp4(ffmpeg_mp4&&) = delete;

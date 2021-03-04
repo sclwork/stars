@@ -61,7 +61,7 @@ void media::ffmpeg_mp4::encode_frame(std::shared_ptr<image_frame> &&img_frame,
     if (aud_frame != nullptr && aud_frame->available()) {
         int32_t count; int8_t *data;
         aud_frame->get(&count, &data);
-        encode_audio_frame();
+        encode_audio_frame(count, data);
     }
     ++pts;
 }
@@ -409,10 +409,7 @@ void media::ffmpeg_mp4::close_audio_encode() {
     af_ctx = nullptr;
 }
 
-/*
- * run in media encode thread
- */
-void media::ffmpeg_mp4::encode_image_frame(int32_t w, int32_t h, uint32_t *data) {
+void media::ffmpeg_mp4::encode_image_frame(int32_t w, int32_t h, const uint32_t* const data) {
     memcpy(i_rgb_frm->data[0], data, i_rgb_frm->linesize[0]);
     int32_t res = sws_scale(i_sws_ctx, i_rgb_frm->data, i_rgb_frm->linesize,
             0, h, i_yuv_frm->data, i_yuv_frm->linesize);
@@ -455,8 +452,5 @@ void media::ffmpeg_mp4::encode_image_frame(int32_t w, int32_t h, uint32_t *data)
     }
 }
 
-/*
- * run in media loop thread
- */
-void media::ffmpeg_mp4::encode_audio_frame() {
+void media::ffmpeg_mp4::encode_audio_frame(int32_t count, const int8_t* const data) {
 }
