@@ -174,7 +174,7 @@ public:
         log_d("encode params created.");
     }
     ~encode_params() {
-        if (mp4 != nullptr) mp4->uninit();
+        if (mp4 != nullptr) mp4->complete();
         log_d("encode params release.");
     }
 

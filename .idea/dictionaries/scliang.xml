@@ -3,6 +3,7 @@
     <words>
       <w>avcodec</w>
       <w>avformat</w>
+      <w>avio</w>
       <w>blazeface</w>
       <w>coords</w>
       <w>essl</w>
@@ -27,6 +28,7 @@
       <w>sctcam</w>
       <w>sparams</w>
       <w>stoped</w>
+      <w>superfast</w>
       <w>tensorflow</w>
       <w>tflite</w>
       <w>thiz</w>
@@ -41,6 +43,7 @@
       <w>ycenter</w>
       <w>ymax</w>
       <w>ymin</w>
+      <w>zerolatency</w>
     </words>
   </dictionary>
 </component>

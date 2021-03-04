@@ -47,9 +47,9 @@ public:
      */
     void init();
     /**
-     * uninit/stop mpe encoder
+     * complete/stop mpe encoder
      */
-    void uninit();
+    void complete();
     /**
      * encode image frame and audio frame [to mp4 file]
      * @param img_frame image frame
@@ -104,6 +104,7 @@ private:
     std::string f_aac_name;
     //////////////////////////
     int64_t          pts;
+    int32_t          a_encode_offset;
     //////////////////////////
     AVFormatContext *if_ctx;
     AVCodecContext  *ic_ctx;
@@ -115,6 +116,8 @@ private:
     AVCodecContext  *ac_ctx;
     AVStream        *a_stm;
     AVFrame         *a_frm;
+    SwrContext      *a_swr_ctx;
+    int8_t          *a_encode_cache;
 };
 
 } //namespace media
