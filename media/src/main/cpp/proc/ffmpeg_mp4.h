@@ -103,7 +103,8 @@ private:
     std::string f_pcm_name;
     std::string f_aac_name;
     //////////////////////////
-    int64_t          pts;
+    int64_t          i_pts;
+    int64_t          a_pts;
     int32_t          a_encode_offset;
     //////////////////////////
     AVFormatContext *if_ctx;
