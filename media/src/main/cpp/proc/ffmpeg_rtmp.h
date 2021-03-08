@@ -35,15 +35,15 @@ public:
 
 public:
     /**
-     * init/start mp4 encoder
+     * init/start rtmp streaming
      */
     void init();
     /**
-     * complete/stop mpe encoder
+     * complete/stop rtmp streaming
      */
     void complete();
     /**
-     * encode image frame and audio frame [to mp4 file]
+     * encode image frame and audio frame [to rtmp url]
      * @param img_frame image frame
      * @param aud_frame audio frame
      */

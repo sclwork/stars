@@ -39,7 +39,7 @@ public:
      */
     void init();
     /**
-     * complete/stop mpe encoder
+     * complete/stop mp4 encoder
      */
     void complete();
     /**
