@@ -17,7 +17,7 @@ media::ffmpeg_mp4::ffmpeg_mp4(int32_t id, std::string &&n, ff_image_args &&img, 
 name(_tmp + "_" + std::to_string(id) + ".mp4"), image(img), audio(aud),
 f_rgb_name(_tmp + "_" + std::to_string(id) + ".rgb"), f_264_name(_tmp + "_" + std::to_string(id) + ".h264"),
 f_pcm_name(_tmp + "_" + std::to_string(id) + ".pcm"), f_aac_name(_tmp + "_" + std::to_string(id) + ".aac"),
-i_pts(0), a_pts(0), a_encode_offset(0),
+i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0),
 if_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr), i_sws_ctx(nullptr),
 af_ctx(nullptr), ac_ctx(nullptr), a_stm(nullptr), a_frm(nullptr), a_swr_ctx(nullptr), a_encode_cache(nullptr) {
     image.update_frame_size();
@@ -84,45 +84,20 @@ void media::ffmpeg_mp4::reset_tmp_files() {
 void media::ffmpeg_mp4::init_image_encode() {
     const char *file_name = name.c_str();
 
-    i_sws_ctx = sws_getContext(image.width, image.height, AV_PIX_FMT_ARGB, image.width, image.height,
-            AV_PIX_FMT_YUV420P, SWS_BILINEAR, nullptr, nullptr, nullptr);
-    if (i_sws_ctx == nullptr) {
-        log_e("init_image_encode sws_getContext fail.");
-        return;
-    }
-
-    int32_t res = avformat_alloc_output_context2(&if_ctx, nullptr, nullptr, file_name);
-    if (res < 0) {
-        log_e("init_image_encode avformat_alloc_output_context2 fail[%d].", res);
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        return;
-    }
-
-    AVOutputFormat *out_fmt = if_ctx->oformat;
-    AVCodec *codec = avcodec_find_encoder(out_fmt->video_codec);
+    AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if (codec == nullptr) {
         log_e("init_image_encode avcodec_find_encoder fail.");
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avformat_free_context(if_ctx);
-        if_ctx = nullptr;
         return;
     }
 
     log_d("video_codec: %s.", codec->long_name);
-    if_ctx->video_codec = codec;
-    ic_ctx = avcodec_alloc_context3(if_ctx->video_codec);
+    ic_ctx = avcodec_alloc_context3(codec);
     if (ic_ctx == nullptr) {
         log_e("init_image_encode avcodec_alloc_context3 fail.");
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avformat_free_context(if_ctx);
-        if_ctx = nullptr;
         return;
     }
 
-    ic_ctx->codec_id = out_fmt->video_codec;
+    ic_ctx->codec_id = codec->id;
     ic_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
     ic_ctx->pix_fmt = AV_PIX_FMT_YUV420P;
     ic_ctx->width = image.width;
@@ -133,12 +108,36 @@ void media::ffmpeg_mp4::init_image_encode() {
     ic_ctx->qmin = 10;
     ic_ctx->qmax = 51;
     ic_ctx->max_b_frames = 1;
+    ic_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-    i_stm = avformat_new_stream(if_ctx, if_ctx->video_codec);
+    AVDictionary *options = nullptr;
+    if (ic_ctx->codec_id == AV_CODEC_ID_H264) {
+        av_dict_set(&options, "preset", "superfast", 0);
+        av_dict_set(&options, "tune", "zerolatency", 0);
+    }
+
+    int32_t res = avcodec_open2(ic_ctx, codec, &options);
+    if (res < 0) {
+        log_e("init_image_encode avcodec_open2 fail.");
+        avcodec_close(ic_ctx);
+        avcodec_free_context(&ic_ctx);
+        ic_ctx = nullptr;
+        return;
+    }
+
+    res = avformat_alloc_output_context2(&if_ctx, nullptr, nullptr, file_name);
+    if (res < 0) {
+        log_e("init_image_encode avformat_alloc_output_context2 fail[%d].", res);
+        avcodec_close(ic_ctx);
+        avcodec_free_context(&ic_ctx);
+        ic_ctx = nullptr;
+        return;
+    }
+
+    i_stm = avformat_new_stream(if_ctx, codec);
     if (i_stm == nullptr) {
         log_e("init_image_encode avformat_new_stream fail.");
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
+        avcodec_close(ic_ctx);
         avcodec_free_context(&ic_ctx);
         ic_ctx = nullptr;
         avformat_free_context(if_ctx);
@@ -151,8 +150,7 @@ void media::ffmpeg_mp4::init_image_encode() {
     res = avcodec_parameters_from_context(i_stm->codecpar, ic_ctx);
     if (res < 0) {
         log_e("init_image_encode avcodec_parameters_from_context fail.");
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
+        avcodec_close(ic_ctx);
         avcodec_free_context(&ic_ctx);
         ic_ctx = nullptr;
         avformat_free_context(if_ctx);
@@ -160,17 +158,11 @@ void media::ffmpeg_mp4::init_image_encode() {
         return;
     }
 
-    AVDictionary *options = nullptr;
-    if (ic_ctx->codec_id == AV_CODEC_ID_H264) {
-        av_dict_set(&options, "preset", "superfast", 0);
-        av_dict_set(&options, "tune", "zerolatency", 0);
-    }
-
-    res = avcodec_open2(ic_ctx, if_ctx->video_codec, &options);
-    if (res < 0) {
-        log_e("init_image_encode avcodec_open2 fail.");
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
+    i_sws_ctx = sws_getContext(image.width, image.height, AV_PIX_FMT_ARGB, image.width, image.height,
+            AV_PIX_FMT_YUV420P, SWS_BILINEAR, nullptr, nullptr, nullptr);
+    if (i_sws_ctx == nullptr) {
+        log_e("init_image_encode sws_getContext fail.");
+        avcodec_close(ic_ctx);
         avcodec_free_context(&ic_ctx);
         ic_ctx = nullptr;
         avformat_free_context(if_ctx);
@@ -425,10 +417,11 @@ void media::ffmpeg_mp4::init_audio_encode() {
     }
 
     int32_t nb_samples;
-    if (ac_ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE)
+    if (ac_ctx->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) {
         nb_samples = 1024;
-    else
+    } else {
         nb_samples = ac_ctx->frame_size;
+    }
     log_d("init_audio_encode nb samples: %d", nb_samples);
     a_frm->nb_samples = nb_samples;
     a_frm->format = ac_ctx->sample_fmt;
@@ -497,8 +490,9 @@ void media::ffmpeg_mp4::init_audio_encode() {
 
     a_pts = 0;
     a_encode_offset = 0;
-    a_encode_cache = (int8_t *) malloc(sizeof(int8_t) * a_frm->linesize[0]);
-    log_d("init_audio_encode success. frame size:%d.", a_frm->linesize[0]);
+    a_encode_length = av_samples_get_buffer_size(nullptr, ac_ctx->channels, ac_ctx->frame_size, ac_ctx->sample_fmt, 1);
+    a_encode_cache = (int8_t *) malloc(sizeof(int8_t) * a_encode_length);
+    log_d("init_audio_encode success. frame size:%d.", a_encode_length);
 }
 
 void media::ffmpeg_mp4::close_image_encode() {
@@ -583,9 +577,9 @@ void media::ffmpeg_mp4::encode_image_frame(int32_t w, int32_t h, const uint32_t*
 }
 
 void media::ffmpeg_mp4::encode_audio_frame(int32_t count, const int8_t* const data) {
-    log_d("encode_audio_frame remain %d, count: %d.", a_encode_offset, count);
+    log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);
     int32_t off = 0;
-    int32_t frm_size = a_frm->linesize[0];
+    int32_t frm_size = a_encode_length;
     while(true) {
         if (count - off >= frm_size) {
             if (a_encode_offset > 0) {
@@ -599,7 +593,7 @@ void media::ffmpeg_mp4::encode_audio_frame(int32_t count, const int8_t* const da
             }
             u_char *pSrcData[1] = {nullptr};
             pSrcData[0] = (u_char *) a_encode_cache;
-            if (swr_convert(a_swr_ctx, a_frm->data, a_frm->nb_samples,
+            if (swr_convert(a_swr_ctx, a_frm->data, swr_get_out_samples(a_swr_ctx, a_frm->nb_samples),
                     (const uint8_t **)pSrcData, a_frm->nb_samples) >= 0) {
 //                log_d("encode_audio_frame swr_convert success.");
                 a_frm->pts = a_pts++;

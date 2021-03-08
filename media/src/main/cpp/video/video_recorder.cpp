@@ -194,11 +194,13 @@ public:
     void run() {
         if (frameQ != nullptr) {
             frame f;
+            if
 #ifdef USE_CONCURRENT_QUEUE
-            if (frameQ->try_dequeue(f)) {
+            (frameQ->try_dequeue(f))
 #else
-            if (frameQ->try_pop(f)) {
+            (frameQ->try_pop(f))
 #endif
+            {
                 if (mp4 != nullptr) mp4->encode_frame(
                         std::forward<std::shared_ptr<image_frame>>(f.image),
                         std::forward<std::shared_ptr<audio_frame>>(f.audio));

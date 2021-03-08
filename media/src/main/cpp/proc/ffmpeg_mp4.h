@@ -106,6 +106,7 @@ private:
     int64_t          i_pts;
     int64_t          a_pts;
     int32_t          a_encode_offset;
+    int32_t          a_encode_length;
     //////////////////////////
     AVFormatContext *if_ctx;
     AVCodecContext  *ic_ctx;
