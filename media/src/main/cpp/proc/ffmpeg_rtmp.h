@@ -1,0 +1,69 @@
+//
+// Created by Scliang on 3/8/21.
+//
+
+#ifndef STARS_FFMPEG_RTMP_H
+#define STARS_FFMPEG_RTMP_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <libavcodec/avcodec.h>
+#include <libavdevice/avdevice.h>
+#include <libavfilter/avfilter.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libpostproc/postprocess.h>
+#include <libswresample/swresample.h>
+#include <libswscale/swscale.h>
+#ifdef __cplusplus
+}
+#endif
+
+#include <mutex>
+#include <string>
+#include "ffmpeg.h"
+#include "image_frame.h"
+#include "audio_frame.h"
+
+namespace media {
+
+class ffmpeg_rtmp {
+public:
+    ffmpeg_rtmp(int32_t id, std::string &&n, image_args &&img, audio_args &&aud);
+    ~ffmpeg_rtmp();
+
+public:
+    /**
+     * init/start mp4 encoder
+     */
+    void init();
+    /**
+     * complete/stop mpe encoder
+     */
+    void complete();
+    /**
+     * encode image frame and audio frame [to mp4 file]
+     * @param img_frame image frame
+     * @param aud_frame audio frame
+     */
+    void encode_frame(std::shared_ptr<image_frame> &&img_frame,
+                      std::shared_ptr<audio_frame> &&aud_frame);
+
+private:
+    ffmpeg_rtmp(ffmpeg_rtmp&&) = delete;
+    ffmpeg_rtmp(const ffmpeg_rtmp&) = delete;
+    ffmpeg_rtmp& operator=(ffmpeg_rtmp&&) = delete;
+    ffmpeg_rtmp& operator=(const ffmpeg_rtmp&) = delete;
+
+private:
+    int32_t _id;
+    //////////////////////////
+    std::string name;
+    image_args image;
+    audio_args audio;
+};
+
+} //namespace media
+
+#endif //STARS_FFMPEG_RTMP_H

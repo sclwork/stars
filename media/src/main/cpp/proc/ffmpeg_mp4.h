@@ -2,8 +2,8 @@
 // Created by scliang on 1/14/21.
 //
 
-#ifndef STARS_FFMPEG_H
-#define STARS_FFMPEG_H
+#ifndef STARS_FFMPEG_MP4_H
+#define STARS_FFMPEG_MP4_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,23 +22,15 @@ extern "C" {
 
 #include <mutex>
 #include <string>
+#include "ffmpeg.h"
 #include "image_frame.h"
 #include "audio_frame.h"
 
 namespace media {
 
-typedef struct ff_image_args {
-    uint32_t width, height, channels, fps, frame_size;
-    void update_frame_size() { frame_size = width*height*channels; }
-} ff_image_args;
-
-typedef struct ff_audio_args {
-    uint32_t channels, sample_rate, frame_size;
-} ff_audio_args;
-
 class ffmpeg_mp4 {
 public:
-    ffmpeg_mp4(int32_t id, std::string &&n, ff_image_args &&img, ff_audio_args &&aud);
+    ffmpeg_mp4(int32_t id, std::string &&n, image_args &&img, audio_args &&aud);
     ~ffmpeg_mp4();
 
 public:
@@ -95,8 +87,8 @@ private:
     std::string _tmp;
     //////////////////////////
     std::string name;
-    ff_image_args image;
-    ff_audio_args audio;
+    image_args image;
+    audio_args audio;
     //////////////////////////
     std::string f_rgb_name;
     std::string f_264_name;
@@ -124,4 +116,4 @@ private:
 
 } //namespace media
 
-#endif //STARS_FFMPEG_H
+#endif //STARS_FFMPEG_MP4_H

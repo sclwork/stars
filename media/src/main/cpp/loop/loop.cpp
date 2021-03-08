@@ -75,12 +75,12 @@ void renderer_draw_frame() {
 //    d("renderer draw frame.");
 }
 
-void video_record_start(const char *mp4_file) {
+void video_record_start(const char *name) {
     loop_post_main([](void*c, void (*cb)(void*)) {
         const char *file = (char *) c;
         com_ptr->video_record_start(std::string(file));
 //        log_d("start video record[%s].", file);
-    }, (void *) mp4_file, nullptr);
+    }, (void *) name, nullptr);
 }
 
 void video_record_stop() {

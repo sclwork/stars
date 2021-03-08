@@ -12,7 +12,7 @@
 namespace media {
 } //namespace media
 
-media::ffmpeg_mp4::ffmpeg_mp4(int32_t id, std::string &&n, ff_image_args &&img, ff_audio_args &&aud)
+media::ffmpeg_mp4::ffmpeg_mp4(int32_t id, std::string &&n, image_args &&img, audio_args &&aud)
 :_id(id), _tmp(std::string(n).replace(n.find(".mp4"), 4, "")),
 name(_tmp + "_" + std::to_string(id) + ".mp4"), image(img), audio(aud),
 f_rgb_name(_tmp + "_" + std::to_string(id) + ".rgb"), f_264_name(_tmp + "_" + std::to_string(id) + ".h264"),

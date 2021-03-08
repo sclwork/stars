@@ -28,9 +28,9 @@ void renderer_surface_changed(int32_t w, int32_t h);
 void renderer_draw_frame();
 
 /**
- * mp4 video record
+ * mp4/rtmp video record
  */
-void video_record_start(const char *mp4_file);
+void video_record_start(const char *name);
 void video_record_stop();
 bool video_recording();
 

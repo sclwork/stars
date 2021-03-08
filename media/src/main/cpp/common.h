@@ -48,9 +48,9 @@ public:
      */
     void renderer_draw_frame();
     /**
-     * start/stop video record.
+     * start/stop/rtmp video record.
      */
-    void video_record_start(std::string &&mp4_file);
+    void video_record_start(std::string &&name);
     void video_record_stop();
     bool video_recording();
 

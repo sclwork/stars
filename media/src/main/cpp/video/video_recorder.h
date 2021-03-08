@@ -49,9 +49,9 @@ public:
      void stop_preview();
      /**
       * start video record save to mp4 file
-      * @param mp4_file mp4 file path
+      * @param name mp4 file path / rtmp url
       */
-     void start_record(std::string &&mp4_file);
+     void start_record(std::string &&name);
      /**
       * stop video record
       */

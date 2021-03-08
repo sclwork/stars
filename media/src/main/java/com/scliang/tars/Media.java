@@ -150,15 +150,17 @@ public class Media {
 
     /**
      * Start Video Record
+     * @param name [.mp4]  save video to mp4 file   (/sdcard/demo.mp4)
+     *             [rtmp:] rtmp video stream to url (rtmp://127.0.0.1/live/demo)
      */
-    public static void startVideoRecord(@NonNull String mp4File) {
+    public static void startVideoRecord(@NonNull String name) {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
             return;
 
         // jni start video record
-        r.jniStartVideoRecord(mp4File);
+        r.jniStartVideoRecord(name);
     }
 
     /**
@@ -407,7 +409,7 @@ public class Media {
     private native int jniRendererSurfaceDestroyed();
     private native int jniRendererDrawFrame();
     ///////////////////////////////////////////////////////////
-    private native int     jniStartVideoRecord(@NonNull String mp4File);
+    private native int     jniStartVideoRecord(@NonNull String name);
     private native int     jniStopVideoRecord();
     private native boolean jniVideoRecording();
 

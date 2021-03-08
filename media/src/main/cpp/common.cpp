@@ -101,9 +101,9 @@ void media::common::renderer_updt_frame(const media::image_frame &frm) {
 /*
  * run in media main loop thread.
  */
-void media::common::video_record_start(std::string &&mp4_file) {
+void media::common::video_record_start(std::string &&name) {
     if (vid_rec != nullptr) {
-        vid_rec->start_record(std::forward<std::string>(mp4_file));
+        vid_rec->start_record(std::forward<std::string>(name));
     }
 }
 
