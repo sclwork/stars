@@ -1,3 +1,6 @@
 {
-    "cmake.sourceDirectory": "${workspaceFolder}/media"
+    "cmake.sourceDirectory": "${workspaceFolder}/media",
+    "files.associations": {
+        "chrono": "cpp"
+    }
 }

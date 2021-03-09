@@ -13,6 +13,7 @@ extern "C" {
 #include <libavfilter/avfilter.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
+#include "libavutil/time.h"
 #include <libpostproc/postprocess.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
@@ -51,17 +52,32 @@ public:
                       std::shared_ptr<audio_frame> &&aud_frame);
 
 private:
+    void init_image_encode();
+    void close_image_encode();
+    void encode_image_frame(int32_t w, int32_t h, const uint32_t* const data);
+
+private:
     ffmpeg_rtmp(ffmpeg_rtmp&&) = delete;
     ffmpeg_rtmp(const ffmpeg_rtmp&) = delete;
     ffmpeg_rtmp& operator=(ffmpeg_rtmp&&) = delete;
     ffmpeg_rtmp& operator=(const ffmpeg_rtmp&) = delete;
 
 private:
-    int32_t _id;
+    int32_t          _id;
     //////////////////////////
-    std::string name;
-    image_args image;
-    audio_args audio;
+    int64_t          i_pts;
+    int64_t          st_time;
+    //////////////////////////
+    std::string      name;
+    image_args       image;
+    audio_args       audio;
+    //////////////////////////
+    AVCodecContext  *ic_ctx;
+    AVFormatContext *if_ctx;
+    AVStream        *i_stm;
+    SwsContext      *i_sws_ctx;
+    AVFrame         *i_rgb_frm;
+    AVFrame         *i_yuv_frm;
 };
 
 } //namespace media

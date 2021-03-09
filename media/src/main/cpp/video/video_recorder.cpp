@@ -293,7 +293,7 @@ void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image
 #ifdef USE_CONCURRENT_QUEUE
         std::forward<std::shared_ptr<moodycamel::ConcurrentQueue<frame>>>(frameQ)
 #else
-            std::forward<std::shared_ptr<safe_queue<frame>>>(frameQ)
+        std::forward<std::shared_ptr<safe_queue<frame>>>(frameQ)
 #endif
     );
     st_cps.push_back(std::shared_ptr<collect_params>(ctx, [](void*){})); // delete cp in img_collect_run
