@@ -2,7 +2,7 @@
 // Created by scliang on 1/6/21.
 //
 
-#include "log.h"
+#include "jni_log.h"
 #include "image_recorder.h"
 
 #define log_d(...)  LOG_D("Media-Native:image_recorder", __VA_ARGS__)

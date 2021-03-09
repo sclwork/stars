@@ -10,7 +10,7 @@
 #include <camera/NdkCameraDevice.h>
 #include <camera/NdkCameraManager.h>
 #include <libyuv.h>
-#include "log.h"
+#include "jni_log.h"
 #include "camera.h"
 
 #define log_d(...)  LOG_D("Media-Native:camera_proc", __VA_ARGS__)

@@ -9,7 +9,7 @@
 #include <media/NdkImageReader.h>
 #include <camera/NdkCameraDevice.h>
 #include <camera/NdkCameraManager.h>
-#include "log.h"
+#include "jni_log.h"
 #include "camera.h"
 
 #define log_d(...)  LOG_D("Media-Native:camera", __VA_ARGS__)

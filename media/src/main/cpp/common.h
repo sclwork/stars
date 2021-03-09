@@ -8,7 +8,7 @@
 #include <map>
 #include <time.h>
 #include <string>
-#include "log.h"
+#include "jni_log.h"
 #include "image/play/image_renderer.h"
 #include "video/video_recorder.h"
 

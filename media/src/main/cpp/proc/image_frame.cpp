@@ -3,7 +3,7 @@
 //
 
 #include <string>
-#include "log.h"
+#include "jni_log.h"
 #include "image_frame.h"
 
 #define log_d(...)  LOG_D("Media-Native:image_frame", __VA_ARGS__)

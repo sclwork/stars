@@ -2,7 +2,7 @@
 // Created by Scliang on 3/8/21.
 //
 
-#include "log.h"
+#include "jni_log.h"
 #include "ffmpeg_rtmp.h"
 
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_rtmp", __VA_ARGS__)

@@ -2,7 +2,7 @@
 // Created by scliang on 1/14/21.
 //
 
-#include "log.h"
+#include "jni_log.h"
 #include "tflite.h"
 
 #define log_d(...)  LOG_D("Media-Native:tflite", __VA_ARGS__)

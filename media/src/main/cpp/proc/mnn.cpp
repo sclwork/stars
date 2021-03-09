@@ -6,7 +6,7 @@
 #include <MNN/MNNDefine.h>
 #include <MNN/Tensor.hpp>
 #include <MNN/ImageProcess.hpp>
-#include "log.h"
+#include "jni_log.h"
 #include "mnn.h"
 
 #define log_d(...)  LOG_D("Media-Native:mnn", __VA_ARGS__)

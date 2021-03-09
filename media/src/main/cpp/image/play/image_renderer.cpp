@@ -2,7 +2,7 @@
 // Created by scliang on 1/7/21.
 //
 
-#include "log.h"
+#include "jni_log.h"
 #include "camera_paint.h"
 #include "image_renderer.h"
 

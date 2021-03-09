@@ -3,7 +3,7 @@
 //
 
 #include <cstdio>
-#include "log.h"
+#include "jni_log.h"
 #include "ffmpeg_mp4.h"
 
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_mp4", __VA_ARGS__)

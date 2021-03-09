@@ -3,7 +3,7 @@
 //
 
 #include <string>
-#include "log.h"
+#include "jni_log.h"
 #include "audio_recorder.h"
 
 #define log_d(...)  LOG_D("Media-Native:audio_recorder", __VA_ARGS__)

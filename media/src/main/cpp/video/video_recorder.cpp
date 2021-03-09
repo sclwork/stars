@@ -6,7 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "log.h"
+#include "jni_log.h"
 #include "video_recorder.h"
 #include "image/collect/image_recorder.h"
 #include "audio/collect/audio_recorder.h"

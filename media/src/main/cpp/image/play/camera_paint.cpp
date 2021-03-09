@@ -2,7 +2,7 @@
 // Created by scliang on 1/6/21.
 //
 
-#include "log.h"
+#include "jni_log.h"
 #include "camera_paint.h"
 
 #define log_d(...)  LOG_D("Media-Native:camera_paint", __VA_ARGS__)
