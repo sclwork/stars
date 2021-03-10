@@ -51,9 +51,8 @@ public:
                       std::shared_ptr<audio_frame> &&aud_frame);
 
 private:
-    void init_image_encode();
-    void close_image_encode();
-    void encode_image_frame(int32_t w, int32_t h, const uint32_t* const data);
+    void encode_ia_frame(int32_t w, int32_t h, const uint32_t* const img_data,
+                         int32_t count, const int8_t* const aud_data);
 
 private:
     ffmpeg_rtmp(ffmpeg_rtmp&&) = delete;
@@ -65,17 +64,25 @@ private:
     int32_t          _id;
     //////////////////////////
     int64_t          i_pts;
+    int64_t          a_pts;
+    int32_t          a_encode_offset;
+    int32_t          a_encode_length;
     //////////////////////////
     std::string      name;
     image_args       image;
     audio_args       audio;
     //////////////////////////
+    AVFormatContext *vf_ctx;
     AVCodecContext  *ic_ctx;
-    AVFormatContext *if_ctx;
     AVStream        *i_stm;
     SwsContext      *i_sws_ctx;
     AVFrame         *i_rgb_frm;
     AVFrame         *i_yuv_frm;
+    AVCodecContext  *ac_ctx;
+    AVStream        *a_stm;
+    SwrContext      *a_swr_ctx;
+    AVFrame         *a_frm;
+    int8_t          *a_encode_cache;
 };
 
 } //namespace media

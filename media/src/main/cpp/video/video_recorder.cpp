@@ -10,6 +10,7 @@
 #include "video_recorder.h"
 #include "image/collect/image_recorder.h"
 #include "audio/collect/audio_recorder.h"
+#include "proc/proc.h"
 #include "proc/mnn.h"
 #include "proc/ffmpeg_mp4.h"
 #include "proc/ffmpeg_rtmp.h"
@@ -18,14 +19,6 @@
 #define log_e(...)  LOG_E("Media-Native:video_recorder", __VA_ARGS__)
 
 namespace media {
-
-static bool endWith(const std::string &str, const std::string &tail) {
-    return str.compare(str.size() - tail.size(), tail.size(), tail) == 0;
-}
-
-static bool startWith(const std::string &str, const std::string &head) {
-    return str.compare(0, head.size(), head) == 0;
-}
 
 class collect_params {
 public:
