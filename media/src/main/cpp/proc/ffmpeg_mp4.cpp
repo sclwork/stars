@@ -158,7 +158,7 @@ void media::ffmpeg_mp4::init_image_encode() {
         return;
     }
 
-    i_sws_ctx = sws_getContext(image.width, image.height, AV_PIX_FMT_ARGB, image.width, image.height,
+    i_sws_ctx = sws_getContext(image.width, image.height, AV_PIX_FMT_RGBA, image.width, image.height,
             AV_PIX_FMT_YUV420P, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (i_sws_ctx == nullptr) {
         log_e("init_image_encode sws_getContext fail.");
@@ -183,7 +183,7 @@ void media::ffmpeg_mp4::init_image_encode() {
         return;
     }
 
-    i_rgb_frm->format = AV_PIX_FMT_ARGB;
+    i_rgb_frm->format = AV_PIX_FMT_RGBA;
     i_rgb_frm->width = image.width;
     i_rgb_frm->height = image.height;
 
@@ -533,7 +533,7 @@ void media::ffmpeg_mp4::close_audio_encode() {
 }
 
 void media::ffmpeg_mp4::encode_image_frame(int32_t w, int32_t h, const uint32_t* const data) {
-    memcpy(i_rgb_frm->data[0], data, sizeof(uint8_t) * i_rgb_frm->linesize[0]);
+    avpicture_fill((AVPicture *)i_rgb_frm, (uint8_t *)data, AV_PIX_FMT_RGBA, w, h);
     int32_t res = sws_scale(i_sws_ctx, i_rgb_frm->data, i_rgb_frm->linesize,
             0, h, i_yuv_frm->data, i_yuv_frm->linesize);
     if (res <= 0) {

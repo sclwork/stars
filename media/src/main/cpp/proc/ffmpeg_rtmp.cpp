@@ -12,7 +12,7 @@ namespace media {
 } //namespace media
 
 media::ffmpeg_rtmp::ffmpeg_rtmp(int32_t id, std::string &&n, image_args &&img, audio_args &&aud)
-:_id(id), i_pts(0), st_time(-1), name(n), image(img), audio(aud),
+:_id(id), i_pts(0), name(n), image(img), audio(aud),
 ic_ctx(nullptr), if_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr) {
     image.update_frame_size();
     log_d("[%d] created. [v:%d,%d,%d,%d],[a:%d,%d,%d].",
@@ -145,7 +145,7 @@ void media::ffmpeg_rtmp::init_image_encode() {
         return;
     }
 
-    i_sws_ctx = sws_getContext(image.width, image.height, AV_PIX_FMT_ARGB, image.width, image.height,
+    i_sws_ctx = sws_getContext(image.width, image.height, AV_PIX_FMT_RGBA, image.width, image.height,
             AV_PIX_FMT_YUV420P, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (i_sws_ctx == nullptr) {
         log_e("init_image_encode sws_getContext fail.");
@@ -170,7 +170,7 @@ void media::ffmpeg_rtmp::init_image_encode() {
         return;
     }
 
-    i_rgb_frm->format = AV_PIX_FMT_ARGB;
+    i_rgb_frm->format = AV_PIX_FMT_RGBA;
     i_rgb_frm->width = image.width;
     i_rgb_frm->height = image.height;
 
@@ -297,14 +297,13 @@ void media::ffmpeg_rtmp::close_image_encode() {
 }
 
 void media::ffmpeg_rtmp::encode_image_frame(int32_t w, int32_t h, const uint32_t* const data) {
-    if (st_time < 0) { st_time = av_gettime(); }
-    log_d("encode_image_frame start_time: %d.", st_time);
-
-    memcpy(i_rgb_frm->data[0], data, sizeof(uint8_t) * i_rgb_frm->linesize[0]);
+    avpicture_fill((AVPicture *)i_rgb_frm, (uint8_t *)data, AV_PIX_FMT_RGBA, w, h);
     int32_t res = sws_scale(i_sws_ctx, i_rgb_frm->data, i_rgb_frm->linesize,
             0, h, i_yuv_frm->data, i_yuv_frm->linesize);
     if (res <= 0) {
-        log_e("encode_image_frame sws_scale fail[%d].", res);
+        char err[64];
+        av_strerror(res, err, 64);
+        log_e("encode_image_frame sws_scale fail[%d] %s.", res, err);
         return;
     }
 

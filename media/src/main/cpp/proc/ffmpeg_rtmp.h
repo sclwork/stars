@@ -13,7 +13,6 @@ extern "C" {
 #include <libavfilter/avfilter.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
-#include "libavutil/time.h"
 #include <libpostproc/postprocess.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
@@ -66,7 +65,6 @@ private:
     int32_t          _id;
     //////////////////////////
     int64_t          i_pts;
-    int64_t          st_time;
     //////////////////////////
     std::string      name;
     image_args       image;
