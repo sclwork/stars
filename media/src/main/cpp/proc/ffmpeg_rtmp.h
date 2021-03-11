@@ -83,6 +83,7 @@ private:
     SwrContext      *a_swr_ctx;
     AVFrame         *a_frm;
     int8_t          *a_encode_cache;
+    AVBitStreamFilterContext *a_aac_adtstoasc;
 };
 
 } //namespace media

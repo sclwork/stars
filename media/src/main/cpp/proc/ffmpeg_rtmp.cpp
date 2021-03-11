@@ -15,7 +15,8 @@ namespace media {
 media::ffmpeg_rtmp::ffmpeg_rtmp(int32_t id, std::string &&n, image_args &&img, audio_args &&aud)
 :_id(id), i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0), name(n), image(img), audio(aud),
 vf_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr),
-ac_ctx(nullptr), a_stm(nullptr), a_swr_ctx(nullptr), a_frm(nullptr), a_encode_cache(nullptr) {
+ac_ctx(nullptr), a_stm(nullptr), a_swr_ctx(nullptr), a_frm(nullptr), a_encode_cache(nullptr),
+a_aac_adtstoasc(av_bitstream_filter_init("aac_adtstoasc")) {
     image.update_frame_size();
     log_d("[%d] created. [v:%d,%d,%d,%d],[a:%d,%d,%d].",
           _id, image.width, image.height, image.channels, image.frame_size,
@@ -33,6 +34,7 @@ media::ffmpeg_rtmp::~ffmpeg_rtmp() {
     if (ac_ctx) avcodec_close(ac_ctx);
     if (ac_ctx) avcodec_free_context(&ac_ctx);
     if (vf_ctx) avformat_free_context(vf_ctx);
+    if (a_aac_adtstoasc) av_bitstream_filter_close(a_aac_adtstoasc);
     log_d("[%d] release.", _id);
 }
 
@@ -40,11 +42,19 @@ void media::ffmpeg_rtmp::init() {
     av_register_all();
     avcodec_register_all();
     avformat_network_init();
-    // init image encode
-    const char *rtmp_url = name.c_str();
 
+    const char *rtmp_url = name.c_str();
+    int32_t res = avformat_alloc_output_context2(&vf_ctx, nullptr, "flv", rtmp_url);
+    if (res < 0) {
+        log_e("init_image_encode avformat_alloc_output_context2 fail[%d].", res);
+        return;
+    }
+
+    // init image encode
     AVCodec *i_codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if (i_codec == nullptr) {
+        avformat_free_context(vf_ctx);
+        vf_ctx = nullptr;
         log_e("init_image_encode avcodec_find_encoder fail.");
         return;
     }
@@ -52,6 +62,8 @@ void media::ffmpeg_rtmp::init() {
     log_d("video_codec: %s.", i_codec->long_name);
     ic_ctx = avcodec_alloc_context3(i_codec);
     if (ic_ctx == nullptr) {
+        avformat_free_context(vf_ctx);
+        vf_ctx = nullptr;
         log_e("init_image_encode avcodec_alloc_context3 fail.");
         return;
     }
@@ -67,7 +79,9 @@ void media::ffmpeg_rtmp::init() {
     ic_ctx->qmin = 10;
     ic_ctx->qmax = 51;
     ic_ctx->max_b_frames = 1;
-    ic_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
+        ic_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    }
 
     AVDictionary *options = nullptr;
     if (ic_ctx->codec_id == AV_CODEC_ID_H264) {
@@ -75,25 +89,16 @@ void media::ffmpeg_rtmp::init() {
         av_dict_set(&options, "tune", "zerolatency", 0);
     }
 
-    int32_t res = avcodec_open2(ic_ctx, i_codec, &options);
+    res = avcodec_open2(ic_ctx, i_codec, &options);
     if (res < 0) {
         log_e("init_image_encode avcodec_open2 fail.");
         avcodec_close(ic_ctx);
         avcodec_free_context(&ic_ctx);
         ic_ctx = nullptr;
+        avformat_free_context(vf_ctx);
+        vf_ctx = nullptr;
         return;
     }
-
-    res = avformat_alloc_output_context2(&vf_ctx, nullptr, "flv", rtmp_url);
-    if (res < 0) {
-        log_e("init_image_encode avformat_alloc_output_context2 fail[%d].", res);
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        return;
-    }
-
-    log_d("init_image_encode vf_ctx stream num: %d.", vf_ctx->nb_streams);
 
     i_stm = avformat_new_stream(vf_ctx, i_codec);
     if (i_stm == nullptr) {
@@ -106,7 +111,7 @@ void media::ffmpeg_rtmp::init() {
         return;
     }
 
-    i_stm->id = 0;
+    i_stm->id = vf_ctx->nb_streams - 1;
     i_stm->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
     i_stm->codec->codec_tag = 0;
 	if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
@@ -305,12 +310,16 @@ void media::ffmpeg_rtmp::init() {
         return;
     }
 
+    ac_ctx->codec_id = a_codec->id;
+    ac_ctx->codec_type = AVMEDIA_TYPE_AUDIO;
     ac_ctx->bit_rate = 128000;
     ac_ctx->sample_rate = audio.sample_rate;
     ac_ctx->sample_fmt = AV_SAMPLE_FMT_FLTP;
     ac_ctx->channels = audio.channels;
     ac_ctx->channel_layout = av_get_default_channel_layout(audio.channels);
-    ac_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
+        ac_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    }
 
     res = avcodec_open2(ac_ctx, a_codec, nullptr);
     if (res < 0) {
@@ -350,7 +359,7 @@ void media::ffmpeg_rtmp::init() {
         return;
     }
 
-    a_stm->id = 1;
+    a_stm->id = vf_ctx->nb_streams - 1;
     a_stm->time_base = {1, (int32_t)audio.sample_rate };
     res = avcodec_parameters_from_context(a_stm->codecpar, ac_ctx);
     if (res < 0) {
@@ -499,6 +508,7 @@ void media::ffmpeg_rtmp::init() {
     a_encode_length = av_samples_get_buffer_size(nullptr, ac_ctx->channels, ac_ctx->frame_size, ac_ctx->sample_fmt, 1);
     a_encode_cache = (int8_t *) malloc(sizeof(int8_t) * a_encode_length);
     log_d("init_audio_encode success. frame size:%d.", a_encode_length);
+    log_d("init_video_encode vf_ctx stream num: %d.", vf_ctx->nb_streams);
 }
 
 void media::ffmpeg_rtmp::complete() {
@@ -547,6 +557,11 @@ void media::ffmpeg_rtmp::encode_frame(std::shared_ptr<image_frame> &&img_frame,
 
 void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* const img_data,
                                          int32_t count, const int8_t* const aud_data) {
+    // check init success
+    if (vf_ctx == nullptr) {
+        return;
+    }
+
     // encode image
     if (w > 0 && h > 0 && img_data != nullptr) {
         avpicture_fill((AVPicture *)i_rgb_frm, (uint8_t *)img_data, AV_PIX_FMT_RGBA, w, h);
@@ -587,11 +602,9 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
                 break;
             }
 
-            if (vf_ctx->nb_streams > 0) {
-                av_packet_rescale_ts(pkt, ic_ctx->time_base, vf_ctx->streams[0]->time_base);
-            }
-            pkt->stream_index = 0;
-        //    log_d("encode_image_frame avcodec_receive_packet success.");
+            av_packet_rescale_ts(pkt, i_stm->codec->time_base, i_stm->time_base);
+            pkt->stream_index = i_stm->index;
+            // log_d("encode_image_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
             av_interleaved_write_frame(vf_ctx, pkt);
             av_packet_free(&pkt);
@@ -637,13 +650,12 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
                                 break;
                             }
 
-                            if (vf_ctx->nb_streams > 1) {
-                                av_packet_rescale_ts(pkt, ac_ctx->time_base, vf_ctx->streams[1]->time_base);
-                            }
-                            pkt->stream_index = 1;
-                            // log_d("encode_audio_frame avcodec_receive_packet success.");
+                            av_packet_rescale_ts(pkt, a_stm->codec->time_base, a_stm->time_base);
+                            pkt->stream_index = a_stm->index;
+                            av_bitstream_filter_filter(a_aac_adtstoasc, a_stm->codec, nullptr, 
+                                &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
+                            // log_d("encode_audio_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-                            // TODO: rtmp audio frame
                             // av_interleaved_write_frame(vf_ctx, pkt);
                             av_packet_free(&pkt);
                         }
