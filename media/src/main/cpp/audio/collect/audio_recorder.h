@@ -10,11 +10,17 @@
 #include <SLES/OpenSLES_Android.h>
 #include "proc/audio_frame.h"
 
+#define USE_8K
+
 namespace media {
 
 // PCM Size=采样率*采样时间*采样位深/8*通道数（Bytes）
 const int32_t PERIOD_TIME  = 10;  // 10ms
+#ifdef USE_8K
+const int32_t PCM_BUF_SIZE = 8192; // 8192bytes
+#else
 const int32_t PCM_BUF_SIZE = 320; // 320bytes
+#endif
 
 class audio_recorder {
 public:

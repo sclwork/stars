@@ -17,7 +17,12 @@ media::audio_recorder::audio_recorder(uint32_t channels, uint32_t sample_rate)
 channels(channels<=1?1:2), sampling_rate(sample_rate==44100?SL_SAMPLINGRATE_44_1:SL_SAMPLINGRATE_16),
 sample_rate(sampling_rate / 1000),
 pcm_data((int8_t*)malloc(sizeof(int8_t)*PCM_BUF_SIZE)),
-frm_size(PCM_BUF_SIZE*sample_rate/100), frm_changed(true),
+#ifdef USE_8K
+frm_size(PCM_BUF_SIZE),
+#else
+frm_size(PCM_BUF_SIZE*sample_rate/100),
+#endif
+frm_changed(true),
 cache(std::make_shared<audio_frame>(frm_size)),
 frame(std::make_shared<audio_frame>(frm_size)) {
     log_d("created. channels:%d, sample_rate:%d.", this->channels, this->sample_rate);
@@ -65,15 +70,20 @@ bool media::audio_recorder::enqueue(bool chk_recording) {
 
 void media::audio_recorder::handle_frame() {
     if (cache != nullptr) {
+#ifdef USE_8K
+        memcpy(frame->cache, pcm_data, sizeof(int8_t) * PCM_BUF_SIZE);
+        frm_changed = true;
+#else
         if (cache->cp_offset + PCM_BUF_SIZE > cache->size) {
             cache->cp_offset = 0;
         }
-        memcpy(cache->cache + cache->cp_offset, pcm_data, sizeof(int8_t)*PCM_BUF_SIZE);
+        memcpy(cache->cache + cache->cp_offset, pcm_data, sizeof(int8_t) * PCM_BUF_SIZE);
         cache->cp_offset += PCM_BUF_SIZE;
         if (frame != nullptr && cache->cp_offset >= cache->size) {
-            memcpy(frame->cache, cache->cache, sizeof(int8_t)*frame->size);
+            memcpy(frame->cache, cache->cache, sizeof(int8_t) * frame->size);
             frm_changed = true;
         }
+#endif
     }
 }
 

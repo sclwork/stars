@@ -30,7 +30,7 @@ namespace media {
 
 class ffmpeg_rtmp {
 public:
-    ffmpeg_rtmp(int32_t id, std::string &&n, image_args &&img, audio_args &&aud);
+    ffmpeg_rtmp(int32_t id, std::string &&f, std::string &&n, image_args &&img, audio_args &&aud);
     ~ffmpeg_rtmp();
 
 public:
@@ -51,6 +51,7 @@ public:
                       std::shared_ptr<audio_frame> &&aud_frame);
 
 private:
+    void on_free_all();
     void encode_ia_frame(int32_t w, int32_t h, const uint32_t* const img_data,
                          int32_t count, const int8_t* const aud_data);
 
@@ -68,6 +69,7 @@ private:
     int32_t          a_encode_offset;
     int32_t          a_encode_length;
     //////////////////////////
+    std::string      file;
     std::string      name;
     image_args       image;
     audio_args       audio;

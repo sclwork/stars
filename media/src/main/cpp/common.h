@@ -19,7 +19,7 @@ namespace media {
  */
 class common {
 public:
-    common(std::string &&cascade, std::string &&mnn);
+    common(std::string &&file_root, std::string &&cascade, std::string &&mnn);
     ~common();
 
 public:
@@ -68,6 +68,7 @@ private:
     common& operator=(const common&) = delete;
 
 private:
+    std::string file_root;
     std::string mnn_path;
     std::shared_ptr<image_renderer> renderer;
     std::shared_ptr<video_recorder> vid_rec;

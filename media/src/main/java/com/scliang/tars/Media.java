@@ -52,7 +52,7 @@ public class Media {
         if (r.mInit) {
             // jni init
             r.getDemoCppFileRes(); // TODO: demo png res
-            r.jniInit(r.getOpenCVCascadeFileRes(), r.getMNNFileRes());
+            r.jniInit(r.getFileRootRes(), r.getOpenCVCascadeFileRes(), r.getMNNFileRes());
         }
 
         // return
@@ -290,6 +290,19 @@ public class Media {
 
     ///////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////
+    private String getFileRootRes() {
+        try {
+            Context context = getContext();
+            if (context == null)
+                return "";
+            File dir = context.getDir("files", Context.MODE_PRIVATE);
+            return dir.getAbsolutePath();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
     private String getOpenCVCascadeFileRes() {
         InputStream is = null;
         FileOutputStream os = null;
@@ -398,7 +411,8 @@ public class Media {
 
     ///////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////
-    private native void jniInit(@NonNull String opencvCascadePath,
+    private native void jniInit(@NonNull String fileRoot,
+                                @NonNull String opencvCascadePath,
                                 @NonNull String mnnModelPaths);
     private native void jniRelease();
     ///////////////////////////////////////////////////////////

@@ -15,12 +15,14 @@ extern "C" {
 JNIEXPORT void JNICALL
 Java_com_scliang_tars_Media_jniInit(
 JNIEnv *env, jobject thiz,
-jstring opencvCascadePath, jstring mnnModelPaths) {
+jstring fileRootPath, jstring opencvCascadePath, jstring mnnModelPaths) {
 //    log_d("RecorderJNI [Init]");
+    const char *file = env->GetStringUTFChars(fileRootPath, nullptr);
     const char *cascade = env->GetStringUTFChars(opencvCascadePath, nullptr);
     const char *mnn = env->GetStringUTFChars(mnnModelPaths, nullptr);
     // start main loop
-    media::loop_start(cascade, mnn);
+    media::loop_start(file, cascade, mnn);
+    env->ReleaseStringUTFChars(fileRootPath, file);
     env->ReleaseStringUTFChars(opencvCascadePath, cascade);
     env->ReleaseStringUTFChars(mnnModelPaths, mnn);
 }

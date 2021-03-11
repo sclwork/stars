@@ -160,6 +160,7 @@ private:
 class encode_params {
 public:
     encode_params(
+        std::string &&file_root,
         std::string &&name,
         image_args &&img_args, audio_args &&aud_args,
         std::shared_ptr<std::atomic_bool> &runnable,
@@ -171,7 +172,8 @@ public:
     ):_mux(), runnable(runnable),
     mp4(endWith(name,".mp4")?std::make_shared<ffmpeg_mp4>(0, std::forward<std::string>(name),
             std::forward<image_args>(img_args), std::forward<audio_args>(aud_args)):nullptr),
-    rtmp(startWith(name,"rtmp")?std::make_shared<ffmpeg_rtmp>(0, std::forward<std::string>(name),
+    rtmp(startWith(name,"rtmp")?std::make_shared<ffmpeg_rtmp>(0,
+            std::forward<std::string>(file_root), std::forward<std::string>(name),
             std::forward<image_args>(img_args), std::forward<audio_args>(aud_args)):nullptr),
     frameQ(fQ) {
         if (mp4 != nullptr) mp4->init();
@@ -303,8 +305,8 @@ void media::video_recorder::stop_preview() {
     st_cps.clear();
 }
 
-void media::video_recorder::start_record(std::string &&name) {
-    log_d("start video record[%s].", name.c_str());
+void media::video_recorder::start_record(std::string &&file_root, std::string &&name) {
+    log_d("start video record[%s]-[%s].", file_root.c_str(), name.c_str());
     image_args img_args{};
     audio_args aud_args{};
     for (auto &cp : st_cps) {
@@ -324,7 +326,7 @@ void media::video_recorder::start_record(std::string &&name) {
         }
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
-    auto *ctx = new encode_params(std::forward<std::string>(name),
+    auto *ctx = new encode_params(std::forward<std::string>(file_root), std::forward<std::string>(name),
             std::forward<image_args>(img_args), std::forward<audio_args>(aud_args), runnable,
 #ifdef USE_CONCURRENT_QUEUE
             std::forward<std::shared_ptr<moodycamel::ConcurrentQueue<frame>>>(frameQ)

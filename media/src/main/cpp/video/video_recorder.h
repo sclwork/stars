@@ -51,7 +51,7 @@ public:
       * start video record save to mp4 file
       * @param name mp4 file path / rtmp url
       */
-     void start_record(std::string &&name);
+     void start_record(std::string &&file_root, std::string &&name);
      /**
       * stop video record
       */

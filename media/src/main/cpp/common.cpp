@@ -13,9 +13,10 @@ namespace media {
     static common *gcom = nullptr;
 } //namespace media
 
-media::common::common(std::string &&cas_path, std::string &&mnn_path)
-:mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr) {
+media::common::common(std::string &&file_root, std::string &&cas_path, std::string &&mnn_path)
+:file_root(file_root), mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr) {
     gcom = this;
+    log_d("file_root:%s.", file_root.c_str());
     log_d("cas_path:%s.", cas_path.c_str());
     log_d("mnn_path:%s.", mnn_path.c_str());
     log_d("created.");
@@ -103,7 +104,8 @@ void media::common::renderer_updt_frame(const media::image_frame &frm) {
  */
 void media::common::video_record_start(std::string &&name) {
     if (vid_rec != nullptr) {
-        vid_rec->start_record(std::forward<std::string>(name));
+        vid_rec->start_record(std::forward<std::string>(file_root),
+                              std::forward<std::string>(name));
     }
 }
 

@@ -121,13 +121,14 @@ static void loop_main_run() {
 
 } //namespace media
 
-void media::loop_start(const char *cascade, const char *mnn) {
+void media::loop_start(const char *file_root, const char *cascade, const char *mnn) {
     if (loop_main_running) {
         return;
     }
 
     log_d("==================================================");
-    com_ptr.reset(new common(std::forward<std::string>(cascade),
+    com_ptr.reset(new common(std::forward<std::string>(file_root),
+                             std::forward<std::string>(cascade),
                              std::forward<std::string>(mnn)));
 
     std::thread main_t(loop_main_run);

@@ -12,8 +12,8 @@
 namespace media {
 } //namespace media
 
-media::ffmpeg_rtmp::ffmpeg_rtmp(int32_t id, std::string &&n, image_args &&img, audio_args &&aud)
-:_id(id), i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0), name(n), image(img), audio(aud),
+media::ffmpeg_rtmp::ffmpeg_rtmp(int32_t id, std::string &&f, std::string &&n, image_args &&img, audio_args &&aud)
+:_id(id), i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0), file(f), name(n), image(img), audio(aud),
 vf_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr),
 ac_ctx(nullptr), a_stm(nullptr), a_swr_ctx(nullptr), a_frm(nullptr), a_encode_cache(nullptr),
 a_aac_adtstoasc(av_bitstream_filter_init("aac_adtstoasc")) {
@@ -47,24 +47,23 @@ void media::ffmpeg_rtmp::init() {
     int32_t res = avformat_alloc_output_context2(&vf_ctx, nullptr, "flv", rtmp_url);
     if (res < 0) {
         log_e("init_image_encode avformat_alloc_output_context2 fail[%d].", res);
+        on_free_all();
         return;
     }
 
     // init image encode
     AVCodec *i_codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if (i_codec == nullptr) {
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
         log_e("init_image_encode avcodec_find_encoder fail.");
+        on_free_all();
         return;
     }
 
     log_d("video_codec: %s.", i_codec->long_name);
     ic_ctx = avcodec_alloc_context3(i_codec);
     if (ic_ctx == nullptr) {
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
         log_e("init_image_encode avcodec_alloc_context3 fail.");
+        on_free_all();
         return;
     }
 
@@ -92,22 +91,14 @@ void media::ffmpeg_rtmp::init() {
     res = avcodec_open2(ic_ctx, i_codec, &options);
     if (res < 0) {
         log_e("init_image_encode avcodec_open2 fail.");
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
     i_stm = avformat_new_stream(vf_ctx, i_codec);
     if (i_stm == nullptr) {
         log_e("init_image_encode avformat_new_stream fail.");
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
@@ -118,27 +109,10 @@ void media::ffmpeg_rtmp::init() {
 		i_stm->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
-    res = avio_open(&vf_ctx->pb, rtmp_url, AVIO_FLAG_WRITE);
-    if (res < 0) {
-        char err[64];
-        av_strerror(res, err, 64);
-        log_e("init_image_encode avio_open fail: (%d) %s", res, err);
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
-        return;
-    }
-
     res = avcodec_parameters_from_context(i_stm->codecpar, ic_ctx);
     if (res < 0) {
         log_e("init_image_encode avcodec_parameters_from_context fail.");
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
@@ -146,24 +120,14 @@ void media::ffmpeg_rtmp::init() {
             AV_PIX_FMT_YUV420P, SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (i_sws_ctx == nullptr) {
         log_e("init_image_encode sws_getContext fail.");
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
     i_rgb_frm = av_frame_alloc();
     if (i_rgb_frm == nullptr) {
         log_e("init_image_encode av_frame_alloc fail.");
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
@@ -174,45 +138,21 @@ void media::ffmpeg_rtmp::init() {
     res = av_frame_get_buffer(i_rgb_frm, 0);
     if (res < 0) {
         log_e("init_image_encode av_frame_get_buffer fail.");
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
     res = av_frame_make_writable(i_rgb_frm);
     if (res < 0) {
         log_e("init_image_encode av_frame_make_writable fail.");
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
     i_yuv_frm = av_frame_alloc();
     if (i_yuv_frm == nullptr) {
         log_e("init_image_encode av_frame_alloc fail.");
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
@@ -223,51 +163,14 @@ void media::ffmpeg_rtmp::init() {
     res = av_frame_get_buffer(i_yuv_frm, 0);
     if (res < 0) {
         log_e("init_image_encode av_frame_get_buffer fail.");
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
     res = av_frame_make_writable(i_yuv_frm);
     if (res < 0) {
         log_e("init_image_encode av_frame_make_writable fail.");
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
-        return;
-    }
-
-    res = avformat_write_header(vf_ctx, nullptr);
-    if (res < 0) {
-        log_e("init_image_encode avformat_write_header fail.");
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
@@ -278,17 +181,7 @@ void media::ffmpeg_rtmp::init() {
     AVCodec *a_codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (a_codec == nullptr) {
         log_e("init_audio_encode avcodec_find_encoder fail.");
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
@@ -296,17 +189,7 @@ void media::ffmpeg_rtmp::init() {
     ac_ctx = avcodec_alloc_context3(a_codec);
     if (ac_ctx == nullptr) {
         log_e("init_audio_encode avcodec_alloc_context3 fail.");
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     }
 
@@ -323,79 +206,35 @@ void media::ffmpeg_rtmp::init() {
 
     res = avcodec_open2(ac_ctx, a_codec, nullptr);
     if (res < 0) {
-        avcodec_free_context(&ac_ctx);
-        ac_ctx = nullptr;
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
         log_e("init_audio_encode avcodec_open2 fail: %d.", res);
+        on_free_all();
         return;
     }
 
     a_stm = avformat_new_stream(vf_ctx, a_codec);
     if (a_stm == nullptr) {
-        avcodec_free_context(&ac_ctx);
-        ac_ctx = nullptr;
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
         log_e("init_audio_encode avformat_new_stream fail.");
+        on_free_all();
         return;
     }
 
     a_stm->id = vf_ctx->nb_streams - 1;
     a_stm->time_base = {1, (int32_t)audio.sample_rate };
+    a_stm->codec->codec_tag = 0;
+	if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
+        a_stm->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    }
     res = avcodec_parameters_from_context(a_stm->codecpar, ac_ctx);
     if (res < 0) {
-        avcodec_free_context(&ac_ctx);
-        ac_ctx = nullptr;
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
         log_e("init_audio_encode avcodec_parameters_from_context fail: %d.", res);
+        on_free_all();
         return;
     }
 
     a_frm = av_frame_alloc();
     if (a_frm == nullptr) {
-        avcodec_free_context(&ac_ctx);
-        ac_ctx = nullptr;
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
         log_e("init_audio_encode av_frame_alloc fail.");
+        on_free_all();
         return;
     }
 
@@ -412,43 +251,15 @@ void media::ffmpeg_rtmp::init() {
 
     res = av_frame_get_buffer(a_frm, 0);
     if (res < 0) {
-        av_frame_free(&a_frm);
-        a_frm = nullptr;
-        avcodec_free_context(&ac_ctx);
-        ac_ctx = nullptr;
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
         log_e("init_audio_encode av_frame_get_buffer fail: %d.", res);
+        on_free_all();
         return;
     }
 
     res = av_frame_make_writable(a_frm);
     if (res < 0) {
-        av_frame_free(&a_frm);
-        a_frm = nullptr;
-        avcodec_free_context(&ac_ctx);
-        ac_ctx = nullptr;
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
         log_e("init_audio_encode av_frame_make_writable fail: %d.", res);
+        on_free_all();
         return;
     }
 
@@ -456,22 +267,8 @@ void media::ffmpeg_rtmp::init() {
             ac_ctx->sample_fmt, audio.sample_rate, a_frm->channel_layout,
             AV_SAMPLE_FMT_S16, audio.sample_rate, 0, nullptr);
     if (a_swr_ctx == nullptr) {
-        av_frame_free(&a_frm);
-        a_frm = nullptr;
-        avcodec_free_context(&ac_ctx);
-        ac_ctx = nullptr;
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
         log_e("init_audio_encode swr_alloc_set_opts fail.");
+        on_free_all();
         return;
     }
 
@@ -480,23 +277,7 @@ void media::ffmpeg_rtmp::init() {
         char err[64];
         av_strerror(res, err, 64);
         log_e("init_audio_encode swr_init fail: (%d) %s", res, err);
-        swr_free(&a_swr_ctx);
-        a_swr_ctx = nullptr;
-        av_frame_free(&a_frm);
-        a_frm = nullptr;
-        avcodec_free_context(&ac_ctx);
-        ac_ctx = nullptr;
-        av_frame_free(&i_rgb_frm);
-        i_rgb_frm = nullptr;
-        av_frame_free(&i_yuv_frm);
-        i_yuv_frm = nullptr;
-        sws_freeContext(i_sws_ctx);
-        i_sws_ctx = nullptr;
-        avcodec_close(ic_ctx);
-        avcodec_free_context(&ic_ctx);
-        ic_ctx = nullptr;
-        avformat_free_context(vf_ctx);
-        vf_ctx = nullptr;
+        on_free_all();
         return;
     } else {
         log_d("init_audio_encode swr_init OK - channel:%d, channelLayout:%lld, sampleRate:%d",
@@ -508,6 +289,24 @@ void media::ffmpeg_rtmp::init() {
     a_encode_length = av_samples_get_buffer_size(nullptr, ac_ctx->channels, ac_ctx->frame_size, ac_ctx->sample_fmt, 1);
     a_encode_cache = (int8_t *) malloc(sizeof(int8_t) * a_encode_length);
     log_d("init_audio_encode success. frame size:%d.", a_encode_length);
+
+    // open rtmp io
+    res = avio_open(&vf_ctx->pb, rtmp_url, AVIO_FLAG_WRITE);
+    if (res < 0) {
+        char err[64];
+        av_strerror(res, err, 64);
+        log_e("init_image_encode avio_open fail: (%d) %s", res, err);
+        on_free_all();
+        return;
+    }
+
+    // write header
+    res = avformat_write_header(vf_ctx, nullptr);
+    if (res < 0) {
+        log_e("init_image_encode avformat_write_header fail.");
+        on_free_all();
+        return;
+    }
     log_d("init_video_encode vf_ctx stream num: %d.", vf_ctx->nb_streams);
 }
 
@@ -517,7 +316,10 @@ void media::ffmpeg_rtmp::complete() {
         av_write_trailer(vf_ctx);
         avio_closep(&vf_ctx->pb);
     }
+    on_free_all();
+}
 
+void media::ffmpeg_rtmp::on_free_all() {
     // close image encode
     if (i_sws_ctx) sws_freeContext(i_sws_ctx);
     i_sws_ctx = nullptr;
@@ -604,7 +406,7 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
 
             av_packet_rescale_ts(pkt, i_stm->codec->time_base, i_stm->time_base);
             pkt->stream_index = i_stm->index;
-            // log_d("encode_image_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
+//            log_d("encode_image_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
             av_interleaved_write_frame(vf_ctx, pkt);
             av_packet_free(&pkt);
@@ -613,9 +415,8 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
     
     // encode audio
     if (count > 0 && aud_data != nullptr) {
-        // log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);
-        int32_t off = 0;
-        int32_t frm_size = a_encode_length;
+        log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);
+        int32_t off = 0, frm_size = a_encode_length;
         while(true) {
             if (count - off >= frm_size) {
                 if (a_encode_offset > 0) {
@@ -652,11 +453,11 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
 
                             av_packet_rescale_ts(pkt, a_stm->codec->time_base, a_stm->time_base);
                             pkt->stream_index = a_stm->index;
-                            av_bitstream_filter_filter(a_aac_adtstoasc, a_stm->codec, nullptr, 
+                            av_bitstream_filter_filter(a_aac_adtstoasc, a_stm->codec, nullptr,
                                 &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
                             // log_d("encode_audio_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-                            // av_interleaved_write_frame(vf_ctx, pkt);
+                            av_interleaved_write_frame(vf_ctx, pkt);
                             av_packet_free(&pkt);
                         }
                     }
