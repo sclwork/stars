@@ -300,7 +300,7 @@ void media::ffmpeg_rtmp::init() {
     a_pts = 0;
     a_encode_offset = 0;
     a_encode_length = av_samples_get_buffer_size(nullptr, ac_ctx->channels, ac_ctx->frame_size, ac_ctx->sample_fmt, 1);
-    a_encode_cache = (int8_t *) malloc(sizeof(int8_t) * a_encode_length);
+    a_encode_cache = (uint8_t *) malloc(sizeof(uint8_t) * a_encode_length);
     log_d("init_audio_encode success. frame size:%d.", a_encode_length);
 #endif
 
@@ -440,11 +440,11 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
             if (count - off >= frm_size) {
                 if (a_encode_offset > 0) {
                     memcpy(a_encode_cache + a_encode_offset, aud_data + off,
-                            sizeof(int8_t) * (frm_size - a_encode_offset));
+                            sizeof(uint8_t) * (frm_size - a_encode_offset));
                     off += frm_size - a_encode_offset;
                     a_encode_offset = 0;
                 } else {
-                    memcpy(a_encode_cache, aud_data + off, sizeof(int8_t) * frm_size);
+                    memcpy(a_encode_cache, aud_data + off, sizeof(uint8_t) * frm_size);
                     off += frm_size;
                 }
                 // log_d("encode_audio_frame start swr_convert.");
@@ -486,7 +486,7 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
                 }
             } else {
                 a_encode_offset = count - off;
-                memcpy(a_encode_cache, aud_data + off, sizeof(int8_t) * a_encode_offset);
+                memcpy(a_encode_cache, aud_data + off, sizeof(uint8_t) * a_encode_offset);
                 break;
             }
         }
