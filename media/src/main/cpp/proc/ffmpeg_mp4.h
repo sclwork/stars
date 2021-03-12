@@ -51,32 +51,6 @@ public:
                       std::shared_ptr<audio_frame> &&aud_frame);
 
 private:
-    /*
-     * reset tmp files:[.pcm, .acc, .argb, .yuv, .mp4]
-     */
-    void reset_tmp_files();
-    /*
-     * init ffmpeg image encode codec
-     */
-    void init_image_encode();
-    /*
-     * init ffmpeg audio encode codec
-     */
-    void init_audio_encode();
-    /*
-     * close ffmpeg image encode codec
-     */
-    void close_image_encode();
-    /*
-     * close ffmpeg audio encode codec
-     */
-    void close_audio_encode();
-
-private:
-    void encode_image_frame(int32_t w, int32_t h, const uint32_t* const data);
-    void encode_audio_frame(int32_t count, const int8_t* const data);
-
-private:
     ffmpeg_mp4(ffmpeg_mp4&&) = delete;
     ffmpeg_mp4(const ffmpeg_mp4&) = delete;
     ffmpeg_mp4& operator=(ffmpeg_mp4&&) = delete;
@@ -94,24 +68,6 @@ private:
     std::string f_264_name;
     std::string f_pcm_name;
     std::string f_aac_name;
-    //////////////////////////
-    int64_t          i_pts;
-    int64_t          a_pts;
-    int32_t          a_encode_offset;
-    int32_t          a_encode_length;
-    //////////////////////////
-    AVFormatContext *if_ctx;
-    AVCodecContext  *ic_ctx;
-    AVStream        *i_stm;
-    AVFrame         *i_rgb_frm;
-    AVFrame         *i_yuv_frm;
-    SwsContext      *i_sws_ctx;
-    AVFormatContext *af_ctx;
-    AVCodecContext  *ac_ctx;
-    AVStream        *a_stm;
-    AVFrame         *a_frm;
-    SwrContext      *a_swr_ctx;
-    int8_t          *a_encode_cache;
 };
 
 } //namespace media
