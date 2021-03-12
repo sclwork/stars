@@ -434,7 +434,7 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
 #ifdef HAVE_AUDIO_STREAM
     // encode audio
     if (count > 0 && aud_data != nullptr) {
-        log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);
+//        log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);
         int32_t off = 0, frm_size = a_encode_length;
         while(true) {
             if (count - off >= frm_size) {
@@ -448,8 +448,7 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
                     off += frm_size;
                 }
                 // log_d("encode_audio_frame start swr_convert.");
-                uint8_t *pData[1] = {nullptr};
-                pData[0] = (uint8_t *) a_encode_cache;
+                uint8_t *pData[1] = { a_encode_cache };
                 if (swr_convert(a_swr_ctx, a_frm->data, swr_get_out_samples(a_swr_ctx, a_frm->nb_samples),
                         (const uint8_t **)pData, a_frm->nb_samples) >= 0) {
                     // log_d("encode_audio_frame swr_convert success.");
