@@ -16,7 +16,7 @@ media::audio_recorder::audio_recorder(bool use8k, uint32_t channels, uint32_t sa
 :eng_obj(nullptr), eng_eng(nullptr), rec_obj(nullptr), rec_eng(nullptr), rec_queue(nullptr),
 use_8k(use8k), channels(channels<=1?1:2), sampling_rate(sample_rate==44100?SL_SAMPLINGRATE_44_1:SL_SAMPLINGRATE_16),
 sample_rate(sampling_rate / 1000), pcm_data((uint8_t*)malloc(sizeof(uint8_t)*(use_8k?PCM_BUF_SIZE_8K:PCM_BUF_SIZE))),
-frm_size(use_8k?PCM_BUF_SIZE_8K:(PCM_BUF_SIZE*sample_rate/100)), frm_changed(true),
+frm_size(use_8k?PCM_BUF_SIZE_8K:(PCM_BUF_SIZE*sample_rate/100)), frm_changed(false),
 cache(std::make_shared<audio_frame>(frm_size)), frame(std::make_shared<audio_frame>(frm_size)) {
     log_d("created. channels:%d, sample_rate:%d.", this->channels, this->sample_rate);
     init_objs();

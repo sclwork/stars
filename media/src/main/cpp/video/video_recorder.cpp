@@ -62,7 +62,7 @@ public:
         if (fps > 0) {
             fps_ms = (int32_t) (1000.0f / fps);
         }
-        audio = new audio_recorder(true);
+        audio = new audio_recorder();
         img_args.width = w;
         img_args.height = h;
         img_args.fps = fps;
