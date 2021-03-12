@@ -10,7 +10,7 @@
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_rtmp", __VA_ARGS__)
 
 #define HAVE_IMAGE_STREAM
-// #define HAVA_AUDIO_STREAM
+#define HAVE_AUDIO_STREAM
 
 namespace media {
 } //namespace media
@@ -182,7 +182,7 @@ void media::ffmpeg_rtmp::init() {
     log_d("init_image_encode success.");
 #endif
 
-#ifdef HAVA_AUDIO_STREAM
+#ifdef HAVE_AUDIO_STREAM
     // init audio encode
     AVCodec *a_codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (a_codec == nullptr) {
@@ -431,7 +431,7 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
     }
 #endif
     
-#ifdef HAVA_AUDIO_STREAM
+#ifdef HAVE_AUDIO_STREAM
     // encode audio
     if (count > 0 && aud_data != nullptr) {
 //        log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);

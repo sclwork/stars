@@ -612,8 +612,8 @@ void media::ffmpeg_mp4::encode_audio_frame(int32_t count, const int8_t* const da
                             break;
                         }
 
-                        av_packet_rescale_ts(pkt, ac_ctx->time_base, af_ctx->streams[0]->time_base);
-                        pkt->stream_index = 0;
+                        av_packet_rescale_ts(pkt, a_stm->codec->time_base, a_stm->time_base);
+                        pkt->stream_index = a_stm->index;
 //                        log_d("encode_audio_frame avcodec_receive_packet success.");
 
                         av_interleaved_write_frame(af_ctx, pkt);
