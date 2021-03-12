@@ -14,7 +14,7 @@ namespace media {
 
 media::audio_frame::audio_frame(int32_t s)
 :is_copy(false), size(s),
-cache((int8_t*)malloc(sizeof(int8_t)*size)), cp_offset(0) {
+cache((uint8_t*)malloc(sizeof(uint8_t)*size)), cp_offset(0) {
     log_d("created.");
     if (cache == nullptr) {
         log_e("malloc pcm cache fail.");
@@ -23,7 +23,7 @@ cache((int8_t*)malloc(sizeof(int8_t)*size)), cp_offset(0) {
 
 media::audio_frame::audio_frame(const audio_frame &frame)
 :is_copy(true), size(frame.size),
-cache((int8_t*)malloc(sizeof(int8_t)*size)), cp_offset(0) {
+cache((uint8_t*)malloc(sizeof(uint8_t)*size)), cp_offset(0) {
 //    log_d("created.");
     if (cache) {
         memcpy(cache, frame.cache, sizeof(int8_t)*size);
@@ -40,7 +40,7 @@ bool media::audio_frame::available() const {
     return cache != nullptr;
 }
 
-void media::audio_frame::get(int32_t *out_size, int8_t **out_cache) const {
+void media::audio_frame::get(int32_t *out_size, uint8_t **out_cache) const {
     if (out_size) *out_size = size;
     if (out_cache) *out_cache = cache;
 }

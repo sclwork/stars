@@ -363,7 +363,7 @@ void media::ffmpeg_rtmp::on_free_all() {
 
 void media::ffmpeg_rtmp::encode_frame(std::shared_ptr<image_frame> &&img_frame,
                                       std::shared_ptr<audio_frame> &&aud_frame) {
-    int32_t w = 0, h = 0, count = 0; uint32_t *img_data = nullptr; int8_t *aud_data = nullptr;
+    int32_t w = 0, h = 0, count = 0; uint32_t *img_data = nullptr; uint8_t *aud_data = nullptr;
     if (img_frame != nullptr && img_frame->available()) {
         img_frame->get(&w, &h, &img_data);
     }
@@ -374,7 +374,7 @@ void media::ffmpeg_rtmp::encode_frame(std::shared_ptr<image_frame> &&img_frame,
 }
 
 void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* const img_data,
-                                         int32_t count, const int8_t* const aud_data) {
+                                         int32_t count, const uint8_t* const aud_data) {
     // check init success
     if (vf_ctx == nullptr) {
         return;
@@ -434,7 +434,7 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
 #ifdef HAVE_AUDIO_STREAM
     // encode audio
     if (count > 0 && aud_data != nullptr) {
-//        log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);
+        log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);
         int32_t off = 0, frm_size = a_encode_length;
         while(true) {
             if (count - off >= frm_size) {

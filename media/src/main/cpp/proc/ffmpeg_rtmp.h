@@ -53,7 +53,7 @@ public:
 private:
     void on_free_all();
     void encode_ia_frame(int32_t w, int32_t h, const uint32_t* const img_data,
-                         int32_t count, const int8_t* const aud_data);
+                         int32_t count, const uint8_t* const aud_data);
 
 private:
     ffmpeg_rtmp(ffmpeg_rtmp&&) = delete;

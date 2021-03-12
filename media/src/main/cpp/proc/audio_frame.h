@@ -27,7 +27,7 @@ public:
      * @param out_size [out] audio pcm data size
      * @param out_cache [out] audio pcm data pointer
      */
-    void get(int32_t *out_size, int8_t **out_cache = nullptr) const;
+    void get(int32_t *out_size, uint8_t **out_cache = nullptr) const;
     /**
      * get audio frame pcm short data
      * @param out_size [out] audio pcm short data size
@@ -46,8 +46,8 @@ private:
 private:
     bool is_copy;
     /////////////////
-    int32_t size;
-    int8_t *cache;
+    int32_t  size;
+    uint8_t *cache;
     ///////////////////
     int32_t cp_offset;
 };

@@ -55,7 +55,7 @@ void media::ffmpeg_mp4::encode_frame(std::shared_ptr<image_frame> &&img_frame,
         img_frame->get(&w, &h, &data);
     }
     if (aud_frame != nullptr && aud_frame->available()) {
-        int32_t count; int8_t *data;
+        int32_t count; uint8_t *data;
         aud_frame->get(&count, &data);
     }
 }

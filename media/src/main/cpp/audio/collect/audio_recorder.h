@@ -10,21 +10,16 @@
 #include <SLES/OpenSLES_Android.h>
 #include "proc/audio_frame.h"
 
-#define USE_8K
-
 namespace media {
 
 // PCM Size=采样率*采样时间*采样位深/8*通道数（Bytes）
 const int32_t PERIOD_TIME  = 10;  // 10ms
-#ifdef USE_8K
-const int32_t PCM_BUF_SIZE = 8192; // 8192bytes
-#else
 const int32_t PCM_BUF_SIZE = 320; // 320bytes
-#endif
+const int32_t PCM_BUF_SIZE_8K = 8192; // 8192bytes
 
 class audio_recorder {
 public:
-    audio_recorder(uint32_t channels = 2, uint32_t sample_rate = 44100);
+    audio_recorder(bool use8k = false, uint32_t channels = 2, uint32_t sample_rate = 44100);
     ~audio_recorder();
 
 public:
@@ -86,11 +81,12 @@ private:
     SLRecordItf rec_eng;
     SLAndroidSimpleBufferQueueItf rec_queue;
     //////////////////////////////////////////
+    bool     use_8k;
     uint32_t channels;
     SLuint32 sampling_rate;
     uint32_t sample_rate;
     //////////////////////////////////////////
-    int8_t  *pcm_data;
+    uint8_t *pcm_data;
     //////////////////////////////////////////
     uint32_t                     frm_size;
     std::atomic_bool             frm_changed;
