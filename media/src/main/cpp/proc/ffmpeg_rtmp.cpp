@@ -9,6 +9,9 @@
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_rtmp", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_rtmp", __VA_ARGS__)
 
+#define HAVE_IMAGE_STREAM
+// #define HAVA_AUDIO_STREAM
+
 namespace media {
 } //namespace media
 
@@ -51,6 +54,7 @@ void media::ffmpeg_rtmp::init() {
         return;
     }
 
+#ifdef HAVE_IMAGE_STREAM
     // init image encode
     AVCodec *i_codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if (i_codec == nullptr) {
@@ -176,7 +180,9 @@ void media::ffmpeg_rtmp::init() {
 
     i_pts = 0;
     log_d("init_image_encode success.");
+#endif
 
+#ifdef HAVA_AUDIO_STREAM
     // init audio encode
     AVCodec *a_codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
     if (a_codec == nullptr) {
@@ -224,6 +230,13 @@ void media::ffmpeg_rtmp::init() {
 	if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
         a_stm->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
+    // if (ac_ctx->extradata_size > 0) {
+    //     int extra_size = (uint64_t)ac_ctx->extradata_size + 7;
+    //     a_stm->codec->extradata = (uint8_t*)av_mallocz(extra_size);
+    //     memcpy(a_stm->codec->extradata, ac_ctx->extradata, ac_ctx->extradata_size);
+    //     a_stm->codec->extradata_size = ac_ctx->extradata_size;
+    // }
+
     res = avcodec_parameters_from_context(a_stm->codecpar, ac_ctx);
     if (res < 0) {
         log_e("init_audio_encode avcodec_parameters_from_context fail: %d.", res);
@@ -289,13 +302,14 @@ void media::ffmpeg_rtmp::init() {
     a_encode_length = av_samples_get_buffer_size(nullptr, ac_ctx->channels, ac_ctx->frame_size, ac_ctx->sample_fmt, 1);
     a_encode_cache = (int8_t *) malloc(sizeof(int8_t) * a_encode_length);
     log_d("init_audio_encode success. frame size:%d.", a_encode_length);
+#endif
 
     // open rtmp io
     res = avio_open(&vf_ctx->pb, rtmp_url, AVIO_FLAG_WRITE);
     if (res < 0) {
         char err[64];
         av_strerror(res, err, 64);
-        log_e("init_image_encode avio_open fail: (%d) %s", res, err);
+        log_e("init_video_encode avio_open fail: (%d) %s", res, err);
         on_free_all();
         return;
     }
@@ -303,7 +317,9 @@ void media::ffmpeg_rtmp::init() {
     // write header
     res = avformat_write_header(vf_ctx, nullptr);
     if (res < 0) {
-        log_e("init_image_encode avformat_write_header fail.");
+        char err[64];
+        av_strerror(res, err, 64);
+        log_e("init_video_encode avformat_write_header fail: (%d) %s", res, err);
         on_free_all();
         return;
     }
@@ -364,6 +380,7 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
         return;
     }
 
+#ifdef HAVE_IMAGE_STREAM
     // encode image
     if (w > 0 && h > 0 && img_data != nullptr) {
         avpicture_fill((AVPicture *)i_rgb_frm, (uint8_t *)img_data, AV_PIX_FMT_RGBA, w, h);
@@ -412,10 +429,12 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
             av_packet_free(&pkt);
         }
     }
+#endif
     
+#ifdef HAVA_AUDIO_STREAM
     // encode audio
     if (count > 0 && aud_data != nullptr) {
-        log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);
+//        log_d("encode_audio_frame remain: %d, count: %d.", a_encode_offset, count);
         int32_t off = 0, frm_size = a_encode_length;
         while(true) {
             if (count - off >= frm_size) {
@@ -429,8 +448,8 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
                     off += frm_size;
                 }
                 // log_d("encode_audio_frame start swr_convert.");
-                u_char *pData[1] = {nullptr};
-                pData[0] = (u_char *) a_encode_cache;
+                uint8_t *pData[1] = {nullptr};
+                pData[0] = (uint8_t *) a_encode_cache;
                 if (swr_convert(a_swr_ctx, a_frm->data, swr_get_out_samples(a_swr_ctx, a_frm->nb_samples),
                         (const uint8_t **)pData, a_frm->nb_samples) >= 0) {
                     // log_d("encode_audio_frame swr_convert success.");
@@ -446,6 +465,9 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
                             av_init_packet(pkt);
 
                             int32_t res = avcodec_receive_packet(ac_ctx, pkt);
+                            // char err[64];
+                            // av_strerror(res, err, 64);
+                            // log_d("avcodec_receive_packet audio pkt: [%d] %s.", res, err);
                             if (res < 0) {
                                 av_packet_free(&pkt);
                                 break;
@@ -453,8 +475,8 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
 
                             av_packet_rescale_ts(pkt, a_stm->codec->time_base, a_stm->time_base);
                             pkt->stream_index = a_stm->index;
-                            av_bitstream_filter_filter(a_aac_adtstoasc, a_stm->codec, nullptr,
-                                &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
+                            // av_bitstream_filter_filter(a_aac_adtstoasc, a_stm->codec, nullptr,
+                            //     &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
                             // log_d("encode_audio_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
                             av_interleaved_write_frame(vf_ctx, pkt);
@@ -469,4 +491,5 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
             }
         }
     }
+#endif
 }
