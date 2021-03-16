@@ -85,6 +85,7 @@ private:
     SwrContext      *a_swr_ctx;
     AVFrame         *a_frm;
     uint8_t         *a_encode_cache;
+    AVBitStreamFilterContext *i_h264bsfc;
     AVBitStreamFilterContext *a_aac_adtstoasc;
 };
 

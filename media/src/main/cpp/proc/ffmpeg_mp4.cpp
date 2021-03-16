@@ -129,7 +129,7 @@ void media::ffmpeg_mp4::init() {
 
     i_stm->id = vf_ctx->nb_streams - 1;
     i_stm->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
-    i_stm->codec->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
+//    i_stm->codec->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
     i_stm->codec->codec_tag = 0;
     if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
         i_stm->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -443,9 +443,11 @@ void media::ffmpeg_mp4::encode_ia_frame(int32_t w, int32_t h, const uint32_t *co
 
             av_packet_rescale_ts(pkt, i_stm->codec->time_base, i_stm->time_base);
             pkt->stream_index = i_stm->index;
+//            av_bitstream_filter_filter(i_h264bsfc, i_stm->codec, nullptr,
+//                    &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
 //            log_d("encode_image_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-            av_interleaved_write_frame(vf_ctx, pkt);
+            av_write_frame(vf_ctx, pkt);
             av_packet_free(&pkt);
         }
     }
@@ -500,7 +502,7 @@ void media::ffmpeg_mp4::encode_ia_frame(int32_t w, int32_t h, const uint32_t *co
 //                            log_d("encode_audio_frame A pkt.pts: %ld, pkt.dts: %ld, pkt.pos: %ld.", pkt->pts, pkt->dts, pkt->pos);
 //                            log_d("encode_audio_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-                            av_interleaved_write_frame(vf_ctx, pkt);
+                            av_write_frame(vf_ctx, pkt);
                             av_packet_free(&pkt);
                         }
                     }

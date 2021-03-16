@@ -19,6 +19,7 @@ media::ffmpeg_rtmp::ffmpeg_rtmp(int32_t id, std::string &&f, std::string &&n, im
 :_id(id), i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0), file(f), name(n), image(img), audio(aud),
 vf_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr),
 ac_ctx(nullptr), a_stm(nullptr), a_swr_ctx(nullptr), a_frm(nullptr), a_encode_cache(nullptr),
+i_h264bsfc(av_bitstream_filter_init("h264_mp4toannexb")),
 a_aac_adtstoasc(av_bitstream_filter_init("aac_adtstoasc")) {
     image.update_frame_size();
     log_d("[%d] created. [v:%d,%d,%d,%d],[a:%d,%d,%d].",
@@ -37,6 +38,7 @@ media::ffmpeg_rtmp::~ffmpeg_rtmp() {
     if (ac_ctx) avcodec_close(ac_ctx);
     if (ac_ctx) avcodec_free_context(&ac_ctx);
     if (vf_ctx) avformat_free_context(vf_ctx);
+    if (i_h264bsfc) av_bitstream_filter_close(i_h264bsfc);
     if (a_aac_adtstoasc) av_bitstream_filter_close(a_aac_adtstoasc);
     log_d("[%d] release.", _id);
 }
@@ -108,7 +110,7 @@ void media::ffmpeg_rtmp::init() {
 
     i_stm->id = vf_ctx->nb_streams - 1;
     i_stm->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
-    i_stm->codec->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
+//    i_stm->codec->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
     i_stm->codec->codec_tag = 0;
 	if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
 		i_stm->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -424,9 +426,11 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
 
             av_packet_rescale_ts(pkt, i_stm->codec->time_base, i_stm->time_base);
             pkt->stream_index = i_stm->index;
+//            av_bitstream_filter_filter(i_h264bsfc, i_stm->codec, nullptr,
+//                    &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
 //            log_d("encode_image_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-            av_interleaved_write_frame(vf_ctx, pkt);
+            av_write_frame(vf_ctx, pkt);
             av_packet_free(&pkt);
         }
     }
@@ -475,11 +479,11 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
 
                             av_packet_rescale_ts(pkt, a_stm->codec->time_base, a_stm->time_base);
                             pkt->stream_index = a_stm->index;
-                            // av_bitstream_filter_filter(a_aac_adtstoasc, a_stm->codec, nullptr,
-                            //     &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
+//                            av_bitstream_filter_filter(a_aac_adtstoasc, a_stm->codec, nullptr,
+//                                    &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
                             // log_d("encode_audio_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-                            av_interleaved_write_frame(vf_ctx, pkt);
+                            av_write_frame(vf_ctx, pkt);
                             av_packet_free(&pkt);
                         }
                     }
