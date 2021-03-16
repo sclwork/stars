@@ -51,23 +51,47 @@ public:
                       std::shared_ptr<audio_frame> &&aud_frame);
 
 private:
+    void on_free_all();
+    void encode_ia_frame(int32_t w, int32_t h, const uint32_t* const img_data,
+                         int32_t count, const uint8_t* const aud_data);
+
+private:
     ffmpeg_mp4(ffmpeg_mp4&&) = delete;
     ffmpeg_mp4(const ffmpeg_mp4&) = delete;
     ffmpeg_mp4& operator=(ffmpeg_mp4&&) = delete;
     ffmpeg_mp4& operator=(const ffmpeg_mp4&) = delete;
 
 private:
-    int32_t _id;
+    int32_t     _id;
     std::string _tmp;
     //////////////////////////
+    int64_t     i_pts;
+    int64_t     a_pts;
+    int32_t     a_encode_offset;
+    int32_t     a_encode_length;
+    //////////////////////////
     std::string name;
-    image_args image;
-    audio_args audio;
+    image_args  image;
+    audio_args  audio;
     //////////////////////////
     std::string f_rgb_name;
     std::string f_264_name;
     std::string f_pcm_name;
     std::string f_aac_name;
+    //////////////////////////
+    AVFormatContext *vf_ctx;
+    AVCodecContext  *ic_ctx;
+    AVStream        *i_stm;
+    SwsContext      *i_sws_ctx;
+    AVFrame         *i_rgb_frm;
+    AVFrame         *i_yuv_frm;
+    AVCodecContext  *ac_ctx;
+    AVStream        *a_stm;
+    SwrContext      *a_swr_ctx;
+    AVFrame         *a_frm;
+    uint8_t         *a_encode_cache;
+    AVBitStreamFilterContext *i_h264bsfc;
+    AVBitStreamFilterContext *a_aac_adtstoasc;
 };
 
 } //namespace media

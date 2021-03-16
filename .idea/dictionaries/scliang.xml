@@ -6,6 +6,7 @@
       <w>avformat</w>
       <w>avio</w>
       <w>blazeface</w>
+      <w>bsfc</w>
       <w>coords</w>
       <w>essl</w>
       <w>ffmpeg</w>
@@ -35,6 +36,7 @@
       <w>tflite</w>
       <w>thiz</w>
       <w>thrd</w>
+      <w>toannexb</w>
       <w>uninit</w>
       <w>unrunning</w>
       <w>updt</w>

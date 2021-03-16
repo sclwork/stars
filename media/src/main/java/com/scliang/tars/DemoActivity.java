@@ -31,9 +31,16 @@ public class DemoActivity extends AppCompatActivity {
             if (Media.isVideoRecording()) {
                 Media.stopVideoRecord();
             } else {
-//                Media.startVideoRecord(getFilesDir() + "/demo.mp4");
-                Media.startVideoRecord("rtmp://192.168.0.11:9999/live/demo");
+                Media.startVideoRecord(getFilesDir() + "/demo.mp4");
             }
+        });
+        if (record != null) record.setOnLongClickListener(v -> {
+            if (Media.isVideoRecording()) {
+                Media.stopVideoRecord();
+            } else {
+                Media.startVideoRecord("rtmp://192.168.0.17:9999/live/demo");
+            }
+            return true;
         });
 //        if (recorderView != null) recorderView.setOnCameraCountListener(count -> {
 //            RadioGroup group = findViewById(R.id.camera_ids);

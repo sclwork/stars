@@ -12,11 +12,11 @@
 namespace media {
 } //namespace media
 
-media::audio_recorder::audio_recorder(bool use8k, uint32_t channels, uint32_t sample_rate)
+media::audio_recorder::audio_recorder(uint32_t channels, uint32_t sample_rate)
 :eng_obj(nullptr), eng_eng(nullptr), rec_obj(nullptr), rec_eng(nullptr), rec_queue(nullptr),
-use_8k(use8k), channels(channels<=1?1:2), sampling_rate(sample_rate==44100?SL_SAMPLINGRATE_44_1:SL_SAMPLINGRATE_16),
-sample_rate(sampling_rate / 1000), pcm_data((uint8_t*)malloc(sizeof(uint8_t)*(use_8k?PCM_BUF_SIZE_8K:PCM_BUF_SIZE))),
-frm_size(use_8k?PCM_BUF_SIZE_8K:(PCM_BUF_SIZE*sample_rate/100)), frm_changed(false),
+channels(channels<=1?1:2), sampling_rate(sample_rate==44100?SL_SAMPLINGRATE_44_1:SL_SAMPLINGRATE_16),
+sample_rate(sampling_rate / 1000), pcm_data((uint8_t*)malloc(sizeof(uint8_t)*(PCM_BUF_SIZE))),
+frm_size((PCM_BUF_SIZE*sample_rate/100)), frm_changed(false),
 cache(std::make_shared<audio_frame>(frm_size)), frame(std::make_shared<audio_frame>(frm_size)) {
     log_d("created. channels:%d, sample_rate:%d.", this->channels, this->sample_rate);
     init_objs();
@@ -57,25 +57,20 @@ bool media::audio_recorder::enqueue(bool chk_recording) {
     if (chk_recording && !recording()) {
         return false;
     }
-    SLresult res = (*rec_queue)->Enqueue(rec_queue, pcm_data, use_8k?PCM_BUF_SIZE_8K:PCM_BUF_SIZE);
+    SLresult res = (*rec_queue)->Enqueue(rec_queue, pcm_data, PCM_BUF_SIZE);
     return res == SL_RESULT_SUCCESS;
 }
 
 void media::audio_recorder::handle_frame() {
     if (cache != nullptr) {
-        if (use_8k) {
-            memcpy(frame->cache, pcm_data, sizeof(uint8_t) * PCM_BUF_SIZE_8K);
+        if (cache->cp_offset + PCM_BUF_SIZE > cache->size) {
+            cache->cp_offset = 0;
+        }
+        memcpy(cache->cache + cache->cp_offset, pcm_data, sizeof(uint8_t) * PCM_BUF_SIZE);
+        cache->cp_offset += PCM_BUF_SIZE;
+        if (frame != nullptr && cache->cp_offset >= cache->size) {
+            memcpy(frame->cache, cache->cache, sizeof(uint8_t) * frame->size);
             frm_changed = true;
-        } else {
-            if (cache->cp_offset + PCM_BUF_SIZE > cache->size) {
-                cache->cp_offset = 0;
-            }
-            memcpy(cache->cache + cache->cp_offset, pcm_data, sizeof(uint8_t) * PCM_BUF_SIZE);
-            cache->cp_offset += PCM_BUF_SIZE;
-            if (frame != nullptr && cache->cp_offset >= cache->size) {
-                memcpy(frame->cache, cache->cache, sizeof(uint8_t) * frame->size);
-                frm_changed = true;
-            }
         }
     }
 }

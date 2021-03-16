@@ -108,6 +108,7 @@ void media::ffmpeg_rtmp::init() {
 
     i_stm->id = vf_ctx->nb_streams - 1;
     i_stm->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
+    i_stm->codec->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
     i_stm->codec->codec_tag = 0;
 	if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
 		i_stm->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -206,6 +207,7 @@ void media::ffmpeg_rtmp::init() {
     ac_ctx->sample_fmt = AV_SAMPLE_FMT_FLTP;
     ac_ctx->channels = audio.channels;
     ac_ctx->channel_layout = av_get_default_channel_layout(audio.channels);
+    ac_ctx->time_base = {1, (int32_t)audio.sample_rate };
     if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
         ac_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
@@ -226,16 +228,11 @@ void media::ffmpeg_rtmp::init() {
 
     a_stm->id = vf_ctx->nb_streams - 1;
     a_stm->time_base = {1, (int32_t)audio.sample_rate };
+    a_stm->codec->time_base = {1, (int32_t)audio.sample_rate };
     a_stm->codec->codec_tag = 0;
 	if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
         a_stm->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
-    // if (ac_ctx->extradata_size > 0) {
-    //     int extra_size = (uint64_t)ac_ctx->extradata_size + 7;
-    //     a_stm->codec->extradata = (uint8_t*)av_mallocz(extra_size);
-    //     memcpy(a_stm->codec->extradata, ac_ctx->extradata, ac_ctx->extradata_size);
-    //     a_stm->codec->extradata_size = ac_ctx->extradata_size;
-    // }
 
     res = avcodec_parameters_from_context(a_stm->codecpar, ac_ctx);
     if (res < 0) {
@@ -299,10 +296,14 @@ void media::ffmpeg_rtmp::init() {
 
     a_pts = 0;
     a_encode_offset = 0;
-    a_encode_length = av_samples_get_buffer_size(nullptr, ac_ctx->channels, ac_ctx->frame_size, ac_ctx->sample_fmt, 1);
+    a_encode_length = a_frm->linesize[0];
     a_encode_cache = (uint8_t *) malloc(sizeof(uint8_t) * a_encode_length);
     log_d("init_audio_encode success. frame size:%d.", a_encode_length);
 #endif
+
+    AVOutputFormat *ofmt = vf_ctx->oformat;
+    log_d("init_video_encode vf_ctx oformat name: %s, acodec: %s, vcodec: %s.",
+            ofmt->long_name, avcodec_get_name(ofmt->audio_codec), avcodec_get_name(ofmt->video_codec));
 
     // open rtmp io
     res = avio_open(&vf_ctx->pb, rtmp_url, AVIO_FLAG_WRITE);
@@ -449,7 +450,7 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
                 }
                 // log_d("encode_audio_frame start swr_convert.");
                 uint8_t *pData[1] = { a_encode_cache };
-                if (swr_convert(a_swr_ctx, a_frm->data, swr_get_out_samples(a_swr_ctx, a_frm->nb_samples),
+                if (swr_convert(a_swr_ctx, a_frm->data, a_frm->nb_samples,
                         (const uint8_t **)pData, a_frm->nb_samples) >= 0) {
                     // log_d("encode_audio_frame swr_convert success.");
                     a_frm->pts = a_pts++;
