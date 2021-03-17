@@ -75,7 +75,7 @@ void media::common::renderer_surface_changed(int32_t w, int32_t h) {
     }
     if (vid_rec != nullptr) {
         vid_rec->start_preview([](std::shared_ptr<media::image_frame> &&frm) {
-            if (gcom != nullptr) gcom->renderer_updt_frame(*(frm.get()));
+            if (gcom != nullptr) gcom->renderer_updt_frame(*frm);
         }, w, h);
     }
 }
