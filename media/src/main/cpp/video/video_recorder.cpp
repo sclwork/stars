@@ -85,13 +85,29 @@ public:
         }
     }
 
+    static void audio_frame_callback(void *ctx) {
+        if (ctx == nullptr) {
+            return;
+        }
+        auto *cps = (collect_params *)ctx;
+        if (cps->recording != nullptr && *cps->recording && cps->frameQ != nullptr && cps->audio != nullptr) {
+            auto aud_frame = cps->audio->collect_frame(nullptr);
+            auto frame = media::frame(nullptr, std::forward<std::shared_ptr<audio_frame>>(aud_frame));
+#ifdef USE_CONCURRENT_QUEUE
+            cps->frameQ->enqueue(frame);
+#else
+            cps->frameQ->push(frame);
+#endif
+        }
+    }
+
     void set_record(bool recing) {
         std::lock_guard<std::mutex> lg(_mux);
         if (recording != nullptr) {
             *(recording) = recing;
         }
         if (audio != nullptr) {
-            if (recing) { audio->start_record(); }
+            if (recing) { audio->start_record(audio_frame_callback, this); }
             else { audio->stop_record(); }
         }
     }
@@ -114,10 +130,7 @@ public:
         mnn->detect_faces(img_frame, faces);
         mnn->flag_faces(img_frame, faces);
         if (recording != nullptr && *recording && frameQ != nullptr) {
-            bool changed = false;
-            aud_frame = audio->collect_frame(&changed);
-            auto frame = media::frame(std::forward<std::shared_ptr<image_frame>>(img_frame),
-                                      std::forward<std::shared_ptr<audio_frame>>(changed ? aud_frame : nullptr));
+            auto frame = media::frame(std::forward<std::shared_ptr<image_frame>>(img_frame), nullptr);
 #ifdef USE_CONCURRENT_QUEUE
             frameQ->enqueue(frame);
 #else

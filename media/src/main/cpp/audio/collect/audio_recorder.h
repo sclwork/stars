@@ -18,7 +18,7 @@ const int32_t PCM_BUF_SIZE = 320; // 320bytes
 
 class audio_recorder {
 public:
-    audio_recorder(uint32_t channels = 2, uint32_t sample_rate = 44100);
+    audio_recorder(uint32_t cls = 2, uint32_t spr = 44100);
     ~audio_recorder();
 
 public:
@@ -30,7 +30,7 @@ public:
      * start audio record
      * @return true: start success
      */
-    bool start_record();
+    bool start_record(void (*frm_callback)(void *) = nullptr, void *ctx = nullptr);
     /**
      * stop audio record
      */
@@ -90,6 +90,9 @@ private:
     std::atomic_bool             frm_changed;
     std::shared_ptr<audio_frame> cache;
     std::shared_ptr<audio_frame> frame;
+    //////////////////////////////////////////
+    void (*frame_callback)(void *);
+    void *frame_ctx;
 };
 
 } //namespace media
