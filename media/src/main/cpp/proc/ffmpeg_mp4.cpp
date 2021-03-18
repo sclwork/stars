@@ -9,7 +9,7 @@
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_mp4", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_mp4", __VA_ARGS__)
 
-//#define HAVE_IMAGE_STREAM
+#define HAVE_IMAGE_STREAM
 
 namespace media {
 } //namespace media
@@ -447,7 +447,7 @@ void media::ffmpeg_mp4::encode_ia_frame(int32_t w, int32_t h, const uint32_t *co
 //                    &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
 //            log_d("encode_image_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-            av_write_frame(vf_ctx, pkt);
+            av_interleaved_write_frame(vf_ctx, pkt);
             av_packet_free(&pkt);
         }
     }
@@ -509,7 +509,7 @@ void media::ffmpeg_mp4::encode_ia_frame(int32_t w, int32_t h, const uint32_t *co
 //                            log_d("encode_audio_frame A pkt.pts: %ld, pkt.dts: %ld, pkt.pos: %ld.", pkt->pts, pkt->dts, pkt->pos);
 //                            log_d("encode_audio_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-                        av_write_frame(vf_ctx, pkt);
+                        av_interleaved_write_frame(vf_ctx, pkt);
                         av_packet_free(&pkt);
                     }
                 }

@@ -9,7 +9,7 @@
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_rtmp", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_rtmp", __VA_ARGS__)
 
-//#define HAVE_IMAGE_STREAM
+#define HAVE_IMAGE_STREAM
 #define HAVE_AUDIO_STREAM
 
 namespace media {
@@ -396,7 +396,7 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
             return;
         }
 
-        i_yuv_frm->pts = a_pts;
+        i_yuv_frm->pts = i_pts++;
         res = avcodec_send_frame(ic_ctx, i_yuv_frm);
         if (res < 0) {
         //    char err[64];
@@ -426,13 +426,13 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
 
             av_packet_rescale_ts(pkt, i_stm->codec->time_base, i_stm->time_base);
             pkt->stream_index = i_stm->index;
-//            log_d("encode_image_frame B pkt.pts: %ld, pkt.dts: %ld, pkt.pos: %ld, pkt.duration: %ld.",
+//            log_d("encode_image_frame pkt.pts: %ld, pkt.dts: %ld, pkt.pos: %ld, pkt.duration: %ld.",
 //                    pkt->pts, pkt->dts, pkt->pos, pkt->duration);
 //            av_bitstream_filter_filter(i_h264bsfc, i_stm->codec, nullptr,
 //                    &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
 //            log_d("encode_image_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-            av_write_frame(vf_ctx, pkt);
+            av_interleaved_write_frame(vf_ctx, pkt);
             av_packet_free(&pkt);
         }
     }
@@ -488,13 +488,13 @@ void media::ffmpeg_rtmp::encode_ia_frame(int32_t w, int32_t h, const uint32_t* c
 
                         av_packet_rescale_ts(pkt, a_stm->codec->time_base, a_stm->time_base);
                         pkt->stream_index = a_stm->index;
-//                            log_d("encode_audio_frame B pkt.pts: %ld, pkt.dts: %ld, pkt.pos: %ld, pkt.duration: %ld.",
-//                                    pkt->pts, pkt->dts, pkt->pos, pkt->duration);
+//                        log_d("encode_audio_frame pkt.pts: %ld, pkt.dts: %ld, pkt.pos: %ld, pkt.duration: %ld.",
+//                                pkt->pts, pkt->dts, pkt->pos, pkt->duration);
 //                            av_bitstream_filter_filter(a_aac_adtstoasc, a_stm->codec, nullptr,
 //                                    &pkt->data, &pkt->size, pkt->data, pkt->size, 0);
                         // log_d("encode_audio_frame avcodec_receive_packet[%d] success.", pkt->stream_index);
 
-                        av_write_frame(vf_ctx, pkt);
+                        av_interleaved_write_frame(vf_ctx, pkt);
                         av_packet_free(&pkt);
                     }
                 }
