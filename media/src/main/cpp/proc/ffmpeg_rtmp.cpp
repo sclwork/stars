@@ -15,15 +15,15 @@
 namespace media {
 } //namespace media
 
-media::ffmpeg_rtmp::ffmpeg_rtmp(int32_t id, std::string &&f, std::string &&n, image_args &&img, audio_args &&aud)
-:_id(id), i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0), file(f), name(n), image(img), audio(aud),
+media::ffmpeg_rtmp::ffmpeg_rtmp(std::string &&f, std::string &&n, image_args &&img, audio_args &&aud)
+:i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0), file(f), name(n), image(img), audio(aud),
 vf_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr),
 ac_ctx(nullptr), a_stm(nullptr), a_swr_ctx(nullptr), a_frm(nullptr), a_encode_cache(nullptr),
 i_h264bsfc(av_bitstream_filter_init("h264_mp4toannexb")),
 a_aac_adtstoasc(av_bitstream_filter_init("aac_adtstoasc")) {
     image.update_frame_size();
-    log_d("[%d] created. [v:%d,%d,%d,%d],[a:%d,%d,%d].",
-          _id, image.width, image.height, image.channels, image.frame_size,
+    log_d("created. [v:%d,%d,%d,%d],[a:%d,%d,%d].",
+          image.width, image.height, image.channels, image.frame_size,
           audio.channels, audio.sample_rate, audio.frame_size);
 }
 
@@ -40,7 +40,7 @@ media::ffmpeg_rtmp::~ffmpeg_rtmp() {
     if (vf_ctx) avformat_free_context(vf_ctx);
     if (i_h264bsfc) av_bitstream_filter_close(i_h264bsfc);
     if (a_aac_adtstoasc) av_bitstream_filter_close(a_aac_adtstoasc);
-    log_d("[%d] release.", _id);
+    log_d("release.");
 }
 
 void media::ffmpeg_rtmp::init() {

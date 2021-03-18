@@ -30,7 +30,7 @@ namespace media {
 
 class ffmpeg_mp4 {
 public:
-    ffmpeg_mp4(int32_t id, std::string &&n, image_args &&img, audio_args &&aud);
+    ffmpeg_mp4(std::string &&n, image_args &&img, audio_args &&aud);
     ~ffmpeg_mp4();
 
 public:
@@ -62,7 +62,6 @@ private:
     ffmpeg_mp4& operator=(const ffmpeg_mp4&) = delete;
 
 private:
-    int32_t     _id;
     std::string _tmp;
     //////////////////////////
     int64_t     i_pts;

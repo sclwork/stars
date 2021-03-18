@@ -1,8 +1,12 @@
 <component name="ProjectDictionaryState">
   <dictionary name="scliang">
     <words>
+      <w>abuffer</w>
+      <w>abuffersink</w>
       <w>adtstoasc</w>
+      <w>aformat</w>
       <w>avcodec</w>
+      <w>avfilter</w>
       <w>avformat</w>
       <w>avio</w>
       <w>blazeface</w>
@@ -11,10 +15,12 @@
       <w>essl</w>
       <w>ffmpeg</w>
       <w>ffps</w>
+      <w>fmts</w>
       <w>frontalface</w>
       <w>gcom</w>
       <w>haarcascade</w>
       <w>libyuv</w>
+      <w>loudnorm</w>
       <w>mediump</w>
       <w>mnns</w>
       <w>nhwc</w>

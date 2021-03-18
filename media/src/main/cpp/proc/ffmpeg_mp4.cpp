@@ -14,19 +14,17 @@
 namespace media {
 } //namespace media
 
-media::ffmpeg_mp4::ffmpeg_mp4(int32_t id, std::string &&n, image_args &&img, audio_args &&aud)
-:_id(id), _tmp(std::string(n).replace(n.find(".mp4"), 4, "")),
-i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0),
-name(_tmp + "_" + std::to_string(id) + ".mp4"), image(img), audio(aud),
-f_rgb_name(_tmp + "_" + std::to_string(id) + ".rgb"), f_264_name(_tmp + "_" + std::to_string(id) + ".h264"),
-f_pcm_name(_tmp + "_" + std::to_string(id) + ".pcm"), f_aac_name(_tmp + "_" + std::to_string(id) + ".aac"),
+media::ffmpeg_mp4::ffmpeg_mp4(std::string &&n, image_args &&img, audio_args &&aud)
+:_tmp(std::string(n).replace(n.find(".mp4"), 4, "")),
+i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0), name(_tmp + ".mp4"), image(img), audio(aud),
+f_rgb_name(_tmp + ".rgb"), f_264_name(_tmp + ".h264"), f_pcm_name(_tmp + ".pcm"), f_aac_name(_tmp + ".aac"),
 vf_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr),
 ac_ctx(nullptr), a_stm(nullptr), a_swr_ctx(nullptr), a_frm(nullptr), a_encode_cache(nullptr),
 i_h264bsfc(av_bitstream_filter_init("h264_mp4toannexb")),
 a_aac_adtstoasc(av_bitstream_filter_init("aac_adtstoasc")) {
     image.update_frame_size();
-    log_d("[%d] created. [v:%d,%d,%d,%d],[a:%d,%d,%d],\n%s\n%s\n%s\n%s\n%s.",
-          _id, image.width, image.height, image.channels, image.frame_size,
+    log_d("created. [v:%d,%d,%d,%d],[a:%d,%d,%d],\n%s,\n%s,\n%s,\n%s,\n%s.",
+          image.width, image.height, image.channels, image.frame_size,
           audio.channels, audio.sample_rate, audio.frame_size,
           f_rgb_name.c_str(), f_264_name.c_str(), f_pcm_name.c_str(), f_aac_name.c_str(), name.c_str());
 }
@@ -44,7 +42,7 @@ media::ffmpeg_mp4::~ffmpeg_mp4() {
     if (vf_ctx) avformat_free_context(vf_ctx);
     if (i_h264bsfc) av_bitstream_filter_close(i_h264bsfc);
     if (a_aac_adtstoasc) av_bitstream_filter_close(a_aac_adtstoasc);
-    log_d("[%d] release.", _id);
+    log_d("release.");
 }
 
 void media::ffmpeg_mp4::init() {

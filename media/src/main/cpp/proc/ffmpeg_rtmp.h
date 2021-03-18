@@ -30,7 +30,7 @@ namespace media {
 
 class ffmpeg_rtmp {
 public:
-    ffmpeg_rtmp(int32_t id, std::string &&f, std::string &&n, image_args &&img, audio_args &&aud);
+    ffmpeg_rtmp(std::string &&f, std::string &&n, image_args &&img, audio_args &&aud);
     ~ffmpeg_rtmp();
 
 public:
@@ -62,8 +62,6 @@ private:
     ffmpeg_rtmp& operator=(const ffmpeg_rtmp&) = delete;
 
 private:
-    int32_t          _id;
-    //////////////////////////
     int64_t          i_pts;
     int64_t          a_pts;
     int32_t          a_encode_offset;

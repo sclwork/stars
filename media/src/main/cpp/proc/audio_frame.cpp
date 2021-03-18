@@ -15,7 +15,7 @@ namespace media {
 media::audio_frame::audio_frame(int32_t s)
 :is_copy(false), size(s),
 cache((uint8_t*)malloc(sizeof(uint8_t)*size)), cp_offset(0) {
-    log_d("created.");
+//    log_d("created.");
     if (cache == nullptr) {
         log_e("malloc pcm cache fail.");
     }
@@ -33,7 +33,7 @@ cache((uint8_t*)malloc(sizeof(uint8_t)*size)), cp_offset(0) {
 
 media::audio_frame::~audio_frame() {
     if (cache) free(cache);
-    if (!is_copy) log_d("release.");
+//    if (!is_copy) log_d("release.");
 }
 
 bool media::audio_frame::available() const {
