@@ -33,7 +33,13 @@ public:
      * @param out_size [out] audio pcm short data size
      * @return audio frame pcm short data pointer
      */
-    std::shared_ptr<int16_t> get(int32_t *out_size);
+    std::shared_ptr<uint16_t> get(int32_t *out_size);
+    /**
+     * set short data to audio frame pcm
+     * @param sht audio pcm short data
+     * @param length audio pcm short data size
+     */
+    void set(const std::shared_ptr<uint16_t>& sht, int32_t length);
 
 private:
     audio_frame(audio_frame&&) = delete;

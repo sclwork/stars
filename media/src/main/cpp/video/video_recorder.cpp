@@ -15,6 +15,7 @@
 #include "proc/ffmpeg_mp4.h"
 #include "proc/ffmpeg_rtmp.h"
 #include "proc/ffmpeg_loudnorm.h"
+#include "proc/webrtc_ns.h"
 
 #define log_d(...)  LOG_D("Media-Native:video_recorder", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:video_recorder", __VA_ARGS__)
@@ -175,6 +176,7 @@ class encode_params {
 public:
     encode_params(
         bool use_loudnorm,
+        int32_t ns_mode,
         std::string &&file_root,
         std::string &&name,
         image_args &&img_args, audio_args &&aud_args,
@@ -187,6 +189,7 @@ public:
     ):_mux(), runnable(runnable),
     loudnorm(use_loudnorm?std::make_shared<ffmpeg_loudnorm>("I=-16:tp=-1.5:LRA=11",
             std::forward<audio_args>(aud_args)):nullptr),
+    ns(ns_mode>=0?std::make_shared<webrtc_ns>(ns_mode, aud_args.sample_rate):nullptr),
     mp4(endWith(name,".mp4")?std::make_shared<ffmpeg_mp4>(
             std::forward<std::string>(name),
             std::forward<image_args>(img_args), std::forward<audio_args>(aud_args)):nullptr),
@@ -195,6 +198,7 @@ public:
             std::forward<image_args>(img_args), std::forward<audio_args>(aud_args)):nullptr),
     frameQ(fQ) {
         if (loudnorm != nullptr) loudnorm->init();
+        if (ns != nullptr) ns->init();
         if (mp4 != nullptr) mp4->init();
         if (rtmp != nullptr) rtmp->init();
         log_d("encode params created.");
@@ -202,6 +206,7 @@ public:
     ~encode_params() {
         if (mp4 != nullptr) mp4->complete();
         if (rtmp != nullptr) rtmp->complete();
+        if (ns != nullptr) ns->complete();
         if (loudnorm != nullptr) loudnorm->complete();
         log_d("encode params release.");
     }
@@ -230,12 +235,15 @@ public:
 #endif
             {
                 if (loudnorm != nullptr) {
-                    loudnorm->encode_frame(std::forward<std::shared_ptr<audio_frame>>(f.audio));
+                    loudnorm->encode_frame(
+                                std::forward<std::shared_ptr<audio_frame>>(f.audio));
                     if (mp4 != nullptr) mp4->encode_frame(
                                 std::forward<std::shared_ptr<image_frame>>(f.image), nullptr);
                     if (rtmp != nullptr) rtmp->encode_frame(
                                 std::forward<std::shared_ptr<image_frame>>(f.image), nullptr);
                 } else {
+                    if (ns != nullptr) ns->encode_frame(
+                                std::forward<std::shared_ptr<audio_frame>>(f.audio));
                     if (mp4 != nullptr) mp4->encode_frame(
                                 std::forward<std::shared_ptr<image_frame>>(f.image),
                                 std::forward<std::shared_ptr<audio_frame>>(f.audio));
@@ -247,10 +255,12 @@ public:
             if (loudnorm != nullptr) {
                 std::shared_ptr<media::audio_frame> frm = loudnorm->get_encoded_frame();
                 if (frm != nullptr) {
+                    if (ns != nullptr) ns->encode_frame(
+                                std::forward<std::shared_ptr<audio_frame>>(frm));
                     if (mp4 != nullptr) mp4->encode_frame(nullptr,
-                            std::forward<std::shared_ptr<audio_frame>>(frm));
+                                std::forward<std::shared_ptr<audio_frame>>(frm));
                     if (rtmp != nullptr) rtmp->encode_frame(nullptr,
-                            std::forward<std::shared_ptr<audio_frame>>(frm));
+                                std::forward<std::shared_ptr<audio_frame>>(frm));
                 }
             }
         }
@@ -260,6 +270,7 @@ private:
     mutable std::mutex _mux;
     std::shared_ptr<std::atomic_bool> runnable;
     std::shared_ptr<ffmpeg_loudnorm> loudnorm;
+    std::shared_ptr<webrtc_ns> ns;
     std::shared_ptr<ffmpeg_mp4> mp4;
     std::shared_ptr<ffmpeg_rtmp> rtmp;
 #ifdef USE_CONCURRENT_QUEUE
@@ -362,7 +373,7 @@ void media::video_recorder::start_record(std::string &&file_root, std::string &&
         }
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
-    auto *ctx = new encode_params(true,
+    auto *ctx = new encode_params(false, -1,
             std::forward<std::string>(file_root), std::forward<std::string>(name),
             std::forward<image_args>(img_args), std::forward<audio_args>(aud_args), runnable,
 #ifdef USE_CONCURRENT_QUEUE
