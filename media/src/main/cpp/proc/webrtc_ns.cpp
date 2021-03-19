@@ -77,5 +77,5 @@ void media::webrtc_ns::encode_frame(std::shared_ptr<audio_frame> &&aud_frame) {
     }
 
     aud_frame->set(sht, length);
-    log_d("encode_frame frm_size: %d, ns_size: %d.", length, count);
+//    log_d("encode_frame frm_size: %d, ns_size: %d.", length, count);
 }

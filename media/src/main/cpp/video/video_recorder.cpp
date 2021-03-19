@@ -226,41 +226,47 @@ public:
 
     void run() {
         if (frameQ != nullptr) {
-            frame f;
+            frame frm;
             if
 #ifdef USE_CONCURRENT_QUEUE
-            (frameQ->try_dequeue(f))
+            (frameQ->try_dequeue(frm))
 #else
-            (frameQ->try_pop(f))
+            (frameQ->try_pop(frm))
 #endif
             {
                 if (loudnorm != nullptr) {
                     loudnorm->encode_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(f.audio));
-                    if (mp4 != nullptr) mp4->encode_frame(
-                                std::forward<std::shared_ptr<image_frame>>(f.image), nullptr);
-                    if (rtmp != nullptr) rtmp->encode_frame(
-                                std::forward<std::shared_ptr<image_frame>>(f.image), nullptr);
+                                std::forward<std::shared_ptr<audio_frame>>(frm.audio));
+                    if (mp4 != nullptr) mp4->encode_image_frame(
+                                std::forward<std::shared_ptr<image_frame>>(frm.image));
+                    if (rtmp != nullptr) rtmp->encode_image_frame(
+                                std::forward<std::shared_ptr<image_frame>>(frm.image));
                 } else {
                     if (ns != nullptr) ns->encode_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(f.audio));
-                    if (mp4 != nullptr) mp4->encode_frame(
-                                std::forward<std::shared_ptr<image_frame>>(f.image),
-                                std::forward<std::shared_ptr<audio_frame>>(f.audio));
-                    if (rtmp != nullptr) rtmp->encode_frame(
-                                std::forward<std::shared_ptr<image_frame>>(f.image),
-                                std::forward<std::shared_ptr<audio_frame>>(f.audio));
+                                std::forward<std::shared_ptr<audio_frame>>(frm.audio));
+                    if (mp4 != nullptr) {
+                        mp4->encode_image_frame(
+                                std::forward<std::shared_ptr<image_frame>>(frm.image));
+                        mp4->encode_audio_frame(
+                                std::forward<std::shared_ptr<audio_frame>>(frm.audio));
+                    }
+                    if (rtmp != nullptr) {
+                        rtmp->encode_image_frame(
+                                std::forward<std::shared_ptr<image_frame>>(frm.image));
+                        rtmp->encode_audio_frame(
+                                std::forward<std::shared_ptr<audio_frame>>(frm.audio));
+                    }
                 }
             }
             if (loudnorm != nullptr) {
-                std::shared_ptr<media::audio_frame> frm = loudnorm->get_encoded_frame();
-                if (frm != nullptr) {
+                std::shared_ptr<media::audio_frame> audio = loudnorm->get_encoded_frame();
+                if (audio != nullptr) {
                     if (ns != nullptr) ns->encode_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(frm));
-                    if (mp4 != nullptr) mp4->encode_frame(nullptr,
-                                std::forward<std::shared_ptr<audio_frame>>(frm));
-                    if (rtmp != nullptr) rtmp->encode_frame(nullptr,
-                                std::forward<std::shared_ptr<audio_frame>>(frm));
+                                std::forward<std::shared_ptr<audio_frame>>(audio));
+                    if (mp4 != nullptr) mp4->encode_audio_frame(
+                                std::forward<std::shared_ptr<audio_frame>>(audio));
+                    if (rtmp != nullptr) rtmp->encode_audio_frame(
+                                std::forward<std::shared_ptr<audio_frame>>(audio));
                 }
             }
         }

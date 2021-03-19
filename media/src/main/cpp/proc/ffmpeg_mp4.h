@@ -43,17 +43,18 @@ public:
      */
     void complete();
     /**
-     * encode image frame and audio frame [to mp4 file]
+     * encode image frame [to mp4 file]
      * @param img_frame image frame
+     */
+    void encode_image_frame(std::shared_ptr<image_frame> &&img_frame);
+    /**
+     * encode audio frame [to mp4 file]
      * @param aud_frame audio frame
      */
-    void encode_frame(std::shared_ptr<image_frame> &&img_frame,
-                      std::shared_ptr<audio_frame> &&aud_frame);
+    void encode_audio_frame(std::shared_ptr<audio_frame> &&aud_frame);
 
 private:
     void on_free_all();
-    void encode_ia_frame(int32_t w, int32_t h, const uint32_t* const img_data,
-                         int32_t count, const uint8_t* const aud_data);
 
 private:
     ffmpeg_mp4(ffmpeg_mp4&&) = delete;
