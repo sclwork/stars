@@ -6,6 +6,7 @@
 
 ```
 ...
+<uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.CAMERA" />
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
@@ -35,6 +36,8 @@ demo.java
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Media.init(this); // init media.
+    MediaGLView recorderView = findViewById(R.id.recorder_view);
+    Media.setMediaGLView(recorderView); // setup MediaGLView
     ...
 }
 
@@ -58,6 +61,34 @@ protected void onDestroy() {
     super.onDestroy();
     ...
 }
+```
+
+<br />
+
+```
+// record to mp4
+View record = findViewById(R.id.record);
+record.setOnClickListener(v -> {
+    if (Media.isVideoRecording()) {
+        Media.stopVideoRecord();
+    } else {
+        Media.startVideoRecord(getFilesDir() + "/demo.mp4");
+    }
+});
+```
+
+<br />
+
+```
+// record to rtmp
+View record = findViewById(R.id.record);
+record.setOnClickListener(v -> {
+    if (Media.isVideoRecording()) {
+        Media.stopVideoRecord();
+    } else {
+        Media.startVideoRecord("rtmp://scliang.com/live/demo");
+    }
+});
 ```
 
 <br /><br />
