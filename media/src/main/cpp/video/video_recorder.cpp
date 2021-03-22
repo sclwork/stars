@@ -12,6 +12,7 @@
 #include "audio/collect/audio_recorder.h"
 #include "proc/proc.h"
 #include "proc/mnn.h"
+#include "proc/opencv.h"
 #include "proc/ffmpeg_mp4.h"
 #include "proc/ffmpeg_rtmp.h"
 #include "proc/ffmpeg_loudnorm.h"
@@ -36,7 +37,7 @@ public:
 #endif
                   ):ms(0), tv(), w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
                     runnable(runnable), recording(recording), callback(callback), _mux(),
-                    image(nullptr), audio(nullptr), mnn(nullptr),
+                    image(nullptr), audio(nullptr), mnn(nullptr), opencv(nullptr),
                     img_args(), aud_args(), aud_frame(nullptr), frameQ(fQ) {
         log_d("collect params[%d,%d,%d] created.", this->w, this->h, this->camera);
     }
@@ -57,6 +58,7 @@ public:
 
     void activate() {
         mnn = new media::mnn(mnn_path, 1);
+        opencv = new media::opencv();
         image = new image_recorder();
         image->update_size(w, h);
         image->select_camera(camera);
@@ -78,6 +80,7 @@ public:
         delete image;
         delete audio;
         delete mnn;
+        delete opencv;
     }
 
     void unrunning() {
@@ -129,6 +132,7 @@ public:
         gettimeofday(&tv, nullptr);
         ms = tv.tv_sec * 1000 + tv.tv_usec / 1000;
         auto img_frame = image->collect_frame();
+        opencv::grey_frame(img_frame);
         mnn->detect_faces(img_frame, faces);
         mnn->flag_faces(img_frame, faces);
         if (recording != nullptr && *recording && frameQ != nullptr) {
@@ -162,6 +166,7 @@ private:
     image_recorder *image;
     audio_recorder *audio;
     mnn *mnn;
+    opencv *opencv;
     image_args img_args;
     audio_args aud_args;
     std::shared_ptr<media::audio_frame> aud_frame;
