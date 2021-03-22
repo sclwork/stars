@@ -412,7 +412,7 @@ void media::video_recorder::start_record(std::string &&file_root, std::string &&
         }
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
-    auto *ctx = new encode_params(true, 1,
+    auto *ctx = new encode_params(true, 0,
             std::forward<std::string>(file_root), std::forward<std::string>(name),
             std::forward<image_args>(img_args), std::forward<audio_args>(aud_args), runnable,
 #ifdef USE_CONCURRENT_QUEUE
