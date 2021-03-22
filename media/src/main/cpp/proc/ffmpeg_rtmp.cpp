@@ -9,7 +9,7 @@
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_rtmp", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_rtmp", __VA_ARGS__)
 
-//#define HAVE_IMAGE_STREAM
+#define HAVE_IMAGE_STREAM
 #define HAVE_AUDIO_STREAM
 
 namespace media {
@@ -446,7 +446,8 @@ void media::ffmpeg_rtmp::encode_audio_frame(std::shared_ptr<audio_frame> &aud_fr
                 uint8_t *pData[1] = { a_encode_cache };
                 if (swr_convert(a_swr_ctx, a_frm->data, a_frm->nb_samples,
                         (const uint8_t **)pData, a_frm->nb_samples) >= 0) {
-                    a_frm->pts = a_pts++;
+                    a_frm->pts = a_pts;
+                    a_pts += a_frm->nb_samples;
                     int32_t res = avcodec_send_frame(ac_ctx, a_frm);
                     if (res < 0) {
                         char err[64];
