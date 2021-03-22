@@ -25,7 +25,8 @@ namespace media {
 
 class collect_params {
 public:
-    collect_params(int32_t w, int32_t h, int32_t camera,
+    collect_params(bool use_mnn, bool use_opencv,
+                   int32_t w, int32_t h, int32_t camera,
                    std::string &mnn_path,
                    std::shared_ptr<std::atomic_bool> &runnable,
                    std::shared_ptr<std::atomic_bool> &recording,
@@ -35,7 +36,8 @@ public:
 #else
                    std::shared_ptr<safe_queue<frame>> &&fQ
 #endif
-                  ):ms(0), tv(), w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
+                  ):ms(0), tv(), use_mnn(use_mnn), use_opencv(use_opencv),
+                    w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
                     runnable(runnable), recording(recording), callback(callback), _mux(),
                     image(nullptr), audio(nullptr), mnn(nullptr), opencv(nullptr),
                     img_args(), aud_args(), aud_frame(nullptr), frameQ(fQ) {
@@ -57,8 +59,12 @@ public:
     }
 
     void activate() {
-        mnn = new media::mnn(mnn_path, 1);
-        opencv = new media::opencv();
+        if (use_mnn) {
+            mnn = new media::mnn(mnn_path, 1);
+        }
+        if (use_opencv) {
+            opencv = new media::opencv();
+        }
         image = new image_recorder();
         image->update_size(w, h);
         image->select_camera(camera);
@@ -132,9 +138,13 @@ public:
         gettimeofday(&tv, nullptr);
         ms = tv.tv_sec * 1000 + tv.tv_usec / 1000;
         auto img_frame = image->collect_frame();
-        opencv::grey_frame(img_frame);
-        mnn->detect_faces(img_frame, faces);
-        mnn->flag_faces(img_frame, faces);
+        if (use_opencv) {
+            opencv::grey_frame(img_frame);
+        }
+        if (use_mnn) {
+            mnn->detect_faces(img_frame, faces);
+            mnn->flag_faces(img_frame, faces);
+        }
         if (recording != nullptr && *recording && frameQ != nullptr) {
             auto frame = media::frame(std::forward<std::shared_ptr<image_frame>>(img_frame), nullptr);
 #ifdef USE_CONCURRENT_QUEUE
@@ -156,6 +166,7 @@ public:
 private:
     long ms;
     struct timeval tv;
+    bool use_mnn, use_opencv;
     int32_t w, h, camera, fps_ms;
     std::string mnn_path;
     std::shared_ptr<std::atomic_bool> runnable;
@@ -375,7 +386,8 @@ void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto recording = std::make_shared<std::atomic_bool>(false);
-    auto *ctx = new collect_params(w, h, camera, mnn_path, runnable, recording, callback,
+    auto *ctx = new collect_params(true, false, w, h, camera,
+            mnn_path, runnable, recording, callback,
 #ifdef USE_CONCURRENT_QUEUE
         std::forward<std::shared_ptr<moodycamel::ConcurrentQueue<frame>>>(frameQ)
 #else
