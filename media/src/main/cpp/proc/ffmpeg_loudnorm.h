@@ -47,7 +47,7 @@ public:
      * encode audio frame
      * @param aud_frame audio frame
      */
-    void encode_frame(std::shared_ptr<audio_frame> &&aud_frame);
+    void encode_frame(std::shared_ptr<audio_frame> &aud_frame);
     /**
      * get encode completed frame
      * @return audio frame

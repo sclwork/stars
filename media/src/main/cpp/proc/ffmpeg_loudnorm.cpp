@@ -199,7 +199,7 @@ void media::ffmpeg_loudnorm::on_free_all() {
     if (graph != nullptr) avfilter_graph_free(&graph);
 }
 
-void media::ffmpeg_loudnorm::encode_frame(std::shared_ptr<audio_frame> &&aud_frame) {
+void media::ffmpeg_loudnorm::encode_frame(std::shared_ptr<audio_frame> &aud_frame) {
     int32_t count = 0; uint8_t *aud_data = nullptr;
     if (aud_frame != nullptr && aud_frame->available()) {
         aud_frame->get(&count, &aud_data);

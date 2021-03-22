@@ -46,12 +46,12 @@ public:
      * encode image frame [to mp4 file]
      * @param img_frame image frame
      */
-    void encode_image_frame(std::shared_ptr<image_frame> &&img_frame);
+    void encode_image_frame(std::shared_ptr<image_frame> &img_frame);
     /**
      * encode audio frame [to mp4 file]
      * @param aud_frame audio frame
      */
-    void encode_audio_frame(std::shared_ptr<audio_frame> &&aud_frame);
+    void encode_audio_frame(std::shared_ptr<audio_frame> &aud_frame);
 
 private:
     void on_free_all();

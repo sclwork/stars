@@ -9,7 +9,7 @@
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_rtmp", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_rtmp", __VA_ARGS__)
 
-#define HAVE_IMAGE_STREAM
+//#define HAVE_IMAGE_STREAM
 #define HAVE_AUDIO_STREAM
 
 namespace media {
@@ -364,7 +364,7 @@ void media::ffmpeg_rtmp::on_free_all() {
     vf_ctx = nullptr;
 }
 
-void media::ffmpeg_rtmp::encode_image_frame(std::shared_ptr<image_frame> &&img_frame) {
+void media::ffmpeg_rtmp::encode_image_frame(std::shared_ptr<image_frame> &img_frame) {
 #ifdef HAVE_IMAGE_STREAM
     if (vf_ctx == nullptr) {
         return;
@@ -417,7 +417,7 @@ void media::ffmpeg_rtmp::encode_image_frame(std::shared_ptr<image_frame> &&img_f
 #endif
 }
 
-void media::ffmpeg_rtmp::encode_audio_frame(std::shared_ptr<audio_frame> &&aud_frame) {
+void media::ffmpeg_rtmp::encode_audio_frame(std::shared_ptr<audio_frame> &aud_frame) {
 #ifdef HAVE_AUDIO_STREAM
     if (vf_ctx == nullptr) {
         return;

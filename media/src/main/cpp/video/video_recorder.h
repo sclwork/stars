@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <stdint.h>
+#include "proc/proc_frame.h"
 #include "proc/image_frame.h"
 #include "proc/audio_frame.h"
 #include "loop/config.h"
@@ -14,19 +15,6 @@
 #include "loop/concurrent_queue.h"
 
 namespace media {
-
-class frame {
-public:
-    frame():image(nullptr), audio(nullptr) {}
-    frame(std::shared_ptr<image_frame> &&img, std::shared_ptr<audio_frame> &&aud)
-     :image(img==nullptr?nullptr:std::make_shared<image_frame>(*img)),
-      audio(aud==nullptr?nullptr:std::make_shared<audio_frame>(*aud)) {}
-    ~frame() = default;
-
-public:
-    std::shared_ptr<image_frame> image;
-    std::shared_ptr<audio_frame> audio;
-};
 
 class video_recorder {
 public:

@@ -9,7 +9,7 @@
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_mp4", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_mp4", __VA_ARGS__)
 
-#define HAVE_IMAGE_STREAM
+//#define HAVE_IMAGE_STREAM
 
 namespace media {
 } //namespace media
@@ -379,7 +379,7 @@ void media::ffmpeg_mp4::on_free_all() {
     vf_ctx = nullptr;
 }
 
-void media::ffmpeg_mp4::encode_image_frame(std::shared_ptr<image_frame> &&img_frame) {
+void media::ffmpeg_mp4::encode_image_frame(std::shared_ptr<image_frame> &img_frame) {
 #ifdef HAVE_IMAGE_STREAM
     if (vf_ctx == nullptr) {
         return;
@@ -432,7 +432,7 @@ void media::ffmpeg_mp4::encode_image_frame(std::shared_ptr<image_frame> &&img_fr
 #endif
 }
 
-void media::ffmpeg_mp4::encode_audio_frame(std::shared_ptr<audio_frame> &&aud_frame) {
+void media::ffmpeg_mp4::encode_audio_frame(std::shared_ptr<audio_frame> &aud_frame) {
     if (vf_ctx == nullptr) {
         return;
     }

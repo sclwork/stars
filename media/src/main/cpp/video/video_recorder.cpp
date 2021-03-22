@@ -235,38 +235,58 @@ public:
 #endif
             {
                 if (loudnorm != nullptr) {
-                    loudnorm->encode_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(frm.audio));
-                    if (mp4 != nullptr) mp4->encode_image_frame(
-                                std::forward<std::shared_ptr<image_frame>>(frm.image));
-                    if (rtmp != nullptr) rtmp->encode_image_frame(
-                                std::forward<std::shared_ptr<image_frame>>(frm.image));
-                } else {
-                    if (ns != nullptr) ns->encode_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(frm.audio));
+                    loudnorm->encode_frame(frm.audio);
                     if (mp4 != nullptr) {
-                        mp4->encode_image_frame(
-                                std::forward<std::shared_ptr<image_frame>>(frm.image));
-                        mp4->encode_audio_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(frm.audio));
+                        mp4->encode_image_frame(frm.image);
                     }
                     if (rtmp != nullptr) {
-                        rtmp->encode_image_frame(
-                                std::forward<std::shared_ptr<image_frame>>(frm.image));
-                        rtmp->encode_audio_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(frm.audio));
+                        rtmp->encode_image_frame(frm.image);
+                    }
+                } else {
+                    if (ns != nullptr) {
+                        ns->encode_frame(frm.audio);
+                        if (mp4 != nullptr) {
+                            mp4->encode_image_frame(frm.image);
+                        }
+                        if (rtmp != nullptr) {
+                            rtmp->encode_image_frame(frm.image);
+                        }
+                    } else {
+                        if (mp4 != nullptr) {
+                            mp4->encode_image_frame(frm.image);
+                            mp4->encode_audio_frame(frm.audio);
+                        }
+                        if (rtmp != nullptr) {
+                            rtmp->encode_image_frame(frm.image);
+                            rtmp->encode_audio_frame(frm.audio);
+                        }
                     }
                 }
             }
             if (loudnorm != nullptr) {
                 std::shared_ptr<media::audio_frame> audio = loudnorm->get_encoded_frame();
                 if (audio != nullptr) {
-                    if (ns != nullptr) ns->encode_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(audio));
-                    if (mp4 != nullptr) mp4->encode_audio_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(audio));
-                    if (rtmp != nullptr) rtmp->encode_audio_frame(
-                                std::forward<std::shared_ptr<audio_frame>>(audio));
+                    if (ns != nullptr) {
+                        ns->encode_frame(audio);
+                    } else {
+                        if (mp4 != nullptr) {
+                            mp4->encode_audio_frame(audio);
+                        }
+                        if (rtmp != nullptr) {
+                            rtmp->encode_audio_frame(audio);
+                        }
+                    }
+                }
+            }
+            if (ns != nullptr) {
+                std::shared_ptr<media::audio_frame> audio = ns->get_encoded_frame();
+                if (audio != nullptr) {
+                    if (mp4 != nullptr) {
+                        mp4->encode_audio_frame(audio);
+                    }
+                    if (rtmp != nullptr) {
+                        rtmp->encode_audio_frame(audio);
+                    }
                 }
             }
         }
@@ -379,7 +399,7 @@ void media::video_recorder::start_record(std::string &&file_root, std::string &&
         }
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
-    auto *ctx = new encode_params(false, -1,
+    auto *ctx = new encode_params(true, 1,
             std::forward<std::string>(file_root), std::forward<std::string>(name),
             std::forward<image_args>(img_args), std::forward<audio_args>(aud_args), runnable,
 #ifdef USE_CONCURRENT_QUEUE

@@ -56,7 +56,16 @@ std::shared_ptr<uint16_t> media::audio_frame::get(int32_t *out_size) {
     return sht;
 }
 
-void media::audio_frame::set(const std::shared_ptr<uint16_t>& sht, int32_t length) {
+void media::audio_frame::set(const uint16_t *sht, int32_t length) {
+    if (sht != nullptr && length > 0 && length * 2 == size && cache != nullptr) {
+        for (int32_t i = 0; i < length; i++) {
+            cache[i * 2]     = (uint8_t) (sht[i]        & 0xff);
+            cache[i * 2 + 1] = (uint8_t)((sht[i] >> 8)  & 0xff);
+        }
+    }
+}
+
+void media::audio_frame::set(const std::shared_ptr<uint16_t> &sht, int32_t length) {
     if (sht != nullptr && length > 0 && length * 2 == size && cache != nullptr) {
         uint16_t *sd = sht.get();
         for (int32_t i = 0; i < length; i++) {
