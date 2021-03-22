@@ -226,16 +226,33 @@ public:
 
     void run() {
         if (frameQ != nullptr) {
-            frame frm;
-            if
+            check_frameQ();
+            check_loudnorm();
+            check_ns();
+        }
+    }
+
+private:
+    void check_frameQ() {
+        frame frm;
+        if
 #ifdef USE_CONCURRENT_QUEUE
-            (frameQ->try_dequeue(frm))
+        (frameQ->try_dequeue(frm))
 #else
-            (frameQ->try_pop(frm))
+        (frameQ->try_pop(frm))
 #endif
-            {
-                if (loudnorm != nullptr) {
-                    loudnorm->encode_frame(frm.audio);
+        {
+            if (loudnorm != nullptr) {
+                loudnorm->encode_frame(frm.audio);
+                if (mp4 != nullptr) {
+                    mp4->encode_image_frame(frm.image);
+                }
+                if (rtmp != nullptr) {
+                    rtmp->encode_image_frame(frm.image);
+                }
+            } else {
+                if (ns != nullptr) {
+                    ns->encode_frame(frm.audio);
                     if (mp4 != nullptr) {
                         mp4->encode_image_frame(frm.image);
                     }
@@ -243,50 +260,46 @@ public:
                         rtmp->encode_image_frame(frm.image);
                     }
                 } else {
-                    if (ns != nullptr) {
-                        ns->encode_frame(frm.audio);
-                        if (mp4 != nullptr) {
-                            mp4->encode_image_frame(frm.image);
-                        }
-                        if (rtmp != nullptr) {
-                            rtmp->encode_image_frame(frm.image);
-                        }
-                    } else {
-                        if (mp4 != nullptr) {
-                            mp4->encode_image_frame(frm.image);
-                            mp4->encode_audio_frame(frm.audio);
-                        }
-                        if (rtmp != nullptr) {
-                            rtmp->encode_image_frame(frm.image);
-                            rtmp->encode_audio_frame(frm.audio);
-                        }
+                    if (mp4 != nullptr) {
+                        mp4->encode_image_frame(frm.image);
+                        mp4->encode_audio_frame(frm.audio);
+                    }
+                    if (rtmp != nullptr) {
+                        rtmp->encode_image_frame(frm.image);
+                        rtmp->encode_audio_frame(frm.audio);
                     }
                 }
             }
-            if (loudnorm != nullptr) {
-                std::shared_ptr<media::audio_frame> audio = loudnorm->get_encoded_frame();
-                if (audio != nullptr) {
-                    if (ns != nullptr) {
-                        ns->encode_frame(audio);
-                    } else {
-                        if (mp4 != nullptr) {
-                            mp4->encode_audio_frame(audio);
-                        }
-                        if (rtmp != nullptr) {
-                            rtmp->encode_audio_frame(audio);
-                        }
-                    }
-                }
-            }
-            if (ns != nullptr) {
-                std::shared_ptr<media::audio_frame> audio = ns->get_encoded_frame();
-                if (audio != nullptr) {
+        }
+    }
+
+    void check_loudnorm() {
+        if (loudnorm != nullptr) {
+            std::shared_ptr<media::audio_frame> audio = loudnorm->get_encoded_frame();
+            if (audio != nullptr) {
+                if (ns != nullptr) {
+                    ns->encode_frame(audio);
+                } else {
                     if (mp4 != nullptr) {
                         mp4->encode_audio_frame(audio);
                     }
                     if (rtmp != nullptr) {
                         rtmp->encode_audio_frame(audio);
                     }
+                }
+            }
+        }
+    }
+
+    void check_ns() {
+        if (ns != nullptr) {
+            std::shared_ptr<media::audio_frame> audio = ns->get_encoded_frame();
+            if (audio != nullptr) {
+                if (mp4 != nullptr) {
+                    mp4->encode_audio_frame(audio);
+                }
+                if (rtmp != nullptr) {
+                    rtmp->encode_audio_frame(audio);
                 }
             }
         }
