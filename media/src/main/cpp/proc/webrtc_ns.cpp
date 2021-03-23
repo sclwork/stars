@@ -15,12 +15,7 @@ namespace media {
 media::webrtc_ns::webrtc_ns(int32_t m, uint32_t spr)
 :mode(m), in_offset(0), frm_offset(0), sample_rate(spr), ns(WebRtcNs_Create()), in(), out(),
 frm_cache((uint16_t*)malloc(sizeof(uint16_t)*FRM_LEN)),
-#ifdef USE_CONCURRENT_QUEUE
-    frameQ(std::make_shared<moodycamel::ConcurrentQueue<frame>>())
-#else
-    frameQ(std::make_shared<safe_queue<frame>>())
-#endif
-{
+frameQ(std::make_shared<moodycamel::ConcurrentQueue<frame>>()) {
     log_d("created. [%d,%d].", sample_rate, mode);
 }
 
@@ -92,11 +87,7 @@ void media::webrtc_ns::encode_frame(std::shared_ptr<audio_frame> &aud_frame) {
                 auto de_frm = std::make_shared<audio_frame>(FRM_LEN * 2);
                 de_frm->set(frm_cache, FRM_LEN);
                 auto qFrm =  media::frame(nullptr, std::forward<std::shared_ptr<audio_frame>>(de_frm));
-#ifdef USE_CONCURRENT_QUEUE
                 frameQ->enqueue(qFrm);
-#else
-                frameQ->push(qFrm);
-#endif
                 int32_t rc = cp_count - cc;
                 memcpy(frm_cache, out + cc, sizeof(int16_t) * rc);
                 frm_offset = rc;
@@ -113,13 +104,7 @@ void media::webrtc_ns::encode_frame(std::shared_ptr<audio_frame> &aud_frame) {
 
 std::shared_ptr<media::audio_frame> media::webrtc_ns::get_encoded_frame() {
     frame frm;
-    if
-#ifdef USE_CONCURRENT_QUEUE
-        (frameQ->try_dequeue(frm))
-#else
-        (frameQ->try_pop(frm))
-#endif
-    {
+    if (frameQ->try_dequeue(frm)) {
         return std::shared_ptr<audio_frame>(frm.audio);
     } else {
         return std::shared_ptr<audio_frame>(nullptr);

@@ -10,8 +10,6 @@
 #include "ns.h"
 #include "proc_frame.h"
 #include "audio_frame.h"
-#include "loop/config.h"
-#include "loop/safe_queue.hpp"
 #include "loop/concurrent_queue.h"
 
 namespace media {
@@ -59,11 +57,7 @@ private:
     uint16_t  in[BUF_LEN];
     uint16_t  out[BUF_LEN];
     uint16_t *frm_cache;
-#ifdef USE_CONCURRENT_QUEUE
     std::shared_ptr<moodycamel::ConcurrentQueue<frame>> frameQ;
-#else
-    std::shared_ptr<safe_queue<frame>> frameQ;
-#endif
 };
 
 } //namespace media

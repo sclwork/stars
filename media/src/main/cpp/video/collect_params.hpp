@@ -34,12 +34,8 @@ public:
                    std::shared_ptr<std::atomic_bool> &runnable,
                    std::shared_ptr<std::atomic_bool> &recording,
                    void (*callback)(std::shared_ptr<image_frame>&&),
-#ifdef USE_CONCURRENT_QUEUE
-            std::shared_ptr<moodycamel::ConcurrentQueue<frame>> &&fQ
-#else
-                   std::shared_ptr<safe_queue<frame>> &&fQ
-#endif
-    ):ms(0), tv(), use_mnn(use_mnn), use_opencv(use_opencv),
+                   std::shared_ptr<moodycamel::ConcurrentQueue<frame>> &&fQ)
+     :ms(0), tv(), use_mnn(use_mnn), use_opencv(use_opencv),
       w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
       runnable(runnable), recording(recording), callback(callback), _mux(),
       image(nullptr), audio(nullptr), mnn(nullptr), opencv(nullptr),
@@ -107,11 +103,7 @@ public:
         if (cps->recording != nullptr && *cps->recording && cps->frameQ != nullptr && cps->audio != nullptr) {
             auto aud_frame = cps->audio->collect_frame(nullptr);
             auto frame = media::frame(nullptr, std::forward<std::shared_ptr<audio_frame>>(aud_frame));
-#ifdef USE_CONCURRENT_QUEUE
             cps->frameQ->enqueue(frame);
-#else
-            cps->frameQ->push(frame);
-#endif
         }
     }
 
@@ -150,11 +142,7 @@ public:
         }
         if (recording != nullptr && *recording && frameQ != nullptr) {
             auto frame = media::frame(std::forward<std::shared_ptr<image_frame>>(img_frame), nullptr);
-#ifdef USE_CONCURRENT_QUEUE
             frameQ->enqueue(frame);
-#else
-            frameQ->push(frame);
-#endif
         }
         callback(std::forward<std::shared_ptr<media::image_frame>>(img_frame));
         gettimeofday(&tv, nullptr);
@@ -184,11 +172,7 @@ private:
     image_args img_args;
     audio_args aud_args;
     std::shared_ptr<media::audio_frame> aud_frame;
-#ifdef USE_CONCURRENT_QUEUE
     std::shared_ptr<moodycamel::ConcurrentQueue<frame>> frameQ;
-#else
-    std::shared_ptr<safe_queue<frame>> frameQ;
-#endif
 };
 
 } //namespace media

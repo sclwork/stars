@@ -6,8 +6,6 @@
 #define STARS_IMAGE_RENDERER_H
 
 #include "paint.h"
-#include "loop/config.h"
-#include "loop/safe_queue.hpp"
 #include "loop/concurrent_queue.h"
 
 namespace media {
@@ -54,11 +52,7 @@ private:
     int32_t height;
     paint  *paint;
     std::shared_ptr<image_frame> frame;
-#ifdef USE_CONCURRENT_QUEUE
     moodycamel::ConcurrentQueue<std::shared_ptr<image_frame>> frameQ;
-#else
-    safe_queue<std::shared_ptr<image_frame>> frameQ;
-#endif
 };
 
 } //namespace media

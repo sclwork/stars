@@ -48,11 +48,7 @@ void media::image_renderer::surface_changed(int32_t w, int32_t h) {
 
 void media::image_renderer::updt_frame(const std::shared_ptr<media::image_frame> &&frm) {
     if (frm != nullptr && frm->available()) {
-#ifdef USE_CONCURRENT_QUEUE
         frameQ.enqueue(frm);
-#else
-        frameQ.push(frm);
-#endif
     }
 }
 
@@ -62,11 +58,7 @@ void media::image_renderer::draw_frame() {
     }
 
     std::shared_ptr<media::image_frame> f;
-#ifdef USE_CONCURRENT_QUEUE
     if (frameQ.try_dequeue(f)) {
-#else
-    if (frameQ.try_pop(f)) {
-#endif
         frame = f;
     }
 

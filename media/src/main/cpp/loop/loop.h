@@ -5,8 +5,6 @@
 #ifndef STARS_LOOP_H
 #define STARS_LOOP_H
 
-#include "config.h"
-
 namespace media {
 
 /**

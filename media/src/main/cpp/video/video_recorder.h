@@ -10,8 +10,6 @@
 #include "proc/proc_frame.h"
 #include "proc/image_frame.h"
 #include "proc/audio_frame.h"
-#include "loop/config.h"
-#include "loop/safe_queue.hpp"
 #include "loop/concurrent_queue.h"
 
 namespace media {
@@ -60,11 +58,7 @@ private:
 private:
     std::string mnn_path;
     std::atomic_bool recing;
-#ifdef USE_CONCURRENT_QUEUE
     std::shared_ptr<moodycamel::ConcurrentQueue<frame>> frameQ;
-#else
-    std::shared_ptr<safe_queue<frame>> frameQ;
-#endif
 };
 
 } //namespace media

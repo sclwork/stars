@@ -35,12 +35,8 @@ public:
             std::string &&name,
             image_args &&img_args, audio_args &&aud_args,
             std::shared_ptr<std::atomic_bool> &runnable,
-#ifdef USE_CONCURRENT_QUEUE
-            std::shared_ptr<moodycamel::ConcurrentQueue<frame>> &&fQ
-#else
-            std::shared_ptr<safe_queue<frame>> &&fQ
-#endif
-    ):_mux(), runnable(runnable),
+            std::shared_ptr<moodycamel::ConcurrentQueue<frame>> &&fQ)
+     :_mux(), runnable(runnable),
       loudnorm(use_loudnorm?std::make_shared<ffmpeg_loudnorm>("I=-16:tp=-1.5:LRA=11",
                                                               std::forward<audio_args>(aud_args)):nullptr),
       ns(ns_mode>=0?std::make_shared<webrtc_ns>(ns_mode, aud_args.sample_rate):nullptr),
@@ -89,13 +85,7 @@ public:
 private:
     void check_frameQ() {
         frame frm;
-        if
-#ifdef USE_CONCURRENT_QUEUE
-            (frameQ->try_dequeue(frm))
-#else
-                (frameQ->try_pop(frm))
-#endif
-        {
+        if (frameQ->try_dequeue(frm)) {
             if (loudnorm != nullptr) {
                 loudnorm->encode_frame(frm.audio);
                 if (mp4 != nullptr) {
@@ -166,11 +156,7 @@ private:
     std::shared_ptr<webrtc_ns> ns;
     std::shared_ptr<ffmpeg_mp4> mp4;
     std::shared_ptr<ffmpeg_rtmp> rtmp;
-#ifdef USE_CONCURRENT_QUEUE
     std::shared_ptr<moodycamel::ConcurrentQueue<frame>> frameQ;
-#else
-    std::shared_ptr<safe_queue<frame>> frameQ;
-#endif
 };
 
 } //namespace media

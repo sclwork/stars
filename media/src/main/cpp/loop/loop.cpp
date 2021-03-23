@@ -6,7 +6,6 @@
 #include "loop.h"
 #include "common.h"
 #include "jni_bridge.h"
-#include "safe_queue.hpp"
 #include "concurrent_queue.h"
 
 #define log_d(...)  LOG_D("Media-Native:loop", __VA_ARGS__)
@@ -39,11 +38,7 @@ private:
  */
 static std::unique_ptr<common> com_ptr;
 static std::atomic_bool        loop_main_running(false);
-#ifdef USE_CONCURRENT_QUEUE
 static moodycamel::ConcurrentQueue<ln> mainQ;
-#else
-static safe_queue<ln> mainQ;
-#endif
 
 void renderer_init() {
     com_ptr->renderer_init();
@@ -100,17 +95,11 @@ static void loop_main_run() {
     log_d("main loop running...");
 
     while (true) {
-#ifdef USE_CONCURRENT_QUEUE
         ln n;
         bool h = mainQ.try_dequeue(n);
         if (!h) { std::this_thread::sleep_for(std::chrono::microseconds(10)); continue; }
         if (n.is_exit()) { break; }
         n.run();
-#else
-        auto n = mainQ.wait_and_pop();
-        if (n->is_exit()) { break; }
-        n->run();
-#endif
     }
 
     common *com = com_ptr.release();
@@ -137,11 +126,7 @@ void media::loop_start(const char *file_root, const char *cascade, const char *m
 
 void media::loop_exit() {
     if (loop_main_running) {
-#ifdef USE_CONCURRENT_QUEUE
         mainQ.enqueue(ln::create_exit_ln());
-#else
-        mainQ.push(ln::create_exit_ln());
-#endif
     }
 }
 
@@ -156,9 +141,5 @@ void media::loop_post_main(void (*runnable)(void*, void (*)(void*)),
         return;
     }
 
-#ifdef USE_CONCURRENT_QUEUE
     mainQ.enqueue(ln(runnable, ctx, callback));
-#else
-    mainQ.push(ln(runnable, ctx, callback));
-#endif
 }

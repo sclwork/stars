@@ -49,12 +49,7 @@ static void img_encode_run(encode_params *ep) {
 
 media::video_recorder::video_recorder(std::string &mnn_path)
 :mnn_path(mnn_path), recing(false),
-#ifdef USE_CONCURRENT_QUEUE
-frameQ(std::make_shared<moodycamel::ConcurrentQueue<frame>>())
-#else
-frameQ(std::make_shared<safe_queue<frame>>())
-#endif
-{
+frameQ(std::make_shared<moodycamel::ConcurrentQueue<frame>>()) {
     log_d("created.");
 }
 
@@ -79,11 +74,7 @@ void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image
     auto recording = std::make_shared<std::atomic_bool>(false);
     auto *ctx = new collect_params(true, false, w, h, camera,
             mnn_path, runnable, recording, callback,
-#ifdef USE_CONCURRENT_QUEUE
-        std::forward<std::shared_ptr<moodycamel::ConcurrentQueue<frame>>>(frameQ)
-#else
-        std::forward<std::shared_ptr<safe_queue<frame>>>(frameQ)
-#endif
+            std::forward<std::shared_ptr<moodycamel::ConcurrentQueue<frame>>>(frameQ)
     );
     st_cps.push_back(std::shared_ptr<collect_params>(ctx, [](void*){})); // delete cp in img_collect_run
     std::thread collect_t(img_collect_run, ctx);
@@ -123,11 +114,7 @@ void media::video_recorder::start_record(std::string &&file_root, std::string &&
     auto *ctx = new encode_params(true, 0,
             std::forward<std::string>(file_root), std::forward<std::string>(name),
             std::forward<image_args>(img_args), std::forward<audio_args>(aud_args), runnable,
-#ifdef USE_CONCURRENT_QUEUE
             std::forward<std::shared_ptr<moodycamel::ConcurrentQueue<frame>>>(frameQ)
-#else
-            std::forward<std::shared_ptr<safe_queue<frame>>>(frameQ)
-#endif
     );
     st_eps.push_back(std::shared_ptr<encode_params>(ctx, [](void*){})); // delete ep in img_encode_run
     std::thread encode_t(img_encode_run, ctx);
