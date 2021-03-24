@@ -23,6 +23,7 @@ a_aac_adtstoasc(av_bitstream_filter_init("aac_adtstoasc")) {
 }
 
 media::ffmpeg_h264::~ffmpeg_h264() {
+    on_free_all();
     log_d("release.");
 }
 
