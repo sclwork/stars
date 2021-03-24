@@ -2,8 +2,8 @@
 // Created by Scliang on 3/8/21.
 //
 
-#ifndef STARS_FFMPEG_H
-#define STARS_FFMPEG_H
+#ifndef STARS_FFMPEG_ARGS_H
+#define STARS_FFMPEG_ARGS_H
 
 namespace media {
 
@@ -18,4 +18,4 @@ typedef struct audio_args {
 
 } //namespace media
 
-#endif //STARS_FFMPEG_H
+#endif //STARS_FFMPEG_ARGS_H

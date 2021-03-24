@@ -2,8 +2,8 @@
 // Created by Scliang on 3/23/21.
 //
 
-#ifndef STARS_COLLECT_PARAMS_HPP
-#define STARS_COLLECT_PARAMS_HPP
+#ifndef STARS_VIDEO_COLLECTOR_HPP
+#define STARS_VIDEO_COLLECTOR_HPP
 
 #include <ctime>
 #include <thread>
@@ -26,15 +26,15 @@
 
 namespace media {
 
-class collect_params {
+class video_collector {
 public:
-    collect_params(bool use_mnn, bool use_opencv,
-                   int32_t w, int32_t h, int32_t camera,
-                   std::string &mnn_path,
-                   std::shared_ptr<std::atomic_bool> &runnable,
-                   std::shared_ptr<std::atomic_bool> &recording,
-                   void (*callback)(std::shared_ptr<image_frame>&&),
-                   std::shared_ptr<moodycamel::ConcurrentQueue<frame>> &&fQ)
+    video_collector(bool use_mnn, bool use_opencv,
+                    int32_t w, int32_t h, int32_t camera,
+                    std::string &mnn_path,
+                    std::shared_ptr<std::atomic_bool> &runnable,
+                    std::shared_ptr<std::atomic_bool> &recording,
+                    void (*callback)(std::shared_ptr<image_frame>&&),
+                    std::shared_ptr<moodycamel::ConcurrentQueue<frame>> &&fQ)
      :ms(0), tv(), use_mnn(use_mnn), use_opencv(use_opencv),
       w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
       runnable(runnable), recording(recording), callback(callback), _mux(),
@@ -42,7 +42,7 @@ public:
       img_args(), aud_args(), aud_frame(nullptr), frameQ(fQ) {
         log_d_("collect params[%d,%d,%d] created.", this->w, this->h, this->camera);
     }
-    ~collect_params() { log_d_("collect params release."); }
+    ~video_collector() { log_d_("collect params release."); }
 
 public:
     int32_t camera_id() const { return camera; }
@@ -99,7 +99,7 @@ public:
         if (ctx == nullptr) {
             return;
         }
-        auto *cps = (collect_params *)ctx;
+        auto *cps = (video_collector *)ctx;
         if (cps->recording != nullptr && *cps->recording && cps->frameQ != nullptr && cps->audio != nullptr) {
             auto aud_frame = cps->audio->collect_frame(nullptr);
             auto frame = media::frame(nullptr, std::forward<std::shared_ptr<audio_frame>>(aud_frame));
@@ -177,4 +177,4 @@ private:
 
 } //namespace media
 
-#endif //STARS_COLLECT_PARAMS_HPP
+#endif //STARS_VIDEO_COLLECTOR_HPP

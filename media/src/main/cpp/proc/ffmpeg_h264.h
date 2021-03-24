@@ -25,7 +25,7 @@ extern "C" {
 
 #include <mutex>
 #include <string>
-#include "ffmpeg.h"
+#include "ffmpeg_args.h"
 #include "image_frame.h"
 #include "audio_frame.h"
 

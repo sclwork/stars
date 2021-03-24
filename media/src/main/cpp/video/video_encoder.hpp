@@ -2,8 +2,8 @@
 // Created by Scliang on 3/23/21.
 //
 
-#ifndef STARS_ENCODE_PARAMS_HPP
-#define STARS_ENCODE_PARAMS_HPP
+#ifndef STARS_VIDEO_ENCODER_HPP
+#define STARS_VIDEO_ENCODER_HPP
 
 #include <ctime>
 #include <thread>
@@ -26,9 +26,9 @@
 
 namespace media {
 
-class encode_params {
+class video_encoder {
 public:
-    encode_params(
+    video_encoder(
             bool use_loudnorm,
             int32_t ns_mode,
             std::string &&file_root,
@@ -53,7 +53,7 @@ public:
         if (rtmp != nullptr) rtmp->init();
         log_d_("encode params created.");
     }
-    ~encode_params() {
+    ~video_encoder() {
         if (mp4 != nullptr) mp4->complete();
         if (rtmp != nullptr) rtmp->complete();
         if (ns != nullptr) ns->complete();
@@ -161,4 +161,4 @@ private:
 
 } //namespace media
 
-#endif //STARS_ENCODE_PARAMS_HPP
+#endif //STARS_VIDEO_ENCODER_HPP

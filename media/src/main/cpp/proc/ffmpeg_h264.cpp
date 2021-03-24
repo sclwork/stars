@@ -14,7 +14,7 @@ namespace media {
 
 media::ffmpeg_h264::ffmpeg_h264(image_args &&img, audio_args &&aud)
 :image(img), audio(aud), i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0),
- vf_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr),
+vf_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr),
 ac_ctx(nullptr), a_stm(nullptr), a_swr_ctx(nullptr), a_frm(nullptr), a_encode_cache(nullptr),
 i_h264bsfc(av_bitstream_filter_init("h264_mp4toannexb")),
 a_aac_adtstoasc(av_bitstream_filter_init("aac_adtstoasc")) {

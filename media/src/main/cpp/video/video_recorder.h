@@ -10,7 +10,11 @@
 #include "proc/proc_frame.h"
 #include "proc/image_frame.h"
 #include "proc/audio_frame.h"
+#include "proc/ffmpeg_args.h"
 #include "loop/concurrent_queue.h"
+
+#include "video_encoder.hpp"
+#include "video_collector.hpp"
 
 namespace media {
 
@@ -59,6 +63,9 @@ private:
     std::string mnn_path;
     std::atomic_bool recing;
     std::shared_ptr<moodycamel::ConcurrentQueue<frame>> frameQ;
+    //////////////////////////////////////
+    std::shared_ptr<video_collector> collector;
+    std::shared_ptr<video_encoder>   encoder;
 };
 
 } //namespace media

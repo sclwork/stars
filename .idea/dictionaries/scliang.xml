@@ -5,6 +5,7 @@
       <w>abuffersink</w>
       <w>adtstoasc</w>
       <w>aformat</w>
+      <w>apts</w>
       <w>avcodec</w>
       <w>avfilter</w>
       <w>avformat</w>
@@ -19,6 +20,7 @@
       <w>frontalface</w>
       <w>gcom</w>
       <w>haarcascade</w>
+      <w>ipts</w>
       <w>libyuv</w>
       <w>loudnorm</w>
       <w>mediump</w>
