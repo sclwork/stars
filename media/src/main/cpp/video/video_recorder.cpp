@@ -26,8 +26,8 @@
 
 namespace media {
 
-static std::vector<std::shared_ptr<collect_params>> st_cps;
-static std::vector<std::shared_ptr<encode_params>>  st_eps;
+static std::shared_ptr<collect_params> st_cp;
+static std::vector<std::shared_ptr<encode_params>> st_eps;
 
 static void img_collect_run(collect_params *cp) {
     cp->activate();
@@ -62,13 +62,11 @@ media::video_recorder::~video_recorder() {
 void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image_frame>&&),
                                           int32_t w, int32_t h,
                                           int32_t camera) {
-    for (auto &cp : st_cps) {
-        if (cp != nullptr && cp->equal_running(w, h, camera)) {
-            return;
-        }
-        if (cp != nullptr) {
-            cp->unrunning();
-        }
+    if (st_cp != nullptr && st_cp->equal_running(w, h, camera)) {
+        return;
+    }
+    if (st_cp != nullptr) {
+        st_cp->unrunning();
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto recording = std::make_shared<std::atomic_bool>(false);
@@ -76,34 +74,26 @@ void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image
             mnn_path, runnable, recording, callback,
             std::forward<std::shared_ptr<moodycamel::ConcurrentQueue<frame>>>(frameQ)
     );
-    st_cps.push_back(std::shared_ptr<collect_params>(ctx, [](void*){})); // delete cp in img_collect_run
+    st_cp = std::shared_ptr<collect_params>(ctx, [](void*){}); // delete cp in img_collect_run
     std::thread collect_t(img_collect_run, ctx);
     collect_t.detach();
 }
 
 void media::video_recorder::stop_preview() {
-    for (auto &cp : st_cps) {
-        if (cp != nullptr) {
-            cp->unrunning();
-        }
+    if (st_cp != nullptr) {
+        st_cp->unrunning();
     }
-    st_cps.clear();
 }
 
 void media::video_recorder::start_record(std::string &&file_root, std::string &&name) {
     log_d("start video record[%s]-[%s].", file_root.c_str(), name.c_str());
     image_args img_args{};
     audio_args aud_args{};
-    for (auto &cp : st_cps) {
-        if (cp != nullptr && cp->running()) {
-            cp->copy_args(img_args, aud_args);
-            break;
-        }
+    if (st_cp != nullptr && st_cp->running()) {
+        st_cp->copy_args(img_args, aud_args);
     }
-    for (auto &cp : st_cps) {
-        if (cp != nullptr) {
-            cp->set_record(true);
-        }
+    if (st_cp != nullptr) {
+        st_cp->set_record(true);
     }
     for (auto &ep : st_eps) {
         if (ep != nullptr) {
@@ -124,10 +114,8 @@ void media::video_recorder::start_record(std::string &&file_root, std::string &&
 
 void media::video_recorder::stop_record() {
     log_d("stop video record.");
-    for (auto &cp : st_cps) {
-        if (cp != nullptr) {
-            cp->set_record(false);
-        }
+    if (st_cp != nullptr) {
+        st_cp->set_record(false);
     }
     recing = false;
     for (auto &ep : st_eps) {
