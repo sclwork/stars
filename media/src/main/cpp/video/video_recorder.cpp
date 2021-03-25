@@ -92,6 +92,7 @@ void media::video_recorder::start_record(std::string &&file_root, std::string &&
     }
     if (encoder != nullptr) {
         encoder->unrunning();
+        encoder = nullptr;
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto *ctx = new video_encoder(true, 0,
@@ -113,5 +114,6 @@ void media::video_recorder::stop_record() {
     recing = false;
     if (encoder != nullptr) {
         encoder->unrunning();
+        encoder = nullptr;
     }
 }

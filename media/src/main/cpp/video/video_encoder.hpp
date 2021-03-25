@@ -51,14 +51,15 @@ public:
         if (ns != nullptr) ns->init();
         if (mp4 != nullptr) mp4->init();
         if (rtmp != nullptr) rtmp->init();
-        log_d_("encode params created.");
+        log_d_("video_encoder created.");
     }
+
     ~video_encoder() {
         if (mp4 != nullptr) mp4->complete();
         if (rtmp != nullptr) rtmp->complete();
         if (ns != nullptr) ns->complete();
         if (loudnorm != nullptr) loudnorm->complete();
-        log_d_("encode params release.");
+        log_d_("video_encoder release.");
     }
 
 public:

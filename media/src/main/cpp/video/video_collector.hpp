@@ -40,9 +40,12 @@ public:
       runnable(runnable), recording(recording), callback(callback), _mux(),
       image(nullptr), audio(nullptr), mnn(nullptr), opencv(nullptr),
       img_args(), aud_args(), aud_frame(nullptr), frameQ(fQ) {
-        log_d_("collect params[%d,%d,%d] created.", this->w, this->h, this->camera);
+        log_d_("video_collector[%d,%d,%d] created.", this->w, this->h, this->camera);
     }
-    ~video_collector() { log_d_("collect params release."); }
+
+    ~video_collector() {
+        log_d_("video_collector release.");
+    }
 
 public:
     int32_t camera_id() const { return camera; }
