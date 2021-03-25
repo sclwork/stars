@@ -62,6 +62,7 @@ void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image
     }
     if (collector != nullptr) {
         collector->unrunning();
+        collector = nullptr;
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto recording = std::make_shared<std::atomic_bool>(false);
@@ -77,6 +78,7 @@ void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image
 void media::video_recorder::stop_preview() {
     if (collector != nullptr) {
         collector->unrunning();
+        collector = nullptr;
     }
 }
 
