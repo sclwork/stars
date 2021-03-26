@@ -68,11 +68,15 @@ void media::ffmpeg_h264::on_init_all(const std::string &format, const std::strin
     ic_ctx->width = image.width;
     ic_ctx->height = image.height;
     ic_ctx->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
-    ic_ctx->bit_rate = 128000;
+    ic_ctx->bit_rate = 512000;
     ic_ctx->gop_size = 10;
     ic_ctx->qmin = 10;
     ic_ctx->qmax = 51;
-    ic_ctx->max_b_frames = 1;
+    ic_ctx->max_b_frames = 3;
+    ic_ctx->qcompress = 0.6;
+    ic_ctx->max_qdiff = 4;
+    ic_ctx->i_quant_factor = 0.71;
+    ic_ctx->keyint_min = 25;
     if (vf_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
         ic_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
@@ -112,8 +116,9 @@ void media::ffmpeg_h264::on_init_all(const std::string &format, const std::strin
         return;
     }
 
-    i_sws_ctx = sws_getContext(image.width, image.height, AV_PIX_FMT_RGBA, image.width, image.height,
-                               AV_PIX_FMT_YUV420P, SWS_BILINEAR, nullptr, nullptr, nullptr);
+    i_sws_ctx = sws_getContext(image.width, image.height, AV_PIX_FMT_RGBA,
+                               image.width, image.height, AV_PIX_FMT_YUV420P,
+                               SWS_BILINEAR, nullptr, nullptr, nullptr);
     if (i_sws_ctx == nullptr) {
         log_e("init_image_encode sws_getContext fail.");
         on_free_all();
