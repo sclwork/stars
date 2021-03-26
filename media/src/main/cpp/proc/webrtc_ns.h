@@ -8,7 +8,7 @@
 #include <mutex>
 #include <string>
 #include "ns.h"
-#include "proc_frame.h"
+#include "proc.h"
 #include "audio_frame.h"
 #include "loop/concurrent_queue.h"
 

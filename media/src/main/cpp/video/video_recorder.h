@@ -7,7 +7,7 @@
 
 #include <memory>
 #include <stdint.h>
-#include "proc/proc_frame.h"
+#include "proc/proc.h"
 #include "proc/image_frame.h"
 #include "proc/audio_frame.h"
 #include "proc/ffmpeg_args.h"
