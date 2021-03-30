@@ -19,7 +19,7 @@ namespace media {
  */
 class common {
 public:
-    common(std::string &&file_root, std::string &&cascade, std::string &&mnn);
+    common(const std::string &file_root, const std::string &cascade, const std::string &mnn);
     ~common();
 
 public:

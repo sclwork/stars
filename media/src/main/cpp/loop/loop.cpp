@@ -70,12 +70,12 @@ void renderer_draw_frame() {
 //    d("renderer draw frame.");
 }
 
-void video_record_start(const char *name) {
+void video_record_start(const std::string &name) {
     loop_post_main([](void*c, void (*cb)(void*)) {
         const char *file = (char *) c;
         com_ptr->video_record_start(std::string(file));
 //        log_d("start video record[%s].", file);
-    }, (void *) name, nullptr);
+    }, (void *) name.c_str(), nullptr);
 }
 
 void video_record_stop() {
@@ -110,15 +110,13 @@ static void loop_main_run() {
 
 } //namespace media
 
-void media::loop_start(const char *file_root, const char *cascade, const char *mnn) {
+void media::loop_start(const std::string &file_root, const std::string &cascade, const std::string &mnn) {
     if (loop_main_running) {
         return;
     }
 
     log_d("==================================================");
-    com_ptr.reset(new common(std::forward<std::string>(file_root),
-                             std::forward<std::string>(cascade),
-                             std::forward<std::string>(mnn)));
+    com_ptr.reset(new common(file_root, cascade, mnn));
 
     std::thread main_t(loop_main_run);
     main_t.detach();

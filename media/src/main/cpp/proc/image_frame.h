@@ -9,6 +9,15 @@
 
 namespace media {
 
+class image_frame;
+class image_frame_ctx {
+public:
+    void *ctx;
+    image_frame *frame;
+};
+
+typedef void (*IMAGE_FRAME_OP_CALLBACK)(image_frame_ctx *ctx);
+
 class image_frame {
 public:
     static image_frame *make_default(int32_t w, int32_t h);
@@ -49,6 +58,10 @@ public:
      */
     void get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache = nullptr) const;
 
+public:
+    void set_op_callback(IMAGE_FRAME_OP_CALLBACK cb, void *ctx);
+    void run_op_callback(image_frame *frame);
+
 private:
     image_frame(image_frame&&) = delete;
     image_frame& operator=(image_frame&&) = delete;
@@ -61,6 +74,9 @@ private:
     int32_t width;
     int32_t height;
     uint32_t *cache;
+    ////////////////////////////////////
+    IMAGE_FRAME_OP_CALLBACK op_callback;
+    void *op_ctx;
 };
 
 } //namespace media

@@ -24,8 +24,9 @@ public:
     /**
      * draw image frame
      * @param frame image frame
+     * @return new image_frame need delete
      */
-    virtual void draw(const std::shared_ptr<image_frame> &frame) = 0;
+    virtual image_frame *draw(const std::shared_ptr<image_frame> &frame) = 0;
 };
 
 } //namespace media

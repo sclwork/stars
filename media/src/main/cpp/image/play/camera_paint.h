@@ -5,16 +5,11 @@
 #ifndef STARS_CAMERA_PAINT_H
 #define STARS_CAMERA_PAINT_H
 
-#include <stdint.h>
-#include <glm/detail/type_mat.hpp>
-#include <glm/detail/type_mat4x4.hpp>
-#include <glm/ext.hpp>
-#include <GLES3/gl3.h>
-#include "paint.h"
+#include "gl_paint.h"
 
 namespace media {
 
-class camera_paint: public paint {
+class camera_paint: public gl_paint {
 public:
     camera_paint();
     ~camera_paint();
@@ -30,13 +25,10 @@ public:
      * draw image frame
      * @param frame image frame
      */
-    void draw(const std::shared_ptr<image_frame> &frame) override;
+    image_frame *draw(const std::shared_ptr<image_frame> &frame) override;
 
 private:
     void update_matrix(int32_t angleX, int32_t angleY, float ratio);
-    static GLuint load_shader(GLenum shaderType, const char *pSource);
-    static GLuint create_program(const char *pVertexShaderSource, const char *pFragShaderSource,
-                          GLuint &vertexShaderHandle, GLuint &fragShaderHandle);
 
 private:
     camera_paint(camera_paint&&) = delete;

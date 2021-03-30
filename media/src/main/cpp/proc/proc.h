@@ -20,6 +20,11 @@ public:
     ~frame() = default;
 
 public:
+    void reset_image_frame_op_callback(IMAGE_FRAME_OP_CALLBACK cb = nullptr, void *ctx = nullptr) {
+        if (image != nullptr) image->set_op_callback(cb, ctx);
+    }
+
+public:
     std::shared_ptr<image_frame> image;
     std::shared_ptr<audio_frame> audio;
 };

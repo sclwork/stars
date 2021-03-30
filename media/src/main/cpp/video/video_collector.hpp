@@ -98,6 +98,19 @@ public:
         }
     }
 
+    static void image_frame_op_callback(image_frame_ctx *ctx) {
+        if (ctx == nullptr || ctx->ctx == nullptr || ctx->frame == nullptr) {
+            return;
+        }
+
+        auto *vcr = (video_collector *)ctx->ctx;
+        if (vcr->recording != nullptr && *vcr->recording && vcr->frameQ != nullptr) {
+            auto frame = media::frame(std::shared_ptr<image_frame>(ctx->frame), nullptr);
+            frame.reset_image_frame_op_callback();
+            vcr->frameQ->enqueue(frame);
+        }
+    }
+
     static void image_frame_callback(void *ctx) {
         if (ctx == nullptr) {
             return;
@@ -117,12 +130,9 @@ public:
             vcr->mnn->detect_faces(img_frame, vcr->faces);
             vcr->mnn->flag_faces(img_frame, vcr->faces);
         }
-        if (vcr->recording != nullptr && *vcr->recording && vcr->frameQ != nullptr) {
-            auto frame = media::frame(std::forward<std::shared_ptr<image_frame>>(img_frame), nullptr);
-            vcr->frameQ->enqueue(frame);
-        }
         if (vcr->renderer_callback != nullptr) {
-            vcr->renderer_callback(std::forward<std::shared_ptr<media::image_frame>>(img_frame));
+            img_frame->set_op_callback(image_frame_op_callback, ctx);
+            vcr->renderer_callback(std::shared_ptr<media::image_frame>(img_frame));
         }
     }
 

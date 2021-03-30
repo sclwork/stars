@@ -13,7 +13,7 @@ namespace media {
     static common *gcom = nullptr;
 } //namespace media
 
-media::common::common(std::string &&file_root, std::string &&cas_path, std::string &&mnn_path)
+media::common::common(const std::string &file_root, const std::string &cas_path, const std::string &mnn_path)
 :file_root(file_root), mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr) {
     gcom = this;
     log_d("file_root:%s.", file_root.c_str());

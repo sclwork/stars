@@ -9,9 +9,6 @@
 #define log_e(...)  LOG_E("Media-Native:camera_paint", __VA_ARGS__)
 
 namespace media {
-
-const double MATH_PI = 3.1415926535897932384626433832802;
-
 } //namespace media
 
 media::camera_paint::camera_paint()
@@ -97,13 +94,15 @@ void media::camera_paint::set_canvas_size(int32_t width, int32_t height) {
     cvs_width = width;
     cvs_height = height;
     cvs_ratio = (float)width/(float)height;
+    glViewport(0, 0, cvs_width, cvs_height);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
 
     log_d("canvas size: %d,%d %0.4f", cvs_width, cvs_height, cvs_ratio);
 }
 
-void media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
+media::image_frame *media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
     if (frame == nullptr) {
-        return;
+        return nullptr;
     }
 
     bool mirror = frame->use_mirror();
@@ -111,7 +110,7 @@ void media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
     frame->get(&width, &height, &data);
 
     if (data == nullptr || program == GL_NONE || texture == GL_NONE) {
-        return;
+        return nullptr;
     }
 
     float img_r = (float)width/(float)height;
@@ -146,14 +145,16 @@ void media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
     glUniformMatrix4fv(sampler_matrix, 1, GL_FALSE, &(matrix[0][0]));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+
+    return new image_frame(*frame);
 }
 
 void media::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float ratio) {
     angleX = angleX % 360;
     angleY = angleY % 360;
 
-    auto radiansX = (float)(MATH_PI / 180.0f * angleX);
-    auto radiansY = (float)(MATH_PI / 180.0f * angleY);
+    auto radiansX = MATH_PI / 180.0f * angleX;
+    auto radiansY = MATH_PI / 180.0f * angleY;
 
     // Projection matrix
     glm::mat4 Projection = glm::ortho(-ratio, ratio, -1.0f, 1.0f, 0.0f, 100.0f);
@@ -173,78 +174,4 @@ void media::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float ra
     Model = glm::translate(Model, glm::vec3(0.0f, 0.0f, 0.0f));
 
     matrix = Projection * View * Model;
-}
-
-GLuint media::camera_paint::load_shader(GLenum shaderType, const char *pSource) {
-    GLuint shader = glCreateShader(shaderType);
-    if (shader) {
-        glShaderSource(shader, 1, &pSource, nullptr);
-        glCompileShader(shader);
-        GLint compiled = 0;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-        if (!compiled) {
-            GLint infoLen = 0;
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
-            if (infoLen) {
-                char* buf = (char*) malloc((size_t)infoLen);
-                if (buf) {
-                    glGetShaderInfoLog(shader, infoLen, nullptr, buf);
-                    log_e("LoadShader Could not compile shader %d: %s", shaderType, buf);
-                    free(buf);
-                }
-                glDeleteShader(shader);
-                shader = 0;
-            }
-        }
-    }
-
-    return shader;
-}
-
-GLuint media::camera_paint::create_program(const char *pVertexShaderSource,
-                                           const char *pFragShaderSource,
-                                           GLuint &vertexShaderHandle,
-                                           GLuint &fragShaderHandle) {
-    GLuint prog = 0;
-    vertexShaderHandle = load_shader(GL_VERTEX_SHADER, pVertexShaderSource);
-    if (!vertexShaderHandle) {
-        return prog;
-    }
-
-    fragShaderHandle = load_shader(GL_FRAGMENT_SHADER, pFragShaderSource);
-    if (!fragShaderHandle) {
-        return prog;
-    }
-
-    prog = glCreateProgram();
-    if (prog) {
-        glAttachShader(prog, vertexShaderHandle);
-        glAttachShader(prog, fragShaderHandle);
-        glLinkProgram(prog);
-        GLint linkStatus = GL_FALSE;
-        glGetProgramiv(prog, GL_LINK_STATUS, &linkStatus);
-
-        glDetachShader(prog, vertexShaderHandle);
-        glDeleteShader(vertexShaderHandle);
-        vertexShaderHandle = 0;
-        glDetachShader(prog, fragShaderHandle);
-        glDeleteShader(fragShaderHandle);
-        fragShaderHandle = 0;
-        if (linkStatus != GL_TRUE) {
-            GLint bufLength = 0;
-            glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &bufLength);
-            if (bufLength) {
-                char* buf = (char*)malloc((size_t)bufLength);
-                if (buf) {
-                    glGetProgramInfoLog(prog, bufLength, nullptr, buf);
-                    log_e("GLUtils::CreateProgram Could not link program: %s", buf);
-                    free(buf);
-                }
-            }
-            glDeleteProgram(prog);
-            prog = 0;
-        }
-    }
-
-    return prog;
 }

@@ -63,6 +63,8 @@ void media::image_renderer::draw_frame() {
     }
 
     if (frame != nullptr) {
-        paint->draw(frame);
+        auto nf = paint->draw(frame);
+        if (nf) frame->run_op_callback(nf);
+        delete nf;
     }
 }
