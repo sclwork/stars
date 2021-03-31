@@ -7,7 +7,7 @@
 
 #include <mutex>
 #include <string>
-#include "proc/image_frame.h"
+#include "image_frame.h"
 #include "camera.h"
 
 namespace media {

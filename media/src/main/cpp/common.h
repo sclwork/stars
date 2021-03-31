@@ -9,8 +9,8 @@
 #include <time.h>
 #include <string>
 #include "jni_log.h"
-#include "image/play/image_renderer.h"
-#include "video/video_recorder.h"
+#include "image_renderer.h"
+#include "video_recorder.h"
 
 namespace media {
 
@@ -72,6 +72,7 @@ private:
     std::string mnn_path;
     std::shared_ptr<image_renderer> renderer;
     std::shared_ptr<video_recorder> vid_rec;
+    moodycamel::ConcurrentQueue<frame> encodeQ;
 };
 
 } //namespace media

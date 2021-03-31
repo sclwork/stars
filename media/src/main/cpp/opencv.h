@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/types.hpp>
-#include <proc/image_frame.h>
+#include <image_frame.h>
 
 namespace media {
 

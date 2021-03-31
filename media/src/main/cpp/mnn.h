@@ -9,7 +9,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <MNN/Interpreter.hpp>
-#include <proc/image_frame.h>
+#include <image_frame.h>
 
 namespace media {
 

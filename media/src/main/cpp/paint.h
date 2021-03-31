@@ -6,7 +6,7 @@
 #define STARS_PAINT_H
 
 #include <cstdint>
-#include "proc/image_frame.h"
+#include "image_frame.h"
 
 namespace media {
 
@@ -26,7 +26,7 @@ public:
      * @param frame image frame
      * @return new image_frame need delete
      */
-    virtual image_frame *draw(const std::shared_ptr<image_frame> &frame) = 0;
+    virtual std::shared_ptr<image_frame> draw(const std::shared_ptr<image_frame> &frame) = 0;
 };
 
 } //namespace media

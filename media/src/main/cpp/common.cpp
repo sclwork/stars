@@ -3,7 +3,7 @@
 //
 
 #include <memory>
-#include "loop/loop.h"
+#include "loop.h"
 #include "common.h"
 
 #define log_d(...)  LOG_D("Media-Native:common", __VA_ARGS__)
@@ -14,7 +14,7 @@ namespace media {
 } //namespace media
 
 media::common::common(const std::string &file_root, const std::string &cas_path, const std::string &mnn_path)
-:file_root(file_root), mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr) {
+:file_root(file_root), mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr), encodeQ() {
     gcom = this;
     log_d("file_root:%s.", file_root.c_str());
     log_d("cas_path:%s.", cas_path.c_str());
@@ -33,8 +33,10 @@ media::common::~common() {
  * run in renderer thread.
  */
 void media::common::renderer_init() {
-    renderer = std::make_shared<image_renderer>();
-    vid_rec = std::make_shared<video_recorder>(mnn_path);
+    renderer = std::make_shared<image_renderer>(encodeQ, [](){
+        return gcom != nullptr && gcom->video_recording();
+    });
+    vid_rec = std::make_shared<video_recorder>(mnn_path, encodeQ);
 }
 
 /*

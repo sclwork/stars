@@ -6,13 +6,14 @@
 #define STARS_IMAGE_RENDERER_H
 
 #include "paint.h"
-#include "loop/concurrent_queue.h"
+#include "proc.h"
+#include "concurrent_queue.h"
 
 namespace media {
 
 class image_renderer {
 public:
-    image_renderer();
+    image_renderer(moodycamel::ConcurrentQueue<frame> &fQ, bool (*cvrecording)());
     ~image_renderer();
 
 public:
@@ -52,7 +53,9 @@ private:
     int32_t height;
     paint  *paint;
     std::shared_ptr<image_frame> frame;
-    moodycamel::ConcurrentQueue<std::shared_ptr<image_frame>> frameQ;
+    moodycamel::ConcurrentQueue<media::frame> &encodeQ;
+    moodycamel::ConcurrentQueue<std::shared_ptr<image_frame>> drawQ;
+    bool (*check_video_recording)();
 };
 
 } //namespace media

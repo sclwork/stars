@@ -11,15 +11,15 @@
 #include <condition_variable>
 #include "jni_log.h"
 #include "video_recorder.h"
-#include "image/collect/image_recorder.h"
-#include "audio/collect/audio_recorder.h"
-#include "proc/proc.h"
-#include "proc/mnn.h"
-#include "proc/opencv.h"
-#include "proc/ffmpeg_mp4.h"
-#include "proc/ffmpeg_rtmp.h"
-#include "proc/ffmpeg_loudnorm.h"
-#include "proc/webrtc_ns.h"
+#include "image_recorder.h"
+#include "audio_recorder.h"
+#include "proc.h"
+#include "mnn.h"
+#include "opencv.h"
+#include "ffmpeg_mp4.h"
+#include "ffmpeg_rtmp.h"
+#include "ffmpeg_loudnorm.h"
+#include "webrtc_ns.h"
 
 #define log_d_(...)  LOG_D("Media-Native:video_recorder", __VA_ARGS__)
 #define log_e_(...)  LOG_E("Media-Native:video_recorder", __VA_ARGS__)
@@ -35,7 +35,7 @@ public:
             std::string &&name,
             image_args &&img_args, audio_args &&aud_args,
             std::shared_ptr<std::atomic_bool> &runnable,
-            std::shared_ptr<moodycamel::ConcurrentQueue<frame>> &&fQ)
+            moodycamel::ConcurrentQueue<frame> &fQ)
      :_mux(), runnable(runnable),
       loudnorm(use_loudnorm?std::make_shared<ffmpeg_loudnorm>("I=-16:tp=-1.5:LRA=11",
                                                               std::forward<audio_args>(aud_args)):nullptr),
@@ -76,17 +76,15 @@ public:
     }
 
     void run() {
-        if (frameQ != nullptr) {
-            check_frameQ();
-            check_loudnorm();
-            check_ns();
-        }
+        check_frameQ();
+        check_loudnorm();
+        check_ns();
     }
 
 private:
     void check_frameQ() {
         frame frm;
-        if (frameQ->try_dequeue(frm)) {
+        if (frameQ.try_dequeue(frm)) {
             if (loudnorm != nullptr) {
                 loudnorm->encode_frame(frm.audio);
                 if (mp4 != nullptr) {
@@ -157,7 +155,7 @@ private:
     std::shared_ptr<webrtc_ns> ns;
     std::shared_ptr<ffmpeg_mp4> mp4;
     std::shared_ptr<ffmpeg_rtmp> rtmp;
-    std::shared_ptr<moodycamel::ConcurrentQueue<frame>> frameQ;
+    moodycamel::ConcurrentQueue<frame> &frameQ;
 };
 
 } //namespace media

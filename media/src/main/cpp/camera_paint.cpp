@@ -100,9 +100,9 @@ void media::camera_paint::set_canvas_size(int32_t width, int32_t height) {
     log_d("canvas size: %d,%d %0.4f", cvs_width, cvs_height, cvs_ratio);
 }
 
-media::image_frame *media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
+std::shared_ptr<media::image_frame> media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
     if (frame == nullptr) {
-        return nullptr;
+        return std::shared_ptr<image_frame>(nullptr);
     }
 
     bool mirror = frame->use_mirror();
@@ -110,7 +110,7 @@ media::image_frame *media::camera_paint::draw(const std::shared_ptr<image_frame>
     frame->get(&width, &height, &data);
 
     if (data == nullptr || program == GL_NONE || texture == GL_NONE) {
-        return nullptr;
+        return std::shared_ptr<image_frame>(nullptr);
     }
 
     float img_r = (float)width/(float)height;
@@ -146,7 +146,7 @@ media::image_frame *media::camera_paint::draw(const std::shared_ptr<image_frame>
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
-    return new image_frame(*frame);
+    return std::make_shared<image_frame>(*frame);
 }
 
 void media::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float ratio) {

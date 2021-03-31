@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
-#include "proc/audio_frame.h"
+#include "audio_frame.h"
 
 namespace media {
 

@@ -9,7 +9,7 @@
 #include <string>
 #include <media/NdkImageReader.h>
 #include <camera/NdkCameraDevice.h>
-#include "proc/image_frame.h"
+#include "image_frame.h"
 
 namespace media {
 

@@ -3,6 +3,7 @@
 //
 
 #include "jni_log.h"
+#include "fbo_paint.h"
 #include "camera_paint.h"
 #include "image_renderer.h"
 
@@ -12,8 +13,8 @@
 namespace media {
 } //namespace media
 
-media::image_renderer::image_renderer()
-:width(0), height(0), paint(nullptr), frame(nullptr), frameQ() {
+media::image_renderer::image_renderer(moodycamel::ConcurrentQueue<media::frame> &fQ, bool (*cvrecording)())
+:width(0), height(0), paint(nullptr), frame(nullptr), encodeQ(fQ), drawQ(), check_video_recording(cvrecording) {
     log_d("created.");
 }
 
@@ -25,6 +26,7 @@ media::image_renderer::~image_renderer() {
 
 void media::image_renderer::surface_created() {
     delete paint;
+//    paint = new fbo_paint();
     paint = new camera_paint();
     frame.reset();
 }
@@ -48,7 +50,7 @@ void media::image_renderer::surface_changed(int32_t w, int32_t h) {
 
 void media::image_renderer::updt_frame(const std::shared_ptr<media::image_frame> &&frm) {
     if (frm != nullptr && frm->available()) {
-        frameQ.enqueue(frm);
+        drawQ.enqueue(frm);
     }
 }
 
@@ -58,13 +60,15 @@ void media::image_renderer::draw_frame() {
     }
 
     std::shared_ptr<media::image_frame> f;
-    if (frameQ.try_dequeue(f)) {
+    if (drawQ.try_dequeue(f)) {
         frame = f;
     }
 
     if (frame != nullptr) {
         auto nf = paint->draw(frame);
-        if (nf) frame->run_op_callback(nf);
-        delete nf;
+        if (nf != nullptr &&
+            check_video_recording != nullptr && check_video_recording()) {
+            encodeQ.enqueue(media::frame(std::shared_ptr<image_frame>(nf), nullptr));
+        }
     }
 }

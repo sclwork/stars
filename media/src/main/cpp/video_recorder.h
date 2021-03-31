@@ -7,11 +7,11 @@
 
 #include <memory>
 #include <stdint.h>
-#include "proc/proc.h"
-#include "proc/image_frame.h"
-#include "proc/audio_frame.h"
-#include "proc/ffmpeg_args.h"
-#include "loop/concurrent_queue.h"
+#include "proc.h"
+#include "image_frame.h"
+#include "audio_frame.h"
+#include "ffmpeg_args.h"
+#include "concurrent_queue.h"
 
 #include "video_encoder.hpp"
 #include "video_collector.hpp"
@@ -20,7 +20,7 @@ namespace media {
 
 class video_recorder {
 public:
-    video_recorder(std::string &mnn_path);
+    video_recorder(std::string &mnn_path, moodycamel::ConcurrentQueue<frame> &fQ);
     ~video_recorder();
 
 public:
@@ -62,7 +62,7 @@ private:
 private:
     std::string mnn_path;
     std::atomic_bool recing;
-    std::shared_ptr<moodycamel::ConcurrentQueue<frame>> frameQ;
+    moodycamel::ConcurrentQueue<frame> &encodeQ;
     //////////////////////////////////////
     std::shared_ptr<video_collector> collector;
     std::shared_ptr<video_encoder>   encoder;
