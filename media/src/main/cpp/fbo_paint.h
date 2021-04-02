@@ -25,7 +25,7 @@ public:
      * draw image frame
      * @param frame image frame
      */
-    std::shared_ptr<image_frame> draw(const std::shared_ptr<image_frame> &frame) override;
+    void draw(const image_frame &frame, image_frame &of) override;
 
 private:
     fbo_paint(fbo_paint&&) = delete;

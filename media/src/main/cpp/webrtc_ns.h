@@ -33,14 +33,14 @@ public:
     void complete();
     /**
      * ns audio frame
-     * @param aud_frame audio frame
+     * @param frame audio frame
      */
-    void encode_frame(std::shared_ptr<audio_frame> &aud_frame);
+    void encode_frame(const audio_frame &frame);
     /**
      * get encode completed frame
      * @return audio frame
      */
-    std::shared_ptr<audio_frame> get_encoded_frame();
+    bool get_encoded_frame(audio_frame &frame);
 
 private:
     webrtc_ns(webrtc_ns&&) = delete;
@@ -57,7 +57,7 @@ private:
     uint16_t  in[BUF_LEN];
     uint16_t  out[BUF_LEN];
     uint16_t *frm_cache;
-    moodycamel::ConcurrentQueue<frame> frameQ;
+    moodycamel::ConcurrentQueue<audio_frame> aQ;
 };
 
 } //namespace media

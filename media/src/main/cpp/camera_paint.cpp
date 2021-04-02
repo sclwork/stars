@@ -100,17 +100,18 @@ void media::camera_paint::set_canvas_size(int32_t width, int32_t height) {
     log_d("canvas size: %d,%d %0.4f", cvs_width, cvs_height, cvs_ratio);
 }
 
-std::shared_ptr<media::image_frame> media::camera_paint::draw(const std::shared_ptr<image_frame> &frame) {
-    if (frame == nullptr) {
-        return std::shared_ptr<image_frame>(nullptr);
+void media::camera_paint::draw(const image_frame &frame, image_frame &of) {
+    if (!frame.available()) {
+        return;
     }
 
-    bool mirror = frame->use_mirror();
-    int32_t width, height; uint32_t *data;
-    frame->get(&width, &height, &data);
+    bool mirror = frame.use_mirror();
+    int32_t width = 0, height = 0;
+    uint32_t *data = nullptr;
+    frame.get(&width, &height, &data);
 
     if (data == nullptr || program == GL_NONE || texture == GL_NONE) {
-        return std::shared_ptr<image_frame>(nullptr);
+        return;
     }
 
     float img_r = (float)width/(float)height;
@@ -128,7 +129,8 @@ std::shared_ptr<media::image_frame> media::camera_paint::draw(const std::shared_
     glUseProgram(program);
 
     // Load the vertex position
-    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), vertices_coords);
+    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat),
+                            vertices_coords);
     // Load the texture coordinate
     glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof (GLfloat),
                            mirror ? texture_coords_mirror : texture_coords);
@@ -146,7 +148,7 @@ std::shared_ptr<media::image_frame> media::camera_paint::draw(const std::shared_
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
-    return std::make_shared<image_frame>(*frame);
+    of = frame;
 }
 
 void media::camera_paint::update_matrix(int32_t angleX, int32_t angleY, float ratio) {

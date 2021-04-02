@@ -43,7 +43,7 @@ public:
      * from selected camera collect an image frame
      * @return collect success image_frame, all return image_frame is same address
      */
-    std::shared_ptr<image_frame> collect_frame();
+    void collect_frame(image_frame &f);
 
 public:
     /**

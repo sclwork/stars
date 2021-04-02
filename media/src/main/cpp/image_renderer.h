@@ -13,7 +13,9 @@ namespace media {
 
 class image_renderer {
 public:
-    image_renderer(moodycamel::ConcurrentQueue<frame> &fQ, bool (*cvrecording)());
+    image_renderer(moodycamel::ConcurrentQueue<image_frame> &iQ,
+                   moodycamel::ConcurrentQueue<audio_frame> &aQ,
+                   bool (*cvrecording)());
     ~image_renderer();
 
 public:
@@ -35,7 +37,7 @@ public:
      * run in caller thread.
      * append frm to frameQ.
      */
-    void updt_frame(const std::shared_ptr<image_frame> &&frm);
+    void updt_frame(image_frame &&frm);
     /**
      * run in renderer thread.
      * read frm from frameQ and draw.
@@ -52,9 +54,9 @@ private:
     int32_t width;
     int32_t height;
     paint  *paint;
-    std::shared_ptr<image_frame> frame;
-    moodycamel::ConcurrentQueue<media::frame> &encodeQ;
-    moodycamel::ConcurrentQueue<std::shared_ptr<image_frame>> drawQ;
+    moodycamel::ConcurrentQueue<image_frame> &eiQ;
+    moodycamel::ConcurrentQueue<audio_frame> &eaQ;
+    moodycamel::ConcurrentQueue<image_frame> drawQ;
     bool (*check_video_recording)();
 };
 

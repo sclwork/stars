@@ -24,7 +24,6 @@ struct img_args {
     int32_t x, y, format, plane_count, y_stride, u_stride, v_stride, vu_pixel_stride, y_len, u_len, v_len, ori;
     int32_t src_w, src_h, img_width, img_height;
     uint8_t *y_pixel, *u_pixel, *v_pixel, *argb_pixel, *dst_argb_pixel;
-    std::shared_ptr<media::image_frame> frame;
     AImageCropRect src_rect;
     uint32_t *frame_cache, argb;
     AImage *image;
@@ -55,7 +54,7 @@ public:
      * call after {@link preview}
      * @param frame [out] latest image frame
      */
-    void get_latest_image(std::shared_ptr<media::image_frame> &frame);
+    bool get_latest_image(image_frame &frame);
 
 public:
     /**

@@ -35,7 +35,8 @@ public:
             std::string &&name,
             image_args &&img_args, audio_args &&aud_args,
             std::shared_ptr<std::atomic_bool> &runnable,
-            moodycamel::ConcurrentQueue<frame> &fQ)
+            moodycamel::ConcurrentQueue<image_frame> &iQ,
+            moodycamel::ConcurrentQueue<audio_frame> &aQ)
      :_mux(), runnable(runnable),
       loudnorm(use_loudnorm?std::make_shared<ffmpeg_loudnorm>("I=-16:tp=-1.5:LRA=11",
                                                               std::forward<audio_args>(aud_args)):nullptr),
@@ -46,7 +47,7 @@ public:
       rtmp(startWith(name,"rtmp")?std::make_shared<ffmpeg_rtmp>(
               std::forward<std::string>(file_root), std::forward<std::string>(name),
               std::forward<image_args>(img_args), std::forward<audio_args>(aud_args)):nullptr),
-      frameQ(fQ) {
+      imageQ(iQ), audioQ(aQ) {
         if (loudnorm != nullptr) loudnorm->init();
         if (ns != nullptr) ns->init();
         if (mp4 != nullptr) mp4->init();
@@ -83,33 +84,28 @@ public:
 
 private:
     void check_frameQ() {
-        frame frm;
-        if (frameQ.try_dequeue(frm)) {
+        image_frame ifrm;
+        if (imageQ.try_dequeue(ifrm)) {
+            if (mp4 != nullptr) {
+                mp4->encode_image_frame(ifrm);
+            }
+            if (rtmp != nullptr) {
+                rtmp->encode_image_frame(ifrm);
+            }
+        }
+        audio_frame afrm;
+        if (audioQ.try_dequeue(afrm)) {
             if (loudnorm != nullptr) {
-                loudnorm->encode_frame(frm.audio);
-                if (mp4 != nullptr) {
-                    mp4->encode_image_frame(frm.image);
-                }
-                if (rtmp != nullptr) {
-                    rtmp->encode_image_frame(frm.image);
-                }
+                loudnorm->encode_frame(afrm);
             } else {
                 if (ns != nullptr) {
-                    ns->encode_frame(frm.audio);
-                    if (mp4 != nullptr) {
-                        mp4->encode_image_frame(frm.image);
-                    }
-                    if (rtmp != nullptr) {
-                        rtmp->encode_image_frame(frm.image);
-                    }
+                    ns->encode_frame(afrm);
                 } else {
                     if (mp4 != nullptr) {
-                        mp4->encode_image_frame(frm.image);
-                        mp4->encode_audio_frame(frm.audio);
+                        mp4->encode_audio_frame(afrm);
                     }
                     if (rtmp != nullptr) {
-                        rtmp->encode_image_frame(frm.image);
-                        rtmp->encode_audio_frame(frm.audio);
+                        rtmp->encode_audio_frame(afrm);
                     }
                 }
             }
@@ -118,17 +114,18 @@ private:
 
     void check_loudnorm() {
         if (loudnorm != nullptr) {
-            std::shared_ptr<media::audio_frame> audio = loudnorm->get_encoded_frame();
-            if (audio != nullptr) {
-                if (ns != nullptr) {
-                    ns->encode_frame(audio);
-                } else {
-                    if (mp4 != nullptr) {
-                        mp4->encode_audio_frame(audio);
-                    }
-                    if (rtmp != nullptr) {
-                        rtmp->encode_audio_frame(audio);
-                    }
+            audio_frame audio;
+            if (!loudnorm->get_encoded_frame(audio)) {
+                return;
+            }
+            if (ns != nullptr) {
+                ns->encode_frame(audio);
+            } else {
+                if (mp4 != nullptr) {
+                    mp4->encode_audio_frame(audio);
+                }
+                if (rtmp != nullptr) {
+                    rtmp->encode_audio_frame(audio);
                 }
             }
         }
@@ -136,14 +133,15 @@ private:
 
     void check_ns() {
         if (ns != nullptr) {
-            std::shared_ptr<media::audio_frame> audio = ns->get_encoded_frame();
-            if (audio != nullptr) {
-                if (mp4 != nullptr) {
-                    mp4->encode_audio_frame(audio);
-                }
-                if (rtmp != nullptr) {
-                    rtmp->encode_audio_frame(audio);
-                }
+            audio_frame audio;
+            if (!ns->get_encoded_frame(audio)) {
+                return;
+            }
+            if (mp4 != nullptr) {
+                mp4->encode_audio_frame(audio);
+            }
+            if (rtmp != nullptr) {
+                rtmp->encode_audio_frame(audio);
             }
         }
     }
@@ -155,7 +153,8 @@ private:
     std::shared_ptr<webrtc_ns> ns;
     std::shared_ptr<ffmpeg_mp4> mp4;
     std::shared_ptr<ffmpeg_rtmp> rtmp;
-    moodycamel::ConcurrentQueue<frame> &frameQ;
+    moodycamel::ConcurrentQueue<image_frame> &imageQ;
+    moodycamel::ConcurrentQueue<audio_frame> &audioQ;
 };
 
 } //namespace media

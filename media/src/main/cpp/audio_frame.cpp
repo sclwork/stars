@@ -12,12 +12,24 @@
 namespace media {
 } //namespace media
 
+media::audio_frame::audio_frame():is_copy(false), size(0), cache(nullptr), cp_offset(0) {}
+
 media::audio_frame::audio_frame(int32_t s)
 :is_copy(false), size(s),
 cache((uint8_t*)malloc(sizeof(uint8_t)*size)), cp_offset(0) {
 //    log_d("created.");
     if (cache == nullptr) {
         log_e("malloc pcm cache fail.");
+    }
+}
+
+media::audio_frame::audio_frame(audio_frame &&frame) noexcept
+:is_copy(true), size(frame.size),
+cache((uint8_t*)malloc(sizeof(uint8_t)*size)), cp_offset(0) {
+//    log_d("created.");
+    if (cache) {
+        memcpy(cache, frame.cache, sizeof(int8_t)*size);
+//        log_d("copy completed. %d.", size);
     }
 }
 
@@ -29,6 +41,28 @@ cache((uint8_t*)malloc(sizeof(uint8_t)*size)), cp_offset(0) {
         memcpy(cache, frame.cache, sizeof(int8_t)*size);
 //        log_d("copy completed. %d.", size);
     }
+}
+
+media::audio_frame& media::audio_frame::operator=(audio_frame &&f) noexcept {
+    is_copy = true;
+    if (size != f.size) {
+        size = f.size;
+        if (cache) free(cache);
+        cache = (uint8_t *) malloc(sizeof(uint8_t) * size);
+    }
+    if (cache) { memcpy(cache, f.cache, sizeof(int8_t)*size); }
+    return *this;
+}
+
+media::audio_frame& media::audio_frame::operator=(const audio_frame &f) noexcept {
+    is_copy = true;
+    if (size != f.size) {
+        size = f.size;
+        if (cache) free(cache);
+        cache = (uint8_t *) malloc(sizeof(uint8_t) * size);
+    }
+    if (cache) { memcpy(cache, f.cache, sizeof(int8_t)*size); }
+    return *this;
 }
 
 media::audio_frame::~audio_frame() {
@@ -45,7 +79,7 @@ void media::audio_frame::get(int32_t *out_size, uint8_t **out_cache) const {
     if (out_cache) *out_cache = cache;
 }
 
-std::shared_ptr<uint16_t> media::audio_frame::get(int32_t *out_size) {
+std::shared_ptr<uint16_t> media::audio_frame::get_sht(int32_t *out_size) const {
     if (out_size) *out_size = size / 2;
     auto sa = new uint16_t[size / 2];
     std::shared_ptr<uint16_t> sht(sa,[](const uint16_t*p){delete[]p;});

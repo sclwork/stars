@@ -54,7 +54,7 @@ public:
      * @param changed true: audio frame data cache changed
      * @return collect success audio_frame, all return audio_frame is same address
      */
-    std::shared_ptr<audio_frame> collect_frame(bool *changed);
+    bool collect_frame(audio_frame &frm, bool *changed);
 
 private:
     audio_recorder(audio_recorder&&) = delete;
@@ -88,8 +88,8 @@ private:
     //////////////////////////////////////////
     uint32_t                     frm_size;
     std::atomic_bool             frm_changed;
-    std::shared_ptr<audio_frame> cache;
-    std::shared_ptr<audio_frame> frame;
+    audio_frame                  cache;
+    audio_frame                  frame;
     //////////////////////////////////////////
     void (*frame_callback)(void *);
     void *frame_ctx;

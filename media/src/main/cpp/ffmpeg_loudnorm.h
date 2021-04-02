@@ -45,14 +45,14 @@ public:
     void complete();
     /**
      * encode audio frame
-     * @param aud_frame audio frame
+     * @param frame audio frame
      */
-    void encode_frame(std::shared_ptr<audio_frame> &aud_frame);
+    void encode_frame(const audio_frame &frame);
     /**
      * get encode completed frame
      * @return audio frame
      */
-    std::shared_ptr<audio_frame> get_encoded_frame();
+    bool get_encoded_frame(audio_frame &frame);
 
 private:
     void on_free_all();

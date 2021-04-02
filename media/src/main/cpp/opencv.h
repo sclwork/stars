@@ -18,7 +18,7 @@ public:
     ~opencv();
 
 public:
-    static void grey_frame(const std::shared_ptr<image_frame> &frame);
+    static void grey_frame(const image_frame &frame);
 
 private:
     opencv(opencv&&) = delete;

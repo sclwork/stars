@@ -16,9 +16,7 @@ media::audio_recorder::audio_recorder(uint32_t cls, uint32_t spr)
 :eng_obj(nullptr), eng_eng(nullptr), rec_obj(nullptr), rec_eng(nullptr), rec_queue(nullptr),
 channels(cls<=1?1:2), sampling_rate(spr==44100?SL_SAMPLINGRATE_44_1:SL_SAMPLINGRATE_16),
 sample_rate(sampling_rate / 1000), pcm_data((uint8_t*)malloc(sizeof(uint8_t)*(PCM_BUF_SIZE))),
-frm_size(1024*2*channels), frm_changed(false),
-cache(std::make_shared<audio_frame>(frm_size)), frame(std::make_shared<audio_frame>(frm_size)),
-frame_callback(nullptr), frame_ctx(nullptr) {
+frm_size(1024*2*channels), frm_changed(false), cache(frm_size), frame(frm_size), frame_callback(nullptr), frame_ctx(nullptr) {
     log_d("created. channels:%d, sample_rate:%d.", this->channels, this->sample_rate);
     init_objs();
 }
@@ -63,17 +61,17 @@ bool media::audio_recorder::enqueue(bool chk_recording) {
 }
 
 void media::audio_recorder::handle_frame() {
-    if (cache->cp_offset + PCM_BUF_SIZE > cache->size) {
-        memcpy(frame->cache, cache->cache, sizeof(uint8_t) * cache->cp_offset);
-        int32_t c = cache->size - cache->cp_offset;
-        memcpy(frame->cache + cache->cp_offset, pcm_data, sizeof(uint8_t) * c);
+    if (cache.cp_offset + PCM_BUF_SIZE > cache.size) {
+        memcpy(frame.cache, cache.cache, sizeof(uint8_t) * cache.cp_offset);
+        int32_t c = cache.size - cache.cp_offset;
+        memcpy(frame.cache + cache.cp_offset, pcm_data, sizeof(uint8_t) * c);
         frm_changed = true;
-        cache->cp_offset = PCM_BUF_SIZE - c;
-        memcpy(cache->cache, pcm_data + c, sizeof(uint8_t) * cache->cp_offset);
+        cache.cp_offset = PCM_BUF_SIZE - c;
+        memcpy(cache.cache, pcm_data + c, sizeof(uint8_t) * cache.cp_offset);
         if (frame_callback != nullptr) frame_callback(frame_ctx);
     } else {
-        memcpy(cache->cache + cache->cp_offset, pcm_data, sizeof(uint8_t) * PCM_BUF_SIZE);
-        cache->cp_offset += PCM_BUF_SIZE;
+        memcpy(cache.cache + cache.cp_offset, pcm_data, sizeof(uint8_t) * PCM_BUF_SIZE);
+        cache.cp_offset += PCM_BUF_SIZE;
     }
 }
 
@@ -114,12 +112,16 @@ uint32_t media::audio_recorder::get_frame_size() const {
     return frm_size;
 }
 
-std::shared_ptr<media::audio_frame> media::audio_recorder::collect_frame(bool *changed) {
+bool media::audio_recorder::collect_frame(audio_frame &frm, bool *changed) {
+    bool chg = frm_changed;
+    if (chg) {
+        frm = frame;
+    }
     if (changed != nullptr) {
         *changed = frm_changed;
     }
     frm_changed = false;
-    return frame;
+    return chg;
 }
 
 void media::audio_recorder::init_objs() {

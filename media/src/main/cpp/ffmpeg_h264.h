@@ -39,8 +39,8 @@ public:
 public:
     virtual void init() = 0;
     virtual void complete();
-    virtual void encode_image_frame(std::shared_ptr<image_frame> &img_frame);
-    virtual void encode_audio_frame(std::shared_ptr<audio_frame> &aud_frame);
+    virtual void encode_image_frame(const image_frame& img_frame);
+    virtual void encode_audio_frame(const audio_frame& aud_frame);
 
 protected:
     void on_init_all(const std::string &format, const std::string &out_name);

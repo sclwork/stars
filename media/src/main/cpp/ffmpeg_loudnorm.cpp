@@ -199,10 +199,10 @@ void media::ffmpeg_loudnorm::on_free_all() {
     if (graph != nullptr) avfilter_graph_free(&graph);
 }
 
-void media::ffmpeg_loudnorm::encode_frame(std::shared_ptr<audio_frame> &aud_frame) {
+void media::ffmpeg_loudnorm::encode_frame(const audio_frame& aud_frame) {
     int32_t count = 0; uint8_t *aud_data = nullptr;
-    if (aud_frame != nullptr && aud_frame->available()) {
-        aud_frame->get(&count, &aud_data);
+    if (aud_frame.available()) {
+        aud_frame.get(&count, &aud_data);
     }
 
     if (count > 0 && aud_data != nullptr) {
@@ -241,26 +241,27 @@ void media::ffmpeg_loudnorm::encode_frame(std::shared_ptr<audio_frame> &aud_fram
     }
 }
 
-std::shared_ptr<media::audio_frame> media::ffmpeg_loudnorm::get_encoded_frame() {
+bool media::ffmpeg_loudnorm::get_encoded_frame(audio_frame &frame) {
     int32_t res = av_buffersink_get_frame(abuffersink_ctx, de_frame);
     if (res == AVERROR_EOF) {
         char err[64];
         av_strerror(res, err, 64);
 //                log_e("encode_frame av_buffersink_get_frame fail: [%d] %s", res, err);
-        return std::shared_ptr<audio_frame>(nullptr);
+        return false;
     }
     if (res < 0) {
         char err[64];
         av_strerror(res, err, 64);
 //                log_e("encode_frame av_buffersink_get_frame fail: [%d] %s", res, err);
-        return std::shared_ptr<audio_frame>(nullptr);
+        return false;
     }
 
     uint8_t *aud_data = nullptr;
-    auto frm = std::make_shared<audio_frame>(de_frame->linesize[0]);
-    frm->get(nullptr, &aud_data);
+    audio_frame frm(de_frame->linesize[0]);
+    frm.get(nullptr, &aud_data);
     memcpy(aud_data, de_frame->data[0], sizeof(uint8_t) * de_frame->linesize[0]);
     av_frame_unref(de_frame);
+    frame = frm;
 
-    return frm;
+    return true;
 }

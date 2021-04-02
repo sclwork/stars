@@ -12,16 +12,51 @@
 extern "C" {
 #endif
 
+static JavaVM *g_JavaVM = nullptr;
+static jobject  g_MediaClass = nullptr;
+
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+    g_JavaVM = vm;
+    return JNI_VERSION_1_6;
+}
+
+JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved) {
+    g_JavaVM = nullptr;
+}
+
 JNIEXPORT void JNICALL
 Java_com_scliang_tars_Media_jniInit(
 JNIEnv *env, jobject thiz,
 jstring fileRootPath, jstring opencvCascadePath, jstring mnnModelPaths) {
 //    log_d("RecorderJNI [Init]");
+    jclass mediaClass = env->FindClass("com/scliang/tars/Media");
+    if (mediaClass != nullptr) {
+        g_MediaClass = env->NewGlobalRef(mediaClass);
+    }
     const char *file = env->GetStringUTFChars(fileRootPath, nullptr);
     const char *cascade = env->GetStringUTFChars(opencvCascadePath, nullptr);
     const char *mnn = env->GetStringUTFChars(mnnModelPaths, nullptr);
     // start main loop
-    media::loop_start(file, cascade, mnn);
+    media::loop_start(file, cascade, mnn, [](int32_t code) {
+        JNIEnv *p_env = nullptr;
+        if (g_JavaVM != nullptr) {
+            g_JavaVM->AttachCurrentThread(&p_env, nullptr);
+        }
+        if (p_env == nullptr || g_MediaClass == nullptr) {
+            return;
+        }
+        auto mediaClass = (jclass) g_MediaClass;
+        if (mediaClass == nullptr) {
+            return;
+        }
+        jmethodID mediaRRID = p_env->GetStaticMethodID(mediaClass, "requestRender", "(I)V");
+        if (mediaRRID != nullptr) {
+            p_env->CallStaticVoidMethod(mediaClass, mediaRRID, code);
+        }
+        if (g_JavaVM != nullptr) {
+            g_JavaVM->DetachCurrentThread();
+        }
+    });
     env->ReleaseStringUTFChars(fileRootPath, file);
     env->ReleaseStringUTFChars(opencvCascadePath, cascade);
     env->ReleaseStringUTFChars(mnnModelPaths, mnn);
@@ -30,6 +65,9 @@ jstring fileRootPath, jstring opencvCascadePath, jstring mnnModelPaths) {
 JNIEXPORT void JNICALL
 Java_com_scliang_tars_Media_jniRelease(
 JNIEnv *env, jobject thiz) {
+    if (g_MediaClass != nullptr) {
+        env->DeleteGlobalRef(g_MediaClass);
+    }
     // exit main loop
     media::loop_exit();
 //    log_d("RecorderJNI [Release]");

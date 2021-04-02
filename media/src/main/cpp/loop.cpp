@@ -110,13 +110,16 @@ static void loop_main_run() {
 
 } //namespace media
 
-void media::loop_start(const std::string &file_root, const std::string &cascade, const std::string &mnn) {
+void media::loop_start(const std::string &file_root,
+                       const std::string &cascade,
+                       const std::string &mnn,
+                       void (*on_request_render)(int32_t)) {
     if (loop_main_running) {
         return;
     }
 
     log_d("==================================================");
-    com_ptr.reset(new common(file_root, cascade, mnn));
+    com_ptr.reset(new common(file_root, cascade, mnn, on_request_render));
 
     std::thread main_t(loop_main_run);
     main_t.detach();

@@ -19,7 +19,10 @@ namespace media {
  */
 class common {
 public:
-    common(const std::string &file_root, const std::string &cascade, const std::string &mnn);
+    common(const std::string &file_root,
+           const std::string &cascade,
+           const std::string &mnn,
+           void (*on_request_render)(int32_t));
     ~common();
 
 public:
@@ -59,7 +62,7 @@ private:
      * run in caller thread.
      * copy from frm to renderer.
      */
-    void renderer_updt_frame(const image_frame &frm);
+    void renderer_updt_frame(image_frame &&frm);
 
 private:
     common(common&&) = delete;
@@ -72,7 +75,9 @@ private:
     std::string mnn_path;
     std::shared_ptr<image_renderer> renderer;
     std::shared_ptr<video_recorder> vid_rec;
-    moodycamel::ConcurrentQueue<frame> encodeQ;
+    moodycamel::ConcurrentQueue<image_frame> eiQ;
+    moodycamel::ConcurrentQueue<audio_frame> eaQ;
+    void (*on_request_render_callback)(int32_t);
 };
 
 } //namespace media

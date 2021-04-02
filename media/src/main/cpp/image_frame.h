@@ -11,11 +11,12 @@ namespace media {
 
 class image_frame {
 public:
-    static image_frame *make_default(int32_t w, int32_t h);
-
-public:
+    image_frame();
     image_frame(int32_t w, int32_t h);
+    image_frame(image_frame&&) noexcept;
     image_frame(const image_frame &frame);
+    image_frame& operator=(image_frame&&) noexcept;
+    image_frame& operator=(const image_frame&) noexcept;
     ~image_frame();
 
 public:
@@ -48,11 +49,6 @@ public:
      * @param out_cache [out] frame data pointer
      */
     void get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache = nullptr) const;
-
-private:
-    image_frame(image_frame&&) = delete;
-    image_frame& operator=(image_frame&&) = delete;
-    image_frame& operator=(const image_frame&) = delete;
 
 private:
     bool is_copy;

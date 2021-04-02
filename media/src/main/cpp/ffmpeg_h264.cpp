@@ -349,7 +349,7 @@ void media::ffmpeg_h264::on_free_all() {
     vf_ctx = nullptr;
 }
 
-void media::ffmpeg_h264::encode_image_frame(std::shared_ptr<image_frame> &img_frame) {
+void media::ffmpeg_h264::encode_image_frame(const image_frame& img_frame) {
 #ifdef HAVE_IMAGE_STREAM
     if (vf_ctx == nullptr) {
         return;
@@ -357,8 +357,8 @@ void media::ffmpeg_h264::encode_image_frame(std::shared_ptr<image_frame> &img_fr
 
     int32_t w = 0, h = 0;
     uint32_t *img_data = nullptr;
-    if (img_frame != nullptr && img_frame->available()) {
-        img_frame->get(&w, &h, &img_data);
+    if (img_frame.available()) {
+        img_frame.get(&w, &h, &img_data);
     }
 
     if (w > 0 && h > 0 && img_data != nullptr) {
@@ -402,7 +402,7 @@ void media::ffmpeg_h264::encode_image_frame(std::shared_ptr<image_frame> &img_fr
 #endif
 }
 
-void media::ffmpeg_h264::encode_audio_frame(std::shared_ptr<audio_frame> &aud_frame) {
+void media::ffmpeg_h264::encode_audio_frame(const audio_frame& aud_frame) {
 #ifdef HAVE_AUDIO_STREAM
     if (vf_ctx == nullptr) {
         return;
@@ -410,8 +410,8 @@ void media::ffmpeg_h264::encode_audio_frame(std::shared_ptr<audio_frame> &aud_fr
 
     int32_t count = 0;
     uint8_t *aud_data = nullptr;
-    if (aud_frame != nullptr && aud_frame->available()) {
-        aud_frame->get(&count, &aud_data);
+    if (aud_frame.available()) {
+        aud_frame.get(&count, &aud_data);
     }
 
     if (count > 0 && aud_data != nullptr) {

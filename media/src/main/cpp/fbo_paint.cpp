@@ -31,10 +31,10 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
     log_d("canvas size: %d,%d %0.4f", cvs_width, cvs_height, cvs_ratio);
 }
 
-std::shared_ptr<media::image_frame> media::fbo_paint::draw(const std::shared_ptr<image_frame> &frame) {
-    if (frame == nullptr) {
-        return std::shared_ptr<image_frame>(nullptr);
+void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
+    if (!frame.available()) {
+        return;
     }
 
-    return std::make_shared<image_frame>(*frame);
+    of = frame;
 }

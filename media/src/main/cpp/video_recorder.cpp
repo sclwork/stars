@@ -41,8 +41,10 @@ static void img_encode_run(video_encoder *ep) {
 
 } //namespace media
 
-media::video_recorder::video_recorder(std::string &mnn_path, moodycamel::ConcurrentQueue<frame> &fQ)
-:mnn_path(mnn_path), recing(false), encodeQ(fQ), collector(nullptr), encoder(nullptr) {
+media::video_recorder::video_recorder(std::string &mnn_path,
+                                      moodycamel::ConcurrentQueue<image_frame> &iQ,
+                                      moodycamel::ConcurrentQueue<audio_frame> &aQ)
+:mnn_path(mnn_path), recing(false), eiQ(iQ), eaQ(aQ), collector(nullptr), encoder(nullptr) {
     log_d("created.");
 }
 
@@ -52,7 +54,7 @@ media::video_recorder::~video_recorder() {
     log_d("release.");
 }
 
-void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image_frame>&&),
+void media::video_recorder::start_preview(void (*callback)(image_frame&&),
                                           int32_t w, int32_t h,
                                           int32_t camera) {
     if (collector != nullptr && collector->equal_running(w, h, camera)) {
@@ -65,8 +67,7 @@ void media::video_recorder::start_preview(void (*callback)(std::shared_ptr<image
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto recording = std::make_shared<std::atomic_bool>(false);
     auto *ctx = new video_collector(true, false, w, h, camera,
-                                    mnn_path, runnable, recording, callback, encodeQ
-    );
+            mnn_path, runnable, recording, callback, /*eiQ,*/ eaQ);
     collector = std::shared_ptr<video_collector>(ctx, [](void*){}); // delete cp in img_collect_run
     std::thread collect_t(img_collect_run, ctx);
     collect_t.detach();
@@ -96,8 +97,8 @@ void media::video_recorder::start_record(std::string &&file_root, std::string &&
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto *ctx = new video_encoder(true, 0,
                                   std::forward<std::string>(file_root), std::forward<std::string>(name),
-                                  std::forward<image_args>(img_args), std::forward<audio_args>(aud_args), runnable,
-                                  encodeQ
+                                  std::forward<image_args>(img_args), std::forward<audio_args>(aud_args),
+                                  runnable, eiQ, eaQ
     );
     encoder = std::shared_ptr<video_encoder>(ctx, [](void*){}); // delete ep in img_encode_run
     std::thread encode_t(img_encode_run, ctx);

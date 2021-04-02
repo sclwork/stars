@@ -35,8 +35,7 @@ public:
      * @param faces [out] face rect
      * @param min_face minimal face rect
      */
-    void detect_faces(const std::shared_ptr<image_frame> &frame,
-            std::vector<cv::Rect> &faces, const int32_t min_face = 64);
+    void detect_faces(const image_frame &frame, std::vector<cv::Rect> &faces, const int32_t min_face = 64);
 
 public:
     /**
@@ -44,7 +43,7 @@ public:
      * @param frame image frame
      * @param faces face rect
      */
-    void flag_faces(const std::shared_ptr<image_frame> &frame, std::vector<cv::Rect> &faces) const;
+    void flag_faces(const image_frame &frame, std::vector<cv::Rect> &faces) const;
 
 private:
     mnn(mnn&&) = delete;

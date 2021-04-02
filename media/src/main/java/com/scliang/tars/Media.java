@@ -119,13 +119,24 @@ public class Media {
             }
         });
 
-        glView.detachedFromWindowRunnable = ()->{glView.queueEvent(renderer::release);};
-        glView.surfaceDestroyedRunnable = ()->{glView.queueEvent(renderer::onSurfaceDestroyed);};
+        glView.detachedFromWindowRunnable = ()-> glView.queueEvent(renderer::release);
+        glView.surfaceDestroyedRunnable = ()-> glView.queueEvent(renderer::onSurfaceDestroyed);
         glView.setEGLContextClientVersion(3);
         glView.setRenderer(renderer);
         glView.queueEvent(renderer::init);
-        glView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        glView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         r.mGLView = new SoftReference<>(glView);
+    }
+
+    // call in jni - can't proguard
+    private static void requestRender(int code) {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
+        if (glView != null) glView.requestRender();
     }
 
     public static void onStart() {
@@ -438,5 +449,5 @@ public class Media {
     private Context getContext() { return mContext == null ? null : mContext.get(); }
     private static class SingletonHolder { private static final Media INSTANCE = new Media(); }
     private Media() { }
-    private boolean mInit, mVideoRecording;
+    private boolean mInit;
 }

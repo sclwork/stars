@@ -11,19 +11,6 @@
 
 namespace media {
 
-class frame {
-public:
-    frame():image(nullptr), audio(nullptr) {}
-    frame(std::shared_ptr<image_frame> &&img, std::shared_ptr<audio_frame> &&aud)
-        :image(img==nullptr?nullptr:std::make_shared<image_frame>(*img)),
-         audio(aud==nullptr?nullptr:std::make_shared<audio_frame>(*aud)) {}
-    ~frame() = default;
-
-public:
-    std::shared_ptr<image_frame> image;
-    std::shared_ptr<audio_frame> audio;
-};
-
 static inline bool startWith(const std::string &str, const std::string &head) {
     return str.compare(0, head.size(), head) == 0;
 }

@@ -13,8 +13,12 @@ class audio_recorder;
 
 class audio_frame {
 public:
+    audio_frame();
     audio_frame(int32_t size);
+    audio_frame(audio_frame&&) noexcept;
     audio_frame(const audio_frame &frame);
+    audio_frame& operator=(audio_frame&&) noexcept;
+    audio_frame& operator=(const audio_frame&) noexcept;
     ~audio_frame();
 
 public:
@@ -33,7 +37,7 @@ public:
      * @param out_size [out] audio pcm short data size
      * @return audio frame pcm short data pointer
      */
-    std::shared_ptr<uint16_t> get(int32_t *out_size);
+    std::shared_ptr<uint16_t> get_sht(int32_t *out_size) const;
     /**
      * set short data to audio frame pcm
      * @param sht audio pcm short data
@@ -41,11 +45,6 @@ public:
      */
     void set(const uint16_t *sht, int32_t length);
     void set(const std::shared_ptr<uint16_t> &sht, int32_t length);
-
-private:
-    audio_frame(audio_frame&&) = delete;
-    audio_frame& operator=(audio_frame&&) = delete;
-    audio_frame& operator=(const audio_frame&) = delete;
 
 private:
     friend class audio_recorder;

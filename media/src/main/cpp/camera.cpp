@@ -71,22 +71,22 @@ media::camera::~camera() {
     log_d("release. %s", id.c_str());
 }
 
-void media::camera::get_latest_image(std::shared_ptr<media::image_frame> &frame) {
+bool media::camera::get_latest_image(image_frame &frame) {
     media_status_t status = AImageReader_acquireLatestImage(reader, &img_args.image);
     if (status != AMEDIA_OK) {
-        return;
+        return false;
     }
 
     status = AImage_getFormat(img_args.image, &img_args.format);
     if (status != AMEDIA_OK || img_args.format != AIMAGE_FORMAT_YUV_420_888) {
         AImage_delete(img_args.image);
-        return;
+        return false;
     }
 
     status = AImage_getNumberOfPlanes(img_args.image, &img_args.plane_count);
     if (status != AMEDIA_OK || img_args.plane_count != 3) {
         AImage_delete(img_args.image);
-        return;
+        return false;
     }
 
     AImage_getPlaneRowStride(img_args.image, 0, &img_args.y_stride);
@@ -105,14 +105,14 @@ void media::camera::get_latest_image(std::shared_ptr<media::image_frame> &frame)
     img_args.argb_pixel = (uint8_t *)malloc(sizeof(uint8_t) * img_args.src_w * img_args.src_h * 4);
     if (img_args.argb_pixel == nullptr) {
         AImage_delete(img_args.image);
-        return;
+        return false;
     }
 
     img_args.dst_argb_pixel = (uint8_t *)malloc(sizeof(uint8_t) * img_args.src_w * img_args.src_h * 4);
     if (img_args.dst_argb_pixel == nullptr) {
         free(img_args.argb_pixel);
         AImage_delete(img_args.image);
-        return;
+        return false;
     }
 
     if (img_args.ori == 90 || img_args.ori == 270) {
@@ -123,16 +123,16 @@ void media::camera::get_latest_image(std::shared_ptr<media::image_frame> &frame)
         img_args.img_height = img_args.src_h;
     }
 
-    img_args.frame = frame;
-    img_args.frame->get(&img_args.frame_w, &img_args.frame_h, &img_args.frame_cache);
+    frame.get(&img_args.frame_w, &img_args.frame_h, &img_args.frame_cache);
     img_args.wof = (img_args.frame_w - img_args.img_width) / 2;
     img_args.hof = (img_args.frame_h - img_args.img_height) / 2;
     yuv2argb(img_args);
-    frame->set_ori(ori);
+    frame.set_ori(ori);
     AImage_delete(img_args.image);
     free(img_args.argb_pixel);
     free(img_args.dst_argb_pixel);
     img_args.image = nullptr;
+    return true;
 }
 
 bool media::camera::preview(int32_t req_w, int32_t req_h, int32_t *out_fps) {

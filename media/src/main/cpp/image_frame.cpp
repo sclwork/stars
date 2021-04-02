@@ -12,13 +12,7 @@
 namespace media {
 } //namespace media
 
-media::image_frame *media::image_frame::make_default(int32_t w, int32_t h) {
-    auto *frame = new image_frame(w, h);
-    if (frame->available()) {
-        memset(frame->cache, 0xff000000, sizeof(int32_t) * w * h);
-    }
-    return frame;
-}
+media::image_frame::image_frame():is_copy(false), ori(0), width(0), height(0), cache(nullptr) {}
 
 media::image_frame::image_frame(int32_t w, int32_t h)
 :is_copy(false), ori(0), width(w), height(h),
@@ -26,6 +20,16 @@ cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
 //    log_d("created.");
     if (cache == nullptr) {
         log_e("malloc image cache fail.");
+    }
+}
+
+media::image_frame::image_frame(image_frame&& frame) noexcept
+:is_copy(true), ori(frame.ori), width(frame.width), height(frame.height),
+cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
+//    log_d("created.");
+    if (cache) {
+        memcpy(cache, frame.cache, sizeof(uint32_t) * width * height);
+//        log_d("copy completed. %d,%d.", width, height);
     }
 }
 
@@ -37,6 +41,32 @@ cache((uint32_t*)malloc(sizeof(uint32_t)*width*height)) {
         memcpy(cache, frame.cache, sizeof(uint32_t) * width * height);
 //        log_d("copy completed. %d,%d.", width, height);
     }
+}
+
+media::image_frame& media::image_frame::operator=(image_frame &&f) noexcept {
+    is_copy = true;
+    if (ori != f.ori || width != f.width || height != f.height) {
+        ori = f.ori;
+        width = f.width;
+        height = f.height;
+        if (cache) free(cache);
+        cache = (uint32_t *) malloc(sizeof(uint32_t) * width * height);
+    }
+    if (cache) { memcpy(cache, f.cache, sizeof(uint32_t) * width * height); }
+    return *this;
+}
+
+media::image_frame& media::image_frame::operator=(const image_frame &f) noexcept {
+    is_copy = true;
+    if (ori != f.ori || width != f.width || height != f.height) {
+        ori = f.ori;
+        width = f.width;
+        height = f.height;
+        if (cache) free(cache);
+        cache = (uint32_t *) malloc(sizeof(uint32_t) * width * height);
+    }
+    if (cache) { memcpy(cache, f.cache, sizeof(uint32_t) * width * height); }
+    return *this;
 }
 
 media::image_frame::~image_frame() {

@@ -20,7 +20,9 @@ namespace media {
 
 class video_recorder {
 public:
-    video_recorder(std::string &mnn_path, moodycamel::ConcurrentQueue<frame> &fQ);
+    video_recorder(std::string &mnn_path,
+                   moodycamel::ConcurrentQueue<image_frame> &iQ,
+                   moodycamel::ConcurrentQueue<audio_frame> &aQ);
     ~video_recorder();
 
 public:
@@ -31,7 +33,7 @@ public:
      * @param h requested height
      * @param camera camera index [0, camera::camera_count)
      */
-     void start_preview(void (*callback)(std::shared_ptr<image_frame>&&),
+     void start_preview(void (*callback)(image_frame&&),
                         int32_t w, int32_t h,
                         int32_t camera = 0);
      /**
@@ -62,7 +64,8 @@ private:
 private:
     std::string mnn_path;
     std::atomic_bool recing;
-    moodycamel::ConcurrentQueue<frame> &encodeQ;
+    moodycamel::ConcurrentQueue<image_frame> &eiQ;
+    moodycamel::ConcurrentQueue<audio_frame> &eaQ;
     //////////////////////////////////////
     std::shared_ptr<video_collector> collector;
     std::shared_ptr<video_encoder>   encoder;

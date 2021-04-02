@@ -13,14 +13,15 @@
 namespace media {
 } //namespace media
 
-media::image_renderer::image_renderer(moodycamel::ConcurrentQueue<media::frame> &fQ, bool (*cvrecording)())
-:width(0), height(0), paint(nullptr), frame(nullptr), encodeQ(fQ), drawQ(), check_video_recording(cvrecording) {
+media::image_renderer::image_renderer(moodycamel::ConcurrentQueue<image_frame> &iQ,
+                                      moodycamel::ConcurrentQueue<audio_frame> &aQ,
+                                      bool (*cvrecording)())
+:width(0), height(0), paint(nullptr), eiQ(iQ), eaQ(aQ), drawQ(), check_video_recording(cvrecording) {
     log_d("created.");
 }
 
 media::image_renderer::~image_renderer() {
     delete paint;
-    frame.reset();
     log_d("release.");
 }
 
@@ -28,13 +29,11 @@ void media::image_renderer::surface_created() {
     delete paint;
 //    paint = new fbo_paint();
     paint = new camera_paint();
-    frame.reset();
 }
 
 void media::image_renderer::surface_destroyed() {
     delete paint;
     paint = nullptr;
-    frame.reset();
 }
 
 void media::image_renderer::surface_changed(int32_t w, int32_t h) {
@@ -43,13 +42,10 @@ void media::image_renderer::surface_changed(int32_t w, int32_t h) {
     if (paint) {
         paint->set_canvas_size(w, h);
     }
-    if (frame == nullptr || !frame->available() || !frame->same_size(w, h)) {
-        updt_frame(std::shared_ptr<media::image_frame>(image_frame::make_default(w, h)));
-    }
 }
 
-void media::image_renderer::updt_frame(const std::shared_ptr<media::image_frame> &&frm) {
-    if (frm != nullptr && frm->available()) {
+void media::image_renderer::updt_frame(image_frame &&frm) {
+    if (frm.available()) {
         drawQ.enqueue(frm);
     }
 }
@@ -59,16 +55,11 @@ void media::image_renderer::draw_frame() {
         return;
     }
 
-    std::shared_ptr<media::image_frame> f;
-    if (drawQ.try_dequeue(f)) {
-        frame = f;
-    }
+    image_frame of, nf;
+    drawQ.try_dequeue(nf);
+    paint->draw(nf, of);
 
-    if (frame != nullptr) {
-        auto nf = paint->draw(frame);
-        if (nf != nullptr &&
-            check_video_recording != nullptr && check_video_recording()) {
-            encodeQ.enqueue(media::frame(std::shared_ptr<image_frame>(nf), nullptr));
-        }
+    if (check_video_recording != nullptr && check_video_recording() && of.available()) {
+        eiQ.enqueue(of);
     }
 }

@@ -97,15 +97,16 @@ uint32_t media::image_recorder::get_height() const {
     return height;
 }
 
-std::shared_ptr<media::image_frame> media::image_recorder::collect_frame() {
+void media::image_recorder::collect_frame(media::image_frame &of) {
     if (frame == nullptr || !frame->available() || run_cam == nullptr) {
-        return frame;
+        return;
     }
 
     if (!is_previewing()) {
-        return frame;
+        return;
     }
 
-    run_cam->get_latest_image(frame);
-    return frame;
+    if (run_cam->get_latest_image(*frame)) {
+        of = *frame;
+    }
 }

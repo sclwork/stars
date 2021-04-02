@@ -13,8 +13,12 @@ namespace media {
     static common *gcom = nullptr;
 } //namespace media
 
-media::common::common(const std::string &file_root, const std::string &cas_path, const std::string &mnn_path)
-:file_root(file_root), mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr), encodeQ() {
+media::common::common(const std::string &file_root,
+                      const std::string &cas_path,
+                      const std::string &mnn_path,
+                      void (*on_request_render)(int32_t))
+:file_root(file_root), mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr),
+eiQ(), eaQ(), on_request_render_callback(on_request_render) {
     gcom = this;
     log_d("file_root:%s.", file_root.c_str());
     log_d("cas_path:%s.", cas_path.c_str());
@@ -33,10 +37,10 @@ media::common::~common() {
  * run in renderer thread.
  */
 void media::common::renderer_init() {
-    renderer = std::make_shared<image_renderer>(encodeQ, [](){
+    renderer = std::make_shared<image_renderer>(eiQ, eaQ, [](){
         return gcom != nullptr && gcom->video_recording();
     });
-    vid_rec = std::make_shared<video_recorder>(mnn_path, encodeQ);
+    vid_rec = std::make_shared<video_recorder>(mnn_path, eiQ, eaQ);
 }
 
 /*
@@ -76,8 +80,8 @@ void media::common::renderer_surface_changed(int32_t w, int32_t h) {
         renderer->surface_changed(w, h);
     }
     if (vid_rec != nullptr) {
-        vid_rec->start_preview([](std::shared_ptr<media::image_frame> &&frm) {
-            if (gcom != nullptr) gcom->renderer_updt_frame(*frm);
+        vid_rec->start_preview([](image_frame &&frm) {
+            if (gcom != nullptr) gcom->renderer_updt_frame(std::forward<image_frame>(frm));
         }, w / 2, h / 2);
     }
 }
@@ -95,9 +99,12 @@ void media::common::renderer_draw_frame() {
  * run in caller thread.
  * copy from frm to renderer.
  */
-void media::common::renderer_updt_frame(const media::image_frame &frm) {
+void media::common::renderer_updt_frame(image_frame &&frm) {
     if (renderer != nullptr) {
-        renderer->updt_frame(std::make_shared<media::image_frame>(frm));
+        renderer->updt_frame(std::forward<image_frame>(frm));
+    }
+    if (on_request_render_callback != nullptr) {
+        on_request_render_callback(0);
     }
 }
 

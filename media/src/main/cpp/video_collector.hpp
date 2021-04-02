@@ -33,13 +33,14 @@ public:
                     std::string &mnn_path,
                     std::shared_ptr<std::atomic_bool> &runnable,
                     std::shared_ptr<std::atomic_bool> &recording,
-                    void (*callback)(std::shared_ptr<image_frame>&&),
-                    moodycamel::ConcurrentQueue<frame> &fQ)
+                    void (*callback)(image_frame&&),
+//                    moodycamel::ConcurrentQueue<image_frame> &iQ,
+                    moodycamel::ConcurrentQueue<audio_frame> &aQ)
      :ms(0), tv(), use_mnn(use_mnn), use_opencv(use_opencv),
       w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
       runnable(runnable), recording(recording), renderer_callback(callback), _mux(),
       image(nullptr), audio(nullptr), mnn(nullptr), opencv(nullptr),
-      img_args(), aud_args(), aud_frame(nullptr), encodeQ(fQ) {
+      img_args(), aud_args(), aud_frame(nullptr), /*eiQ(iQ),*/ eaQ(aQ) {
         log_d_("video_collector[%d,%d,%d] created.", this->w, this->h, this->camera);
     }
 
@@ -138,14 +139,18 @@ private:
         if (ctx == nullptr) {
             return;
         }
+
         auto *vcr = (video_collector *)ctx;
         if (vcr->image == nullptr) {
             return;
         }
-        auto img_frame = vcr->image->collect_frame();
-        if (img_frame == nullptr) {
+
+        image_frame img_frame;
+        vcr->image->collect_frame(img_frame);
+        if (!img_frame.available()) {
             return;
         }
+
         if (vcr->use_opencv) {
             opencv::grey_frame(img_frame);
         }
@@ -154,7 +159,7 @@ private:
             vcr->mnn->flag_faces(img_frame, vcr->faces);
         }
         if (vcr->renderer_callback != nullptr) {
-            vcr->renderer_callback(std::shared_ptr<media::image_frame>(img_frame));
+            vcr->renderer_callback(std::move(img_frame));
         }
     }
 
@@ -164,8 +169,10 @@ private:
         }
         auto *vcr = (video_collector *)ctx;
         if (vcr->recording != nullptr && *vcr->recording && vcr->audio != nullptr) {
-            auto aud_frame = vcr->audio->collect_frame(nullptr);
-            vcr->encodeQ.enqueue(media::frame(nullptr, std::forward<std::shared_ptr<audio_frame>>(aud_frame)));
+            audio_frame frame;
+            if (vcr->audio->collect_frame(frame, nullptr)) {
+                vcr->eaQ.enqueue(frame);
+            }
         }
     }
 
@@ -177,7 +184,7 @@ private:
     std::string mnn_path;
     std::shared_ptr<std::atomic_bool> runnable;
     std::shared_ptr<std::atomic_bool> recording;
-    void (*renderer_callback)(std::shared_ptr<media::image_frame>&&);
+    void (*renderer_callback)(image_frame &&);
     std::vector<cv::Rect> faces;
     mutable std::mutex _mux;
     image_recorder *image;
@@ -186,8 +193,9 @@ private:
     opencv *opencv;
     image_args img_args;
     audio_args aud_args;
-    std::shared_ptr<media::audio_frame> aud_frame;
-    moodycamel::ConcurrentQueue<frame> &encodeQ;
+    std::shared_ptr<audio_frame> aud_frame;
+//    moodycamel::ConcurrentQueue<image_frame> &eiQ;
+    moodycamel::ConcurrentQueue<audio_frame> &eaQ;
 };
 
 } //namespace media

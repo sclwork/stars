@@ -14,7 +14,10 @@ namespace media {
  * [call from jni] media main thread loop start/exit
  * create/release global thread objects[common/queue_main]
  */
-void loop_start(const std::string &file_root, const std::string &cascade, const std::string &mnn);
+void loop_start(const std::string &file_root,
+                const std::string &cascade,
+                const std::string &mnn,
+                void (*on_request_render)(int32_t));
 void loop_exit();
 
 /**
