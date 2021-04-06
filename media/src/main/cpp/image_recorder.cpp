@@ -12,7 +12,7 @@ namespace media {
 } //namespace media
 
 media::image_recorder::image_recorder()
-:fps(0), previewing(false), frame(nullptr), cams(), run_cam(nullptr) {
+:previewing(false), width(0), height(0), fps(0), cams(), run_cam(nullptr) {
     log_d("created.");
     camera::enumerate(cams);
 //    log_d("--------------------");
@@ -31,14 +31,6 @@ media::image_recorder::~image_recorder() {
     log_d("release.");
 }
 
-int32_t media::image_recorder::camera_count() const {
-    return cams.size();
-}
-
-bool media::image_recorder::is_previewing() const {
-    return previewing;
-}
-
 bool media::image_recorder::select_camera(int camera) {
     if (camera < 0 || camera >= cams.size()) {
         previewing = false;
@@ -50,24 +42,16 @@ bool media::image_recorder::select_camera(int camera) {
         run_cam = nullptr;
     }
 
-    if (frame == nullptr) {
-        previewing = false;
-        return false;
-    }
-
-    int32_t w, h;
-    frame->get(&w, &h);
-    previewing = cams[camera]->preview(w, h, &fps);
+    previewing = cams[camera]->preview(width, height, &fps);
     run_cam = cams[camera];
     return previewing;
 }
 
 void media::image_recorder::update_size(int32_t w, int32_t h) {
     previewing = false;
-    // check reset cache
-    if (frame == nullptr || !frame->available() || !frame->same_size(w, h)) {
-        frame = std::make_shared<image_frame>(w, h);
-    }
+    // reset width/height/cache
+    width = w;
+    height = h;
     // restart cam
     if (run_cam != nullptr) {
         run_cam->close();
@@ -75,30 +59,8 @@ void media::image_recorder::update_size(int32_t w, int32_t h) {
     }
 }
 
-int32_t media::image_recorder::get_fps() const {
-    return fps;
-}
-
-uint32_t media::image_recorder::get_width() const {
-    if (frame == nullptr) {
-        return 0;
-    }
-    int32_t width;
-    frame->get(&width, nullptr, nullptr);
-    return width;
-}
-
-uint32_t media::image_recorder::get_height() const {
-    if (frame == nullptr) {
-        return 0;
-    }
-    int32_t height;
-    frame->get(nullptr, &height, nullptr);
-    return height;
-}
-
 void media::image_recorder::collect_frame(media::image_frame &of) {
-    if (frame == nullptr || !frame->available() || run_cam == nullptr) {
+    if (run_cam == nullptr) {
         return;
     }
 
@@ -106,7 +68,10 @@ void media::image_recorder::collect_frame(media::image_frame &of) {
         return;
     }
 
-    if (run_cam->get_latest_image(*frame)) {
-        of = *frame;
+    // check/setup frame width/height/cache
+    if (!of.available() || !of.same_size(width, height)) {
+        of.update_size(width, height);
     }
+
+    run_cam->get_latest_image(of);
 }

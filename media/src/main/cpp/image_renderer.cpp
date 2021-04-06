@@ -46,7 +46,7 @@ void media::image_renderer::surface_changed(int32_t w, int32_t h) {
 
 void media::image_renderer::updt_frame(image_frame &&frm) {
     if (frm.available()) {
-        drawQ.enqueue(frm);
+        drawQ.enqueue(std::forward<image_frame>(frm));
     }
 }
 
@@ -60,6 +60,6 @@ void media::image_renderer::draw_frame() {
     paint->draw(nf, of);
 
     if (check_video_recording != nullptr && check_video_recording() && of.available()) {
-        eiQ.enqueue(of);
+        eiQ.enqueue(std::forward<image_frame>(of));
     }
 }

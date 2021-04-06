@@ -171,7 +171,7 @@ private:
         if (vcr->recording != nullptr && *vcr->recording && vcr->audio != nullptr) {
             audio_frame frame;
             if (vcr->audio->collect_frame(frame, nullptr)) {
-                vcr->eaQ.enqueue(frame);
+                vcr->eaQ.enqueue(std::forward<audio_frame>(frame));
             }
         }
     }

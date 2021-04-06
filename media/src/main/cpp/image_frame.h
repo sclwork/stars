@@ -26,13 +26,22 @@ public:
      * @param h frame height
      * @return true: same size
      */
-    bool same_size(int32_t w, int32_t h) const;
+    bool same_size(int32_t w, int32_t h) const
+        { return w == width && h == height; }
     /**
      * check image frame available
      */
-    bool available() const;
+    bool available() const
+        { return cache != nullptr; }
 
 public:
+    /**
+     * update frame size
+     * @param w frame width
+     * @param h frame height
+     * if w/h changed, remalloc data cache.
+     */
+    void update_size(int32_t w, int32_t h);
     /**
      * setup camera/image orientation
      * @param o orientation:[0|90|180|270]
@@ -41,7 +50,8 @@ public:
     /**
      * @return true: if camera/image orientation is 270
      */
-    bool use_mirror() const;
+    bool use_mirror() const
+        { return ori == 270; }
     /**
      * get image frame args/data pointer
      * @param out_w [out] frame width

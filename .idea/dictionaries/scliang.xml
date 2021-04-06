@@ -5,6 +5,7 @@
       <w>abuffersink</w>
       <w>adtstoasc</w>
       <w>aformat</w>
+      <w>afrm</w>
       <w>apts</w>
       <w>avcodec</w>
       <w>avfilter</w>
@@ -21,6 +22,7 @@
       <w>frontalface</w>
       <w>gcom</w>
       <w>haarcascade</w>
+      <w>ifrm</w>
       <w>ipts</w>
       <w>libyuv</w>
       <w>loudnorm</w>
@@ -34,6 +36,7 @@
       <w>proc</w>
       <w>prog</w>
       <w>recing</w>
+      <w>remalloc</w>
       <w>rtmp</w>
       <w>runnables</w>
       <w>scliang</w>

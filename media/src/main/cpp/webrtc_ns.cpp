@@ -81,7 +81,7 @@ void media::webrtc_ns::encode_frame(const audio_frame &aud_frame) {
                 memcpy(frm_cache + frm_offset, out, sizeof(int16_t) * cc);
                 audio_frame de_frm(FRM_LEN * 2);
                 de_frm.set(frm_cache, FRM_LEN);
-                aQ.enqueue(de_frm);
+                aQ.enqueue(std::forward<audio_frame>(de_frm));
                 int32_t rc = cp_count - cc;
                 memcpy(frm_cache, out + cc, sizeof(int16_t) * rc);
                 frm_offset = rc;

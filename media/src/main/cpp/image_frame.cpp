@@ -75,20 +75,22 @@ media::image_frame::~image_frame() {
 //    if (!is_copy) log_d("release.");
 }
 
-bool media::image_frame::same_size(int32_t w, int32_t h) const {
-    return w == width && h == height;
-}
+void media::image_frame::update_size(int32_t w, int32_t h) {
+    if (w <= 0 || h <= 0) {
+        return;
+    }
 
-bool media::image_frame::available() const {
-    return cache != nullptr;
+    if (same_size(w, h)) {
+        if (cache) memset(cache, 0, sizeof(uint32_t) * width * height);
+    } else {
+        if (cache) free(cache);
+        width = w; height = h;
+        cache = (uint32_t*)malloc(sizeof(uint32_t) * width * height);
+    }
 }
 
 void media::image_frame::set_ori(int32_t o) {
     ori = o;
-}
-
-bool media::image_frame::use_mirror() const {
-    return ori == 270;
 }
 
 void media::image_frame::get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache) const {

@@ -21,11 +21,13 @@ public:
     /**
      * @return camera count
      */
-    int32_t camera_count() const;
+    int32_t camera_count() const
+        { return cams.size(); }
     /**
      * @return true: selected camera and previewing
      */
-    bool is_previewing() const;
+    bool is_previewing() const
+        { return previewing; }
     /**
      * select camera with index
      * @param camera index [0, camera_count)
@@ -49,19 +51,23 @@ public:
     /**
      * @return selected camera fps
      */
-    int32_t  get_fps() const;
+    int32_t  get_fps() const
+        { return fps; }
     /**
      * @return image_frame width
      */
-    uint32_t get_width() const;
+    uint32_t get_width() const
+        { return width; }
     /**
      * @return image_frame height
      */
-    uint32_t get_height() const;
+    uint32_t get_height() const
+        { return height; }
     /**
      * @return image_frame image channels argb:4
      */
-    uint32_t get_channels() const { return 4; }
+    uint32_t get_channels() const
+        { return 4; }
 
 private:
     image_recorder(image_recorder&&) = delete;
@@ -70,9 +76,8 @@ private:
     image_recorder& operator=(const image_recorder&) = delete;
 
 private:
-    int32_t fps;
     bool previewing;
-    std::shared_ptr<image_frame> frame;
+    int32_t width, height, fps;
     /////////////////////////////////////////
     std::vector<std::shared_ptr<camera>> cams;
     std::shared_ptr<camera>run_cam;
