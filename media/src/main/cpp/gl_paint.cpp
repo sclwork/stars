@@ -38,16 +38,14 @@ GLuint media::gl_paint::load_shader(GLenum shaderType, const char *pSource) {
 }
 
 GLuint media::gl_paint::create_program(const char *pVertexShaderSource,
-                                       const char *pFragShaderSource,
-                                       GLuint &vertexShaderHandle,
-                                       GLuint &fragShaderHandle) {
+                                       const char *pFragShaderSource) {
     GLuint prog = 0;
-    vertexShaderHandle = load_shader(GL_VERTEX_SHADER, pVertexShaderSource);
+    GLuint vertexShaderHandle = load_shader(GL_VERTEX_SHADER, pVertexShaderSource);
     if (!vertexShaderHandle) {
         return prog;
     }
 
-    fragShaderHandle = load_shader(GL_FRAGMENT_SHADER, pFragShaderSource);
+    GLuint fragShaderHandle = load_shader(GL_FRAGMENT_SHADER, pFragShaderSource);
     if (!fragShaderHandle) {
         return prog;
     }
@@ -62,10 +60,8 @@ GLuint media::gl_paint::create_program(const char *pVertexShaderSource,
 
         glDetachShader(prog, vertexShaderHandle);
         glDeleteShader(vertexShaderHandle);
-        vertexShaderHandle = 0;
         glDetachShader(prog, fragShaderHandle);
         glDeleteShader(fragShaderHandle);
-        fragShaderHandle = 0;
         if (linkStatus != GL_TRUE) {
             GLint bufLength = 0;
             glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &bufLength);

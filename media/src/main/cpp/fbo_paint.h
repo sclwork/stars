@@ -5,9 +5,43 @@
 #ifndef STARS_FBO_PAINT_H
 #define STARS_FBO_PAINT_H
 
+#include <mutex>
 #include "gl_paint.h"
 
 namespace media {
+
+struct TransformMatrix {
+    int32_t degree;
+    int32_t mirror;
+    float translateX;
+    float translateY;
+    float scaleX;
+    float scaleY;
+    int32_t angleX;
+    int32_t angleY;
+
+    TransformMatrix():
+            translateX(0),
+            translateY(0),
+            scaleX(1.0),
+            scaleY(1.0),
+            degree(0),
+            mirror(0),
+            angleX(0),
+            angleY(0) {
+
+    }
+
+    void Reset() {
+        translateX = 0;
+        translateY = 0;
+        scaleX = 1.0;
+        scaleY = 1.0;
+        degree = 0;
+        mirror = 0;
+
+    }
+};
 
 class fbo_paint : public gl_paint {
 public:
@@ -34,9 +68,29 @@ private:
     fbo_paint& operator=(const fbo_paint&) = delete;
 
 private:
+    static const int32_t TEXTURE_NUM = 3;
+
+private:
+    void update_matrix(int32_t angleX, int32_t angleY, float scaleX, float scaleY);
+
+private:
     int32_t   cvs_width;
     int32_t   cvs_height;
     float     cvs_ratio;
+    /////////////////////////
+    glm::mat4  matrix;
+    /////////////////////////
+    GLuint program;
+    GLuint fbo_program;
+    GLuint textures[TEXTURE_NUM];
+    GLuint vao;
+    GLuint vbo[TEXTURE_NUM];
+    GLuint src_fbo;
+    GLuint src_fbo_texture;
+    GLuint dst_fbo;
+    GLuint dst_fbo_texture;
+    /////////////////////////
+    int32_t frame_index;
 };
 
 } //namespace media

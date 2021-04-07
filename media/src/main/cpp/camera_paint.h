@@ -38,8 +38,6 @@ private:
 
 private:
     GLuint    texture;
-    GLuint    vertex_shader;
-    GLuint    fragment_shader;
     GLuint    program;
     GLint     sampler_location;
     GLint     sampler_matrix;

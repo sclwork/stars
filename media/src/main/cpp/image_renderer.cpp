@@ -27,8 +27,8 @@ media::image_renderer::~image_renderer() {
 
 void media::image_renderer::surface_created() {
     delete paint;
-//    paint = new fbo_paint();
-    paint = new camera_paint();
+    paint = new fbo_paint();
+//    paint = new camera_paint();
 }
 
 void media::image_renderer::surface_destroyed() {

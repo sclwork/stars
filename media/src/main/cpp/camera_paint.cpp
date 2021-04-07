@@ -12,9 +12,10 @@ namespace media {
 } //namespace media
 
 media::camera_paint::camera_paint()
-:texture(GL_NONE), vertex_shader(GL_NONE), fragment_shader(GL_NONE), program(GL_NONE),
-sampler_location(0), sampler_matrix(0), cvs_width(0), cvs_height(0), cvs_ratio(0), matrix(glm::mat4{}) {
+:texture(GL_NONE), program(GL_NONE), sampler_location(0),
+sampler_matrix(0), cvs_width(0), cvs_height(0), cvs_ratio(0), matrix(glm::mat4{}) {
     glGenTextures  (1, &texture);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture  (GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
@@ -22,7 +23,7 @@ sampler_location(0), sampler_matrix(0), cvs_width(0), cvs_height(0), cvs_ratio(0
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture  (GL_TEXTURE_2D, GL_NONE);
 
-    char vShaderStr[] =
+    const char *vShaderStr =
             "#version 300 es                                     \n"
             "layout(location = 0) in vec4 a_position;            \n"
             "layout(location = 1) in vec2 a_texCoord;            \n"
@@ -34,7 +35,7 @@ sampler_location(0), sampler_matrix(0), cvs_width(0), cvs_height(0), cvs_ratio(0
             "   v_texCoord = a_texCoord;                         \n"
             "}                                                   \n";
 
-    char fShaderStr[] =
+    const char *fShaderStr =
             "#version 300 es                                     \n"
             "#extension GL_OES_EGL_image_external_essl3 : require\n"
             "precision mediump float;                            \n"
@@ -46,7 +47,7 @@ sampler_location(0), sampler_matrix(0), cvs_width(0), cvs_height(0), cvs_ratio(0
             "  outColor = texture(sp_location, v_texCoord);      \n"
             "}                                                   \n";
 
-    program = create_program(vShaderStr, fShaderStr, vertex_shader, fragment_shader);
+    program = create_program(vShaderStr, fShaderStr);
     if (program) {
         sampler_location = glGetUniformLocation(program, "sp_location");
         sampler_matrix = glGetUniformLocation(program, "u_Matrix");

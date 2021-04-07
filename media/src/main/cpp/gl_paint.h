@@ -22,8 +22,7 @@ public:
 
 public:
     static GLuint load_shader(GLenum shaderType, const char *pSource);
-    static GLuint create_program(const char *pVertexShaderSource, const char *pFragShaderSource,
-                                 GLuint &vertexShaderHandle, GLuint &fragShaderHandle);
+    static GLuint create_program(const char *pVertexShaderSource, const char *pFragShaderSource);
 };
 
 } //namespace media
