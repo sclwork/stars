@@ -117,7 +117,7 @@ static GLushort indices[] = {
 
 media::fbo_paint::fbo_paint()
 :cvs_width(0), cvs_height(0), cvs_ratio(0),
-matrix(), program(GL_NONE), fbo_program(GL_NONE), textures(), vao(GL_NONE), vbo(),
+matrix(), program(GL_NONE), fbo_program(GL_NONE), texture(GL_NONE), vao(GL_NONE), vbo(),
 src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE), frame_index(0) {
     log_d("created.");
 }
@@ -199,16 +199,14 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
     program = create_program(vShaderStr, fShaderStr);
     fbo_program = create_program(vShaderStr, fShaderStr);
 
-    glGenTextures(TEXTURE_NUM, textures);
-    for (int i = 0; i < TEXTURE_NUM ; ++i) {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, textures[i]);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glBindTexture(GL_TEXTURE_2D, GL_NONE);
-    }
+    glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
     // Generate VBO Ids and load the VBOs with data
     glGenBuffers(3, vbo);
@@ -280,22 +278,16 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textures[0]);
+    glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
     glBindVertexArray(vao);
-//    update_matrix(&transform_matrix);
     update_matrix(0, 0, 1.0, 1.0);
     setMat4(fbo_program, "u_MVPMatrix", matrix);
-    for (int i = 0; i < TEXTURE_NUM; ++i) {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, textures[i]);
-        char samplerName[64] = {0};
-        sprintf(samplerName, "s_texture%d", i);
-        setInt(fbo_program, samplerName, i);
-    }
-
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    setInt(fbo_program, "s_texture0", 0);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
     // 再绘制一次，把方向倒过来

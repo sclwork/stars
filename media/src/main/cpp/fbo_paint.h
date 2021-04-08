@@ -68,9 +68,6 @@ private:
     fbo_paint& operator=(const fbo_paint&) = delete;
 
 private:
-    static const int32_t TEXTURE_NUM = 3;
-
-private:
     void update_matrix(int32_t angleX, int32_t angleY, float scaleX, float scaleY);
 
 private:
@@ -82,9 +79,9 @@ private:
     /////////////////////////
     GLuint program;
     GLuint fbo_program;
-    GLuint textures[TEXTURE_NUM];
+    GLuint texture;
     GLuint vao;
-    GLuint vbo[TEXTURE_NUM];
+    GLuint vbo[3];
     GLuint src_fbo;
     GLuint src_fbo_texture;
     GLuint dst_fbo;
