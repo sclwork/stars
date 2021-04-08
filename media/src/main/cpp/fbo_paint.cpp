@@ -23,17 +23,69 @@ static const char *vShaderStr =
         "    v_texCoord = a_texCoord;\n"
         "}";
 
+//static const char *fShaderStr =
+//        "#version 300 es\n"
+//        "precision highp float;\n"
+//        "in vec2 v_texCoord;\n"
+//        "layout(location = 0) out vec4 outColor;\n"
+//        "uniform sampler2D s_texture;\n"
+//        "void main()\n"
+//        "{\n"
+//        "    outColor = texture(s_texture, v_texCoord);\n"
+//        "}";
+
 static const char *fShaderStr =
         "#version 300 es\n"
         "precision highp float;\n"
         "in vec2 v_texCoord;\n"
         "layout(location = 0) out vec4 outColor;\n"
+        "uniform float u_Offset;\n"
         "uniform sampler2D s_texture;\n"
-        "\n"
+        "const float MAX_ALPHA = 0.5;\n"
+        "const float MAX_SCALE = 0.8;\n"
         "void main()\n"
         "{\n"
-        "    outColor = texture(s_texture, v_texCoord);\n"
+        "    float alpha = MAX_ALPHA * (1.0 - u_Offset);\n"
+        "    float scale = 1.0 + u_Offset * MAX_SCALE;\n"
+        "    float scale_x = 0.5 + (v_texCoord.x - 0.5) / scale;\n"
+        "    float scale_y = 0.5 + (v_texCoord.y - 0.5) / scale;\n"
+        "    vec2 scaleCoord = vec2(scale_x, scale_y);\n"
+        "    vec4 maskColor = texture(s_texture, scaleCoord);\n"
+        "    vec4 originColor = texture(s_texture, v_texCoord);"
+        "    outColor = originColor * (1.0 - alpha) + maskColor * alpha;\n"
         "}";
+
+//static const char *fShaderStr =
+//        "#version 300 es\n"
+//        "precision highp float;\n"
+//        "in vec2 v_texCoord;\n"
+//        "layout(location = 0) out vec4 outColor;\n"
+//        "uniform float u_Offset;\n"
+//        "uniform vec2 u_TexSize;\n"
+//        "uniform sampler2D s_texture;\n"
+//        "void main()\n"
+//        "{\n"
+//        "    vec2 newTexCoord = v_texCoord;\n"
+//        "    if(newTexCoord.x < 0.5)\n"
+//        "    {\n"
+//        "        newTexCoord.x = newTexCoord.x * 2.0;\n"
+//        "    }\n"
+//        "    else\n"
+//        "    {\n"
+//        "        newTexCoord.x = (newTexCoord.x - 0.5) * 2.0;\n"
+//        "    }\n"
+//        "\n"
+//        "    if(newTexCoord.y < 0.5)\n"
+//        "    {\n"
+//        "        newTexCoord.y = newTexCoord.y * 2.0;\n"
+//        "    }\n"
+//        "    else\n"
+//        "    {\n"
+//        "        newTexCoord.y = (newTexCoord.y - 0.5) * 2.0;\n"
+//        "    }\n"
+//        "\n"
+//        "    outColor = texture(s_texture, newTexCoord);\n"
+//        "}";
 
 static GLfloat vcs[] = {
         -1.0f,  1.0f, 0.0f,
@@ -66,7 +118,7 @@ static GLushort indices[] = {
 media::fbo_paint::fbo_paint()
 :cvs_width(0), cvs_height(0), cvs_ratio(0),
 matrix(), program(GL_NONE), fbo_program(GL_NONE), texture(GL_NONE), vao(GL_NONE), vbo(),
-src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE) {
+src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE), frame_index(0) {
     log_d("created.");
 }
 
@@ -79,6 +131,7 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
         return;
     }
 
+    frame_index = 0;
     cvs_width = width;
     cvs_height = height;
     cvs_ratio = (float)width/(float)height;
@@ -225,6 +278,8 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glBindTexture(GL_TEXTURE_2D, texture);
     setInt(fbo_program, "s_texture", 0);
     setMat4(fbo_program, "u_MVPMatrix", matrix);
+    setFloat(fbo_program, "u_Offset", (sin(frame_index * MATH_PI / 40) + 1.0f) / 2.0f);
+    setVec2(fbo_program, "u_TexSize", glm::vec2(width, height));
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
     // 再绘制一次，把方向倒过来
@@ -266,6 +321,8 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     setInt(program, "s_texture", 0);
     setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+
+    frame_index++;
 }
 
 void media::fbo_paint::update_matrix(int32_t angleX, int32_t angleY, float scaleX, float scaleY) {

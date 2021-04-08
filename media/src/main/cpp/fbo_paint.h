@@ -53,6 +53,8 @@ private:
     GLuint src_fbo_texture;
     GLuint dst_fbo;
     GLuint dst_fbo_texture;
+    /////////////////////////
+    int32_t frame_index;
 };
 
 } //namespace media
