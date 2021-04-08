@@ -11,58 +11,6 @@
 
 namespace media {
 
-static void setBool(GLuint programId, const std::string &name, bool value) {
-    glUniform1i(glGetUniformLocation(programId, name.c_str()), (int) value);
-}
-
-static void setInt(GLuint programId, const std::string &name, int value) {
-    glUniform1i(glGetUniformLocation(programId, name.c_str()), value);
-}
-
-static void setFloat(GLuint programId, const std::string &name, float value) {
-    glUniform1f(glGetUniformLocation(programId, name.c_str()), value);
-}
-
-static void setVec2(GLuint programId, const std::string &name, const glm::vec2 &value) {
-    glUniform2fv(glGetUniformLocation(programId, name.c_str()), 1, &value[0]);
-}
-
-static void setVec2(GLuint programId, const std::string &name, float x, float y) {
-    glUniform2f(glGetUniformLocation(programId, name.c_str()), x, y);
-}
-
-static void setVec3(GLuint programId, const std::string &name, const glm::vec3 &value) {
-    glUniform3fv(glGetUniformLocation(programId, name.c_str()), 1, &value[0]);
-}
-
-static void setVec3(GLuint programId, const std::string &name, float x, float y, float z) {
-    glUniform3f(glGetUniformLocation(programId, name.c_str()), x, y, z);
-}
-
-static void setVec4(GLuint programId, const std::string &name, const glm::vec4 &value) {
-    glUniform4fv(glGetUniformLocation(programId, name.c_str()), 1, &value[0]);
-}
-
-static void setVec4(GLuint programId, const std::string &name, float x, float y, float z, float w) {
-    glUniform4f(glGetUniformLocation(programId, name.c_str()), x, y, z, w);
-}
-
-static void setMat2(GLuint programId, const std::string &name, const glm::mat2 &mat) {
-    glUniformMatrix2fv(glGetUniformLocation(programId, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-}
-
-static void setMat3(GLuint programId, const std::string &name, const glm::mat3 &mat) {
-    glUniformMatrix3fv(glGetUniformLocation(programId, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-}
-
-static void setMat4(GLuint programId, const std::string &name, const glm::mat4 &mat) {
-    glUniformMatrix4fv(glGetUniformLocation(programId, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-}
-
-static glm::vec3 texCoordToVertexCoord(glm::vec2 texCoord) {
-    return glm::vec3(2 * texCoord.x - 1, 1 - 2 * texCoord.y, 0);
-}
-
 static const char *vShaderStr =
         "#version 300 es\n"
         "layout(location = 0) in vec4 a_position;\n"
@@ -80,28 +28,28 @@ static const char *fShaderStr =
         "precision highp float;\n"
         "in vec2 v_texCoord;\n"
         "layout(location = 0) out vec4 outColor;\n"
-        "uniform sampler2D s_texture0;\n"
+        "uniform sampler2D s_texture;\n"
         "\n"
         "void main()\n"
         "{\n"
-        "    outColor = texture(s_texture0, v_texCoord);\n"
+        "    outColor = texture(s_texture, v_texCoord);\n"
         "}";
 
-static GLfloat verticesCoords[] = {
+static GLfloat vcs[] = {
         -1.0f,  1.0f, 0.0f,
         -1.0f, -1.0f, 0.0f,
          1.0f, -1.0f, 0.0f,
          1.0f,  1.0f, 0.0f,
 };
 
-static GLfloat textureCoords[] = {
+static GLfloat tcs[] = {
         0.0f,  0.0f,
         0.0f,  1.0f,
         1.0f,  1.0f,
         1.0f,  0.0f
 };
 
-static GLfloat mirror_textureCoords[] = {
+static GLfloat mirror_tcs[] = {
         1.0f,  0.0f,
         1.0f,  1.0f,
         0.0f,  1.0f,
@@ -118,7 +66,7 @@ static GLushort indices[] = {
 media::fbo_paint::fbo_paint()
 :cvs_width(0), cvs_height(0), cvs_ratio(0),
 matrix(), program(GL_NONE), fbo_program(GL_NONE), texture(GL_NONE), vao(GL_NONE), vbo(),
-src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE), frame_index(0) {
+src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE) {
     log_d("created.");
 }
 
@@ -134,11 +82,9 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
     cvs_width = width;
     cvs_height = height;
     cvs_ratio = (float)width/(float)height;
+    log_d("canvas size: %d,%d %0.4f", cvs_width, cvs_height, cvs_ratio);
     glViewport(0, 0, cvs_width, cvs_height);
     glClearColor(0.0, 0.0, 0.0, 1.0);
-
-    log_d("canvas size: %d,%d %0.4f", cvs_width, cvs_height, cvs_ratio);
-    frame_index = 0;
 
     glGenTextures(1, &src_fbo_texture);
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
@@ -208,20 +154,20 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
-    // Generate VBO Ids and load the VBOs with data
-    glGenBuffers(3, vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCoords), verticesCoords, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoords), textureCoords, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[2]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
     // Generate VAO Id
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+
+    // Generate VBO Ids and load the VBOs with data
+    glGenBuffers(3, vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vcs), vcs, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tcs), tcs, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[2]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glEnableVertexAttribArray(0);
@@ -249,45 +195,36 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     frame.get(&width, &height, &data);
 
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    if(program == GL_NONE || data == nullptr) return;
-
-    glBindTexture(GL_TEXTURE_2D, GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
-
-    if(src_fbo == GL_NONE) {
+    if(program == GL_NONE || data == nullptr || src_fbo == GL_NONE) {
         log_e("GLCameraRender::OnDrawFrame CreateFrameBufferObj fail");
         return;
     }
 
-//    frame_index++;
-
+    update_matrix(0, 0, 1.0, 1.0);
+    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
     glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoords),
-            mirror ? mirror_textureCoords : textureCoords, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tcs), mirror ? mirror_tcs : tcs, GL_STATIC_DRAW);
 
     // 渲染到 FBO
     glBindFramebuffer(GL_FRAMEBUFFER, src_fbo);
-    glViewport(0, 0, cvs_width, cvs_height);
+    glViewport(0, 0, width, height);
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(fbo_program);
-
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
     glBindTexture(GL_TEXTURE_2D, dst_fbo_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
     glBindVertexArray(vao);
-    update_matrix(0, 0, 1.0, 1.0);
-    setMat4(fbo_program, "u_MVPMatrix", matrix);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    setInt(fbo_program, "s_texture0", 0);
+    setInt(fbo_program, "s_texture", 0);
+    setMat4(fbo_program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
     // 再绘制一次，把方向倒过来
@@ -296,13 +233,10 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram (program);
     glBindVertexArray(vao);
-
-    update_matrix(0, 0, 1.0, 1.0);
-    setMat4(program, "u_MVPMatrix", matrix);
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
-    setInt(program, "s_texture0", 0);
+    setInt(program, "s_texture", 0);
+    setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
     // 获得图像
@@ -327,14 +261,10 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     // 渲染到屏幕
     glViewport(0, 0, cvs_width, cvs_height);
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    update_matrix(0, 0, 1.0, 1.0);
-    setMat4(program, "u_MVPMatrix", matrix);
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, dst_fbo_texture);
-    setInt(program, "s_texture0", 0);
-
+    setInt(program, "s_texture", 0);
+    setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 }
 
@@ -342,8 +272,9 @@ void media::fbo_paint::update_matrix(int32_t angleX, int32_t angleY, float scale
     angleX = angleX % 360;
     angleY = angleY % 360;
 
-    auto radiansX = static_cast<float>(MATH_PI / 180.0f * angleX);
-    auto radiansY = static_cast<float>(MATH_PI / 180.0f * angleY);
+    auto radiansX = MATH_PI / 180.0f * angleX;
+    auto radiansY = MATH_PI / 180.0f * angleY;
+
     // Projection matrix
 //    glm::mat4 Projection = glm::ortho(-cvs_ratio, cvs_ratio, -1.0f, 1.0f, 0.0f, 100.0f);
     glm::mat4 Projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 100.0f);
