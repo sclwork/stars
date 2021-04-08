@@ -72,6 +72,7 @@ media::camera::~camera() {
 }
 
 bool media::camera::get_latest_image(image_frame &frame) {
+    frame.set_ori(ori);
     media_status_t status = AImageReader_acquireLatestImage(reader, &img_args.image);
     if (status != AMEDIA_OK) {
         return false;
@@ -127,7 +128,6 @@ bool media::camera::get_latest_image(image_frame &frame) {
     img_args.wof = (img_args.frame_w - img_args.img_width) / 2;
     img_args.hof = (img_args.frame_h - img_args.img_height) / 2;
     yuv2argb(img_args);
-    frame.set_ori(ori);
     AImage_delete(img_args.image);
     free(img_args.argb_pixel);
     free(img_args.dst_argb_pixel);

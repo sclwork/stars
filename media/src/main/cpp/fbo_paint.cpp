@@ -198,10 +198,6 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
 
     program = create_program(vShaderStr, fShaderStr);
     fbo_program = create_program(vShaderStr, fShaderStr);
-    if (!program || !fbo_program) {
-        log_e("create program fail.");
-        return;
-    }
 
     glGenTextures(TEXTURE_NUM, textures);
     for (int i = 0; i < TEXTURE_NUM ; ++i) {
@@ -267,15 +263,9 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
 
 //    frame_index++;
 
-//    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCoords), verticesCoords, GL_STATIC_DRAW);
-
-//    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoords),
-//            mirror ? mirror_textureCoords : textureCoords, GL_STATIC_DRAW);
-
-//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[2]);
-//    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoords),
+            mirror ? mirror_textureCoords : textureCoords, GL_STATIC_DRAW);
 
     // 渲染到 FBO
     glBindFramebuffer(GL_FRAMEBUFFER, src_fbo);

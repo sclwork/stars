@@ -159,7 +159,7 @@ private:
             vcr->mnn->flag_faces(img_frame, vcr->faces);
         }
         if (vcr->renderer_callback != nullptr) {
-            vcr->renderer_callback(std::move(img_frame));
+            vcr->renderer_callback(std::forward<image_frame>(img_frame));
         }
     }
 
