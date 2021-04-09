@@ -6,6 +6,7 @@
 #define STARS_IMAGE_FRAME_H
 
 #include <cstdint>
+#include <opencv2/core/types.hpp>
 
 namespace media {
 
@@ -43,6 +44,12 @@ public:
      */
     void update_size(int32_t w, int32_t h);
     /**
+     * update faces in frame
+     * @param fs
+     */
+    void update_faces(const std::vector<cv::Rect> &fs);
+    void get_faces(std::vector<cv::Rect> &fs) const;
+    /**
      * setup camera/image orientation
      * @param o orientation:[0|90|180|270]
      */
@@ -67,6 +74,8 @@ private:
     int32_t width;
     int32_t height;
     uint32_t *cache;
+    /////////////////
+    std::vector<cv::Rect> faces;
 };
 
 } //namespace media

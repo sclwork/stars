@@ -155,8 +155,10 @@ private:
             opencv::grey_frame(img_frame);
         }
         if (vcr->use_mnn && vcr->mnn != nullptr) {
-            vcr->mnn->detect_faces(img_frame, vcr->faces);
-            vcr->mnn->flag_faces(img_frame, vcr->faces);
+            std::vector<cv::Rect> faces;
+            vcr->mnn->detect_faces(img_frame, faces);
+//            vcr->mnn->flag_faces(img_frame, faces);
+            img_frame.update_faces(faces);
         }
         if (vcr->renderer_callback != nullptr) {
             vcr->renderer_callback(std::forward<image_frame>(img_frame));
@@ -185,7 +187,6 @@ private:
     std::shared_ptr<std::atomic_bool> runnable;
     std::shared_ptr<std::atomic_bool> recording;
     void (*renderer_callback)(image_frame &&);
-    std::vector<cv::Rect> faces;
     mutable std::mutex _mux;
     image_recorder *image;
     audio_recorder *audio;

@@ -87,6 +87,39 @@ static const char *fShaderStr =
 //        "    outColor = texture(s_texture, newTexCoord);        \n"
 //        "}";
 
+//static const char *fShaderStr =
+//        "#version 300 es                                  \n"
+//        "precision highp float;                           \n"
+//        "in vec2 v_texCoord;                              \n"
+//        "layout(location = 0) out vec4 outColor;          \n"
+//        "uniform sampler2D s_texture;                     \n"
+//        "vec2 scale(vec2 uv, float level)                 \n"
+//        "{                                                \n"
+//        "    vec2 center = vec2(0.5, 0.5);                \n"
+//        "    vec2 newTexCoord = uv.xy;                    \n"
+//        "    newTexCoord -= center;                       \n"
+//        "    newTexCoord = newTexCoord / level;           \n"
+//        "    newTexCoord += center;                       \n"
+//        "    return newTexCoord;                          \n"
+//        "}                                                \n"
+//        "const float OFFSET_LEVEL = 0.05;                 \n"
+//        "const float SCALE_LEVEL = 4.0;                   \n"
+//        "void main()                                      \n"
+//        "{                                                \n"
+//        "    if(OFFSET_LEVEL < v_texCoord.x && v_texCoord.x < (1.0 - OFFSET_LEVEL)      \n"
+//        "       && OFFSET_LEVEL < v_texCoord.y && v_texCoord.y < (1.0 - OFFSET_LEVEL))  \n"
+//        "    {                                            \n"
+//        "        vec2 newTexCoord = v_texCoord;           \n"
+//        "        newTexCoord -= OFFSET_LEVEL;             \n"
+//        "        newTexCoord = newTexCoord / (1.0 - 2.0 * OFFSET_LEVEL);               \n"
+//        "        outColor = texture(s_texture, newTexCoord);                           \n"
+//        "    }                                            \n"
+//        "    else                                         \n"
+//        "    {                                            \n"
+//        "        outColor = texture(s_texture, scale(v_texCoord, SCALE_LEVEL));        \n"
+//        "    }                                            \n"
+//        "}";
+
 static GLfloat vcs[] = {
         -1.0f,  1.0f, 0.0f,
         -1.0f, -1.0f, 0.0f,
@@ -138,6 +171,14 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
     log_d("canvas size: %d,%d %0.4f", cvs_width, cvs_height, cvs_ratio);
     glViewport(0, 0, cvs_width, cvs_height);
     glClearColor(0.0, 0.0, 0.0, 1.0);
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
     glGenTextures(1, &src_fbo_texture);
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
@@ -198,15 +239,6 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
     program = create_program(vShaderStr, fShaderStr);
     fbo_program = create_program(vShaderStr, fShaderStr);
 
-    glGenTextures(1, &texture);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, GL_NONE);
-
     // Generate VAO Id
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -246,10 +278,11 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     int32_t width = 0, height = 0;
     uint32_t *data = nullptr;
     frame.get(&width, &height, &data);
+    std::vector<cv::Rect> fs;
+    frame.get_faces(fs);
 
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(program == GL_NONE || data == nullptr || src_fbo == GL_NONE) {
-        log_e("GLCameraRender::OnDrawFrame CreateFrameBufferObj fail");
         return;
     }
 
@@ -293,24 +326,7 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     setInt(program, "s_texture", 0);
     setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-
-    // 获得图像
-    uint32_t *of_data = nullptr;
-    if (of.available()) {
-        if (of.same_size(width, height)) {
-            of.get(nullptr, nullptr, &of_data);
-        } else {
-            of.update_size(width, height);
-            of.get(nullptr, nullptr, &of_data);
-        }
-    } else {
-        of.update_size(width, height);
-        of.get(nullptr, nullptr, &of_data);
-    }
-    if (of_data != nullptr) {
-        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, of_data);
-    }
-
+    gl_pixels_to_image_frame(of, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // 渲染到屏幕
@@ -322,7 +338,11 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
-    frame_index++;
+    if (frame_index == INT32_MAX) {
+        frame_index = 0;
+    } else {
+        frame_index++;
+    }
 }
 
 void media::fbo_paint::update_matrix(int32_t angleX, int32_t angleY, float scaleX, float scaleY) {
@@ -353,4 +373,23 @@ void media::fbo_paint::update_matrix(int32_t angleX, int32_t angleY, float scale
     Model = glm::translate(Model, glm::vec3(0.0f, 0.0f, 0.0f));
 
     matrix = Projection * View * Model;
+}
+
+void media::fbo_paint::gl_pixels_to_image_frame(
+        media::image_frame &of, int32_t width, int32_t height) {
+    uint32_t *of_data = nullptr;
+    if (of.available()) {
+        if (of.same_size(width, height)) {
+            of.get(nullptr, nullptr, &of_data);
+        } else {
+            of.update_size(width, height);
+            of.get(nullptr, nullptr, &of_data);
+        }
+    } else {
+        of.update_size(width, height);
+        of.get(nullptr, nullptr, &of_data);
+    }
+    if (of_data != nullptr) {
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, of_data);
+    }
 }
