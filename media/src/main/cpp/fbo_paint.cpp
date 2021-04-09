@@ -28,32 +28,32 @@ static const char *vShaderStr =
 //        "precision highp float;                           \n"
 //        "in vec2 v_texCoord;                              \n"
 //        "layout(location = 0) out vec4 outColor;          \n"
-//        "uniform sampler2D s_texture;                     \n"
+//        "uniform sampler2D s_Texture;                     \n"
 //        "void main()                                      \n"
 //        "{                                                \n"
-//        "    outColor = texture(s_texture, v_texCoord);   \n"
+//        "    outColor = texture(s_Texture, v_texCoord);   \n"
 //        "}";
 
-static const char *fShaderStr =
-        "#version 300 es                                                   \n"
-        "precision highp float;                                            \n"
-        "in vec2 v_texCoord;                                               \n"
-        "layout(location = 0) out vec4 outColor;                           \n"
-        "uniform float u_Offset;                                           \n"
-        "uniform sampler2D s_texture;                                      \n"
-        "const float MAX_ALPHA = 0.5;                                      \n"
-        "const float MAX_SCALE = 0.8;                                      \n"
-        "void main()                                                       \n"
-        "{                                                                 \n"
-        "    float alpha = MAX_ALPHA * (1.0 - u_Offset);                   \n"
-        "    float scale = 1.0 + u_Offset * MAX_SCALE;                     \n"
-        "    float scale_x = 0.5 + (v_texCoord.x - 0.5) / scale;           \n"
-        "    float scale_y = 0.5 + (v_texCoord.y - 0.5) / scale;           \n"
-        "    vec2 scaleCoord = vec2(scale_x, scale_y);                     \n"
-        "    vec4 maskColor = texture(s_texture, scaleCoord);              \n"
-        "    vec4 originColor = texture(s_texture, v_texCoord);            \n"
-        "    outColor = originColor * (1.0 - alpha) + maskColor * alpha;   \n"
-        "}";
+//static const char *fShaderStr =
+//        "#version 300 es                                                   \n"
+//        "precision highp float;                                            \n"
+//        "in vec2 v_texCoord;                                               \n"
+//        "layout(location = 0) out vec4 outColor;                           \n"
+//        "uniform float u_Offset;                                           \n"
+//        "uniform sampler2D s_Texture;                                      \n"
+//        "const float MAX_ALPHA = 0.5;                                      \n"
+//        "const float MAX_SCALE = 0.8;                                      \n"
+//        "void main()                                                       \n"
+//        "{                                                                 \n"
+//        "    float alpha = MAX_ALPHA * (1.0 - u_Offset);                   \n"
+//        "    float scale = 1.0 + u_Offset * MAX_SCALE;                     \n"
+//        "    float scale_x = 0.5 + (v_texCoord.x - 0.5) / scale;           \n"
+//        "    float scale_y = 0.5 + (v_texCoord.y - 0.5) / scale;           \n"
+//        "    vec2 scaleCoord = vec2(scale_x, scale_y);                     \n"
+//        "    vec4 maskColor = texture(s_Texture, scaleCoord);              \n"
+//        "    vec4 originColor = texture(s_Texture, v_texCoord);            \n"
+//        "    outColor = originColor * (1.0 - alpha) + maskColor * alpha;   \n"
+//        "}";
 
 //static const char *fShaderStr =
 //        "#version 300 es                                        \n"
@@ -62,7 +62,7 @@ static const char *fShaderStr =
 //        "layout(location = 0) out vec4 outColor;                \n"
 //        "uniform float u_Offset;                                \n"
 //        "uniform vec2 u_TexSize;                                \n"
-//        "uniform sampler2D s_texture;                           \n"
+//        "uniform sampler2D s_Texture;                           \n"
 //        "void main()                                            \n"
 //        "{                                                      \n"
 //        "    vec2 newTexCoord = v_texCoord;                     \n"
@@ -84,7 +84,7 @@ static const char *fShaderStr =
 //        "        newTexCoord.y = (newTexCoord.y - 0.5) * 2.0;   \n"
 //        "    }                                                  \n"
 //        "                                                       \n"
-//        "    outColor = texture(s_texture, newTexCoord);        \n"
+//        "    outColor = texture(s_Texture, newTexCoord);        \n"
 //        "}";
 
 //static const char *fShaderStr =
@@ -92,7 +92,7 @@ static const char *fShaderStr =
 //        "precision highp float;                           \n"
 //        "in vec2 v_texCoord;                              \n"
 //        "layout(location = 0) out vec4 outColor;          \n"
-//        "uniform sampler2D s_texture;                     \n"
+//        "uniform sampler2D s_Texture;                     \n"
 //        "vec2 scale(vec2 uv, float level)                 \n"
 //        "{                                                \n"
 //        "    vec2 center = vec2(0.5, 0.5);                \n"
@@ -112,13 +112,36 @@ static const char *fShaderStr =
 //        "        vec2 newTexCoord = v_texCoord;           \n"
 //        "        newTexCoord -= OFFSET_LEVEL;             \n"
 //        "        newTexCoord = newTexCoord / (1.0 - 2.0 * OFFSET_LEVEL);               \n"
-//        "        outColor = texture(s_texture, newTexCoord);                           \n"
+//        "        outColor = texture(s_Texture, newTexCoord);                           \n"
 //        "    }                                            \n"
 //        "    else                                         \n"
 //        "    {                                            \n"
-//        "        outColor = texture(s_texture, scale(v_texCoord, SCALE_LEVEL));        \n"
+//        "        outColor = texture(s_Texture, scale(v_texCoord, SCALE_LEVEL));        \n"
 //        "    }                                            \n"
 //        "}";
+
+static const char *fShaderStr =
+        "#version 300 es                                           \n"
+        "precision highp float;                                    \n"
+        "in vec2 v_texCoord;                                       \n"
+        "layout(location = 0) out vec4 outColor;                   \n"
+        "uniform sampler2D s_Texture;                              \n"
+        "uniform vec4 u_rect_fm;                                   \n"
+        "uniform vec2 u_TexSize;                                   \n"
+        "void main()                                               \n"
+        "{                                                         \n"
+        "    if (v_texCoord.x > float(u_rect_fm.x / u_TexSize.x)   \n"
+        "     && v_texCoord.x < float(u_rect_fm.z / u_TexSize.x)   \n"
+        "     && v_texCoord.y > float(u_rect_fm.y / u_TexSize.y)   \n"
+        "     && v_texCoord.y < float(u_rect_fm.w / u_TexSize.y))  \n"
+        "    {                                                     \n"
+        "        outColor = vec4(1.0, 1.0, 1.0, 1.0);              \n"
+        "    }                                                     \n"
+        "    else                                                  \n"
+        "    {                                                     \n"
+        "        outColor = texture(s_Texture, v_texCoord);        \n"
+        "    }                                                     \n"
+        "}";
 
 static GLfloat vcs[] = {
         -1.0f,  1.0f, 0.0f,
@@ -280,6 +303,8 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     frame.get(&width, &height, &data);
     std::vector<cv::Rect> fs;
     frame.get_faces(fs);
+    cv::Rect face;
+    if (!fs.empty()) { face = fs[0]; }
 
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(program == GL_NONE || data == nullptr || src_fbo == GL_NONE) {
@@ -309,10 +334,11 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glBindVertexArray(vao);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    setInt(fbo_program, "s_texture", 0);
+    setInt(fbo_program, "s_Texture", 0);
     setMat4(fbo_program, "u_MVPMatrix", matrix);
     setFloat(fbo_program, "u_Offset", (sin(frame_index * MATH_PI / 40) + 1.0f) / 2.0f);
     setVec2(fbo_program, "u_TexSize", glm::vec2(width, height));
+    setVec4(fbo_program, "u_rect_fm", glm::vec4(face.x, face.y, face.x + face.width, face.y + face.height));
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
     // 再绘制一次，把方向倒过来
@@ -323,18 +349,18 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glBindVertexArray(vao);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
-    setInt(program, "s_texture", 0);
+    setInt(program, "s_Texture", 0);
     setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
     gl_pixels_to_image_frame(of, width, height);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 
     // 渲染到屏幕
     glViewport(0, 0, cvs_width, cvs_height);
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, dst_fbo_texture);
-    setInt(program, "s_texture", 0);
+    setInt(program, "s_Texture", 0);
     setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
