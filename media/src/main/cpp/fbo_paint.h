@@ -58,8 +58,10 @@ private:
     /////////////////////////
     int32_t frame_index;
     /////////////////////////
-    kalman k_face_cx;
-    kalman k_face_cy;
+    kalman k_face_x;
+    kalman k_face_y;
+    kalman k_face_z;
+    kalman k_face_w;
 };
 
 } //namespace media

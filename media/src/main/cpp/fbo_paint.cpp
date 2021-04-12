@@ -126,16 +126,24 @@ static const char *fShaderStr =
         "in vec2 v_texCoord;                                              \n"
         "layout(location = 0) out vec4 outColor;                          \n"
         "uniform sampler2D s_Texture;                                     \n"
-        "uniform vec2 u_rect_center;                                      \n"
         "uniform vec2 u_TexSize;                                          \n"
+        "uniform int u_FaceCount;                                         \n"
+        "uniform vec4 u_FaceRect;                                         \n"
         "void main()                                                      \n"
         "{                                                                \n"
-        "    float cx = u_rect_center.x / u_TexSize.x;  \n"
-        "    float cy = u_rect_center.y / u_TexSize.y;  \n"
-        "    float cw = 2.0 / u_TexSize.x;                                \n"
-        "    float ch = 2.0 / u_TexSize.y;                                \n"
-        "    if ((v_texCoord.x > cx - cw && v_texCoord.x < cx + cw)       \n"
-        "     && (v_texCoord.y > cy - ch && v_texCoord.y < cy + ch))      \n"
+        "    float fx = u_FaceRect.x / u_TexSize.x;                       \n"
+        "    float fy = u_FaceRect.y / u_TexSize.y;                       \n"
+        "    float fz = u_FaceRect.z / u_TexSize.x;                       \n"
+        "    float fw = u_FaceRect.w / u_TexSize.y;                       \n"
+        "    float cw = 0.5 / u_TexSize.x;                                \n"
+        "    float ch = 0.5 / u_TexSize.y;                                \n"
+        "    if (((v_texCoord.x > fx - cw && v_texCoord.x < fx + cw)      \n"
+        "      || (v_texCoord.y > fy - ch && v_texCoord.y < fy + ch)      \n"
+        "      || (v_texCoord.x > fz - cw && v_texCoord.x < fz + cw)      \n"
+        "      || (v_texCoord.y > fw - ch && v_texCoord.y < fw + ch))     \n"
+        "      && (v_texCoord.x > fx - cw && v_texCoord.x < fz + cw       \n"
+        "       && v_texCoord.y > fy - ch && v_texCoord.y < fw + ch)      \n"
+        "      && u_FaceCount > 0)                                        \n"
         "    {                                                            \n"
         "        outColor = vec4(1.0, 1.0, 1.0, 1.0);                     \n"
         "    }                                                            \n"
@@ -177,7 +185,7 @@ media::fbo_paint::fbo_paint()
 :cvs_width(0), cvs_height(0), cvs_ratio(0),
 matrix(), program(GL_NONE), fbo_program(GL_NONE), texture(GL_NONE), vao(GL_NONE), vbo(),
 src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE),
-frame_index(0), k_face_cx(), k_face_cy() {
+frame_index(0), k_face_x(), k_face_y(), k_face_z(), k_face_w() {
     log_d("created.");
 }
 
@@ -341,10 +349,15 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     setMat4(fbo_program, "u_MVPMatrix", matrix);
     setFloat(fbo_program, "u_Offset", (sin(frame_index * MATH_PI / 40) + 1.0f) / 2.0f);
     setVec2(fbo_program, "u_TexSize", glm::vec2(width, height));
-
-    float cx = face.x + face.width / 2.0f;
-    float cy = face.y + face.height / 2.0f;
-    setVec2(fbo_program, "u_rect_center", glm::vec2(k_face_cx.filter(cx), k_face_cy.filter(cy)));
+    setInt(fbo_program, "u_FaceCount", fs.size());
+    if (fs.empty()) {
+        setVec4(fbo_program, "u_FaceRect", glm::vec4(0, 0, 0, 0));
+    } else {
+        setVec4(fbo_program, "u_FaceRect", glm::vec4(
+                k_face_x.filter(face.x), k_face_y.filter(face.y),
+                k_face_z.filter((float) face.x + face.width),
+                k_face_w.filter((float) face.y + face.height)));
+    }
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
     // 再绘制一次，把方向倒过来
