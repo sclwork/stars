@@ -58,6 +58,28 @@ static inline uint32_t get_sr_index(int32_t sample_rate) {
     }
 }
 
+class kalman {
+public:
+    kalman();
+    ~kalman() = default;
+
+public:
+    float filter(float i);
+
+private:
+    float x_last;
+    float p_last;
+    float Q;
+    float R;
+    float kg;
+    float x_mid;
+    float x_now;
+    float p_mid;
+    float p_now;
+    float z_real;
+    float z_measure;
+};
+
 } //namespace media
 
 #endif //STARS_PROC_H

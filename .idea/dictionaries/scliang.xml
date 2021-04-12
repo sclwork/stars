@@ -24,6 +24,7 @@
       <w>haarcascade</w>
       <w>ifrm</w>
       <w>ipts</w>
+      <w>kalman</w>
       <w>libyuv</w>
       <w>loudnorm</w>
       <w>mediump</w>

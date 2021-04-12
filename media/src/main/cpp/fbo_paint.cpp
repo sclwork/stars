@@ -121,26 +121,28 @@ static const char *vShaderStr =
 //        "}";
 
 static const char *fShaderStr =
-        "#version 300 es                                           \n"
-        "precision highp float;                                    \n"
-        "in vec2 v_texCoord;                                       \n"
-        "layout(location = 0) out vec4 outColor;                   \n"
-        "uniform sampler2D s_Texture;                              \n"
-        "uniform vec4 u_rect_fm;                                   \n"
-        "uniform vec2 u_TexSize;                                   \n"
-        "void main()                                               \n"
-        "{                                                         \n"
-        "    if (v_texCoord.x > float(u_rect_fm.x / u_TexSize.x)   \n"
-        "     && v_texCoord.x < float(u_rect_fm.z / u_TexSize.x)   \n"
-        "     && v_texCoord.y > float(u_rect_fm.y / u_TexSize.y)   \n"
-        "     && v_texCoord.y < float(u_rect_fm.w / u_TexSize.y))  \n"
-        "    {                                                     \n"
-        "        outColor = vec4(1.0, 1.0, 1.0, 1.0);              \n"
-        "    }                                                     \n"
-        "    else                                                  \n"
-        "    {                                                     \n"
-        "        outColor = texture(s_Texture, v_texCoord);        \n"
-        "    }                                                     \n"
+        "#version 300 es                                                  \n"
+        "precision highp float;                                           \n"
+        "in vec2 v_texCoord;                                              \n"
+        "layout(location = 0) out vec4 outColor;                          \n"
+        "uniform sampler2D s_Texture;                                     \n"
+        "uniform vec2 u_rect_center;                                      \n"
+        "uniform vec2 u_TexSize;                                          \n"
+        "void main()                                                      \n"
+        "{                                                                \n"
+        "    float cx = u_rect_center.x / u_TexSize.x;  \n"
+        "    float cy = u_rect_center.y / u_TexSize.y;  \n"
+        "    float cw = 2.0 / u_TexSize.x;                                \n"
+        "    float ch = 2.0 / u_TexSize.y;                                \n"
+        "    if ((v_texCoord.x > cx - cw && v_texCoord.x < cx + cw)       \n"
+        "     && (v_texCoord.y > cy - ch && v_texCoord.y < cy + ch))      \n"
+        "    {                                                            \n"
+        "        outColor = vec4(1.0, 1.0, 1.0, 1.0);                     \n"
+        "    }                                                            \n"
+        "    else                                                         \n"
+        "    {                                                            \n"
+        "        outColor = texture(s_Texture, v_texCoord);               \n"
+        "    }                                                            \n"
         "}";
 
 static GLfloat vcs[] = {
@@ -174,7 +176,8 @@ static GLushort indices[] = {
 media::fbo_paint::fbo_paint()
 :cvs_width(0), cvs_height(0), cvs_ratio(0),
 matrix(), program(GL_NONE), fbo_program(GL_NONE), texture(GL_NONE), vao(GL_NONE), vbo(),
-src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE), frame_index(0) {
+src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE),
+frame_index(0), k_face_cx(), k_face_cy() {
     log_d("created.");
 }
 
@@ -338,7 +341,10 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     setMat4(fbo_program, "u_MVPMatrix", matrix);
     setFloat(fbo_program, "u_Offset", (sin(frame_index * MATH_PI / 40) + 1.0f) / 2.0f);
     setVec2(fbo_program, "u_TexSize", glm::vec2(width, height));
-    setVec4(fbo_program, "u_rect_fm", glm::vec4(face.x, face.y, face.x + face.width, face.y + face.height));
+
+    float cx = face.x + face.width / 2.0f;
+    float cy = face.y + face.height / 2.0f;
+    setVec2(fbo_program, "u_rect_center", glm::vec2(k_face_cx.filter(cx), k_face_cy.filter(cy)));
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
     // 再绘制一次，把方向倒过来

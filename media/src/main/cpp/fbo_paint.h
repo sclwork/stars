@@ -6,6 +6,7 @@
 #define STARS_FBO_PAINT_H
 
 #include <mutex>
+#include "proc.h"
 #include "gl_paint.h"
 
 namespace media {
@@ -56,6 +57,9 @@ private:
     GLuint dst_fbo_texture;
     /////////////////////////
     int32_t frame_index;
+    /////////////////////////
+    kalman k_face_cx;
+    kalman k_face_cy;
 };
 
 } //namespace media
