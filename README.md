@@ -2,6 +2,18 @@
 
 <br /><br />
 
+| 功能 |  |  |  |  |  |  |
+| --- | --- | --- | --- | --- | --- | --- |
+| 图像采集 | camera2ndk | libyuv | mnn |  |  |  |
+| 声音采集 | OpenSLES |  |  |  |  |
+| 图像预览 |  |  | OpenGLES | GLSurfaceView | FBO | Kalman |
+| 图像编码 | x264 | ffmpeg |  |  |  |
+| 声音编码 | pcm | loudnorm | webrtc-ns | aac |  |  |
+| 导出Mp4 |  |  |  |  |  | ffmpeg |
+| RTMP推流 |  |  |  |  |  | ffmpeg |
+
+<br /><br />
+
 #### Uses Permission
 
 ```
