@@ -64,9 +64,9 @@ void media::face_paint::on_setup_program_args(GLuint prog, const image_frame &fr
     setVec2(prog, "u_TexSize", glm::vec2(width, height));
     setInt(prog, "u_FaceCount", fs.size());
     if (fs.empty()) {
-        setVec4(fbo_program, "u_FaceRect", glm::vec4(0, 0, 0, 0));
+        setVec4(prog, "u_FaceRect", glm::vec4(0, 0, 0, 0));
     } else {
-        setVec4(fbo_program, "u_FaceRect", glm::vec4(
+        setVec4(prog, "u_FaceRect", glm::vec4(
                 k_face_x.filter(face.x), k_face_y.filter(face.y),
                 k_face_z.filter((float) face.x + face.width),
                 k_face_w.filter((float) face.y + face.height)));

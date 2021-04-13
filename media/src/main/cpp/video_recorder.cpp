@@ -96,10 +96,9 @@ void media::video_recorder::start_record(std::string &&file_root, std::string &&
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto *ctx = new video_encoder(true, 0,
-                                  std::forward<std::string>(file_root), std::forward<std::string>(name),
-                                  std::forward<image_args>(img_args), std::forward<audio_args>(aud_args),
-                                  runnable, eiQ, eaQ
-    );
+            std::forward<std::string>(file_root), std::forward<std::string>(name),
+            std::forward<image_args>(img_args), std::forward<audio_args>(aud_args),
+            runnable, eiQ, eaQ);
     encoder = std::shared_ptr<video_encoder>(ctx, [](void*){}); // delete ep in img_encode_run
     std::thread encode_t(img_encode_run, ctx);
     encode_t.detach();

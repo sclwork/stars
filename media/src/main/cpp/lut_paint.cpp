@@ -75,6 +75,6 @@ void media::lut_paint::on_setup_program_args(GLuint prog, const image_frame &fra
     if (lut_texture != GL_NONE) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, lut_texture);
-        setInt(fbo_program, "s_LutTexture", 1);
+        setInt(prog, "s_LutTexture", 1);
     }
 }

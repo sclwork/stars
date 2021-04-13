@@ -223,8 +223,6 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, dst_fbo_texture);
-    setInt(program, "s_Texture", 0);
-    setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 }
 
