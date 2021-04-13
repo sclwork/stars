@@ -4,8 +4,6 @@
 
 #include <glm/vec2.hpp>
 #include "jni_log.h"
-#include "opencv.h"
-#include "fbo_shader.h"
 #include "fbo_paint.h"
 
 #define log_d(...)  LOG_D("Media-Native:fbo_paint", __VA_ARGS__)
@@ -41,20 +39,14 @@ static GLushort indices[] = {
 
 } //namespace media
 
-media::fbo_paint::fbo_paint(std::string &froot)
-:file_root(froot), cvs_width(0), cvs_height(0), cvs_ratio(0),
-matrix(), program(GL_NONE), fbo_program(GL_NONE), texture(GL_NONE), lut_texture(GL_NONE),
-vao(GL_NONE), vbo(), src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE),
-frame_index(0), k_face_x(), k_face_y(), k_face_z(), k_face_w(), lut_wid(0), lut_hei(0), lut_img(nullptr) {
-    if (!file_root.empty()) {
-        lut_img = opencv::load_image(file_root + "/lut_a.png", &lut_wid, &lut_hei);
-        log_d("lut img load success: %d, %d,%d.", lut_img!=nullptr, lut_wid, lut_hei);
-    }
+media::fbo_paint::fbo_paint()
+:cvs_width(0), cvs_height(0), cvs_ratio(0),
+matrix(), program(GL_NONE), fbo_program(GL_NONE), texture(GL_NONE),/* lut_texture(GL_NONE),*/
+vao(GL_NONE), vbo(), src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE) {
     log_d("created.");
 }
 
 media::fbo_paint::~fbo_paint() {
-    if (lut_img != nullptr) free(lut_img);
     log_d("release.");
 }
 
@@ -63,7 +55,6 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
         return;
     }
 
-    frame_index = 0;
     cvs_width = width;
     cvs_height = height;
     cvs_ratio = (float)width/(float)height;
@@ -78,18 +69,6 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
-
-    if (lut_img != nullptr) {
-        glGenTextures(1, &lut_texture);
-        glBindTexture(GL_TEXTURE_2D, lut_texture);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, lut_wid, lut_hei, 0,
-                GL_RGBA, GL_UNSIGNED_BYTE, lut_img);
-        glBindTexture(GL_TEXTURE_2D, GL_NONE);
-    }
 
     glGenTextures(1, &src_fbo_texture);
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
@@ -145,10 +124,12 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
         glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
     }
 
+    on_canvas_size_changed(width, height);
+
     log_d("create src_fbo/dst_fbo success.");
 
-    program = create_program(vShaderStr, fShaderStr);
-    fbo_program = create_program(vShaderStr, fShaderStr);
+    program = create_program(gen_vertex_shader_str(), gen_frag_shader_str());
+    fbo_program = create_program(gen_vertex_shader_str(), gen_frag_shader_str());
 
     // Generate VAO Id
     glGenVertexArrays(1, &vao);
@@ -189,10 +170,6 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     int32_t width = 0, height = 0;
     uint32_t *data = nullptr;
     frame.get(&width, &height, &data);
-    std::vector<cv::Rect> fs;
-    frame.get_faces(fs);
-    cv::Rect face;
-    if (!fs.empty()) { face = fs[0]; }
 
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if(program == GL_NONE || data == nullptr || src_fbo == GL_NONE) {
@@ -223,23 +200,8 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     setInt(fbo_program, "s_Texture", 0);
-    if (lut_texture != GL_NONE) {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, lut_texture);
-        setInt(fbo_program, "s_LutTexture", 1);
-    }
     setMat4(fbo_program, "u_MVPMatrix", matrix);
-    setFloat(fbo_program, "u_Offset", (sin(frame_index * MATH_PI / 40) + 1.0f) / 2.0f);
-    setVec2(fbo_program, "u_TexSize", glm::vec2(width, height));
-    setInt(fbo_program, "u_FaceCount", fs.size());
-    if (fs.empty()) {
-        setVec4(fbo_program, "u_FaceRect", glm::vec4(0, 0, 0, 0));
-    } else {
-        setVec4(fbo_program, "u_FaceRect", glm::vec4(
-                k_face_x.filter(face.x), k_face_y.filter(face.y),
-                k_face_z.filter((float) face.x + face.width),
-                k_face_w.filter((float) face.y + face.height)));
-    }
+    on_setup_program_args(fbo_program, frame);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
 
     // 再绘制一次，把方向倒过来
@@ -264,12 +226,6 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     setInt(program, "s_Texture", 0);
     setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-
-    if (frame_index == INT32_MAX) {
-        frame_index = 0;
-    } else {
-        frame_index++;
-    }
 }
 
 void media::fbo_paint::update_matrix(int32_t angleX, int32_t angleY, float scaleX, float scaleY) {
@@ -320,3 +276,31 @@ void media::fbo_paint::gl_pixels_to_image_frame(
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, of_data);
     }
 }
+
+const char *media::fbo_paint::gen_vertex_shader_str() {
+    return "#version 300 es                                  \n"
+           "layout(location = 0) in vec4 a_position;         \n"
+           "layout(location = 1) in vec2 a_texCoord;         \n"
+           "uniform mat4 u_MVPMatrix;                        \n"
+           "out vec2 v_texCoord;                             \n"
+           "void main()                                      \n"
+           "{                                                \n"
+           "    gl_Position = u_MVPMatrix * a_position;      \n"
+           "    v_texCoord = a_texCoord;                     \n"
+           "}";
+}
+
+const char *media::fbo_paint::gen_frag_shader_str() {
+    return "#version 300 es                                  \n"
+           "precision highp float;                           \n"
+           "in vec2 v_texCoord;                              \n"
+           "layout(location = 0) out vec4 outColor;          \n"
+           "uniform sampler2D s_Texture;                     \n"
+           "void main()                                      \n"
+           "{                                                \n"
+           "    outColor = texture(s_Texture, v_texCoord);   \n"
+           "}";
+}
+
+void media::fbo_paint::on_setup_program_args(GLuint prog, const image_frame &frame) {}
+void media::fbo_paint::on_canvas_size_changed(int32_t width, int32_t height) {}

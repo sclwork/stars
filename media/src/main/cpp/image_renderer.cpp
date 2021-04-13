@@ -4,6 +4,8 @@
 
 #include "jni_log.h"
 #include "fbo_paint.h"
+#include "lut_paint.h"
+#include "face_paint.h"
 #include "camera_paint.h"
 #include "image_renderer.h"
 
@@ -29,8 +31,10 @@ media::image_renderer::~image_renderer() {
 
 void media::image_renderer::surface_created() {
     delete paint;
-    paint = new fbo_paint(file_root);
 //    paint = new camera_paint();
+//    paint = new fbo_paint();
+//    paint = new lut_paint(file_root);
+    paint = new face_paint();
 }
 
 void media::image_renderer::surface_destroyed() {

@@ -6,15 +6,14 @@
 #define STARS_FBO_PAINT_H
 
 #include <mutex>
-#include "proc.h"
 #include "gl_paint.h"
 
 namespace media {
 
 class fbo_paint : public gl_paint {
 public:
-    fbo_paint(std::string &froot);
-    ~fbo_paint();
+    fbo_paint();
+    virtual ~fbo_paint();
 
 public:
     /**
@@ -35,39 +34,32 @@ private:
     fbo_paint& operator=(fbo_paint&&) = delete;
     fbo_paint& operator=(const fbo_paint&) = delete;
 
-private:
+protected:
     void update_matrix(int32_t angleX, int32_t angleY, float scaleX, float scaleY);
     static void gl_pixels_to_image_frame(media::image_frame &of, int32_t width, int32_t height);
 
-private:
-    std::string &file_root;
-    int32_t   cvs_width;
-    int32_t   cvs_height;
-    float     cvs_ratio;
+protected:
+    virtual const char *gen_vertex_shader_str();
+    virtual const char *gen_frag_shader_str();
+    virtual void on_setup_program_args(GLuint prog, const image_frame &frame);
+    virtual void on_canvas_size_changed(int32_t width, int32_t height);
+
+protected:
+    int32_t      cvs_width;
+    int32_t      cvs_height;
+    float        cvs_ratio;
     /////////////////////////
-    glm::mat4  matrix;
+    glm::mat4    matrix;
     /////////////////////////
-    GLuint program;
-    GLuint fbo_program;
-    GLuint texture;
-    GLuint lut_texture;
-    GLuint vao;
-    GLuint vbo[3];
-    GLuint src_fbo;
-    GLuint src_fbo_texture;
-    GLuint dst_fbo;
-    GLuint dst_fbo_texture;
-    /////////////////////////
-    int32_t frame_index;
-    /////////////////////////
-    kalman k_face_x;
-    kalman k_face_y;
-    kalman k_face_z;
-    kalman k_face_w;
-    /////////////////////////
-    int32_t      lut_wid;
-    int32_t      lut_hei;
-    uint32_t    *lut_img;
+    GLuint       program;
+    GLuint       fbo_program;
+    GLuint       texture;
+    GLuint       vao;
+    GLuint       vbo[3];
+    GLuint       src_fbo;
+    GLuint       src_fbo_texture;
+    GLuint       dst_fbo;
+    GLuint       dst_fbo_texture;
 };
 
 } //namespace media
