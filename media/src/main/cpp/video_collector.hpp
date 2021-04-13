@@ -39,7 +39,7 @@ public:
      :ms(0), tv(), use_mnn(use_mnn), use_opencv(use_opencv),
       w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
       runnable(runnable), recording(recording), renderer_callback(callback), _mux(),
-      image(nullptr), audio(nullptr), mnn(nullptr), opencv(nullptr),
+      image(nullptr), audio(nullptr), mnn(nullptr),
       img_args(), aud_args(), aud_frame(nullptr), /*eiQ(iQ),*/ eaQ(aQ) {
         log_d_("video_collector[%d,%d,%d] created.", this->w, this->h, this->camera);
     }
@@ -65,9 +65,6 @@ public:
         if (use_mnn) {
             mnn = new media::mnn(mnn_path, 1);
         }
-        if (use_opencv) {
-            opencv = new media::opencv();
-        }
         image = new image_recorder();
         image->update_size(w, h);
         image->select_camera(camera);
@@ -89,7 +86,6 @@ public:
         delete image;
         delete audio;
         delete mnn;
-        delete opencv;
     }
 
     void unrunning() {
@@ -191,7 +187,6 @@ private:
     image_recorder *image;
     audio_recorder *audio;
     mnn *mnn;
-    opencv *opencv;
     image_args img_args;
     audio_args aud_args;
     std::shared_ptr<audio_frame> aud_frame;

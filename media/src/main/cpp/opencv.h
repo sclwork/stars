@@ -18,6 +18,7 @@ public:
     ~opencv();
 
 public:
+    static uint32_t *load_image(const std::string &file, int32_t *ow, int32_t *oh);
     static void grey_frame(const image_frame &frame);
 
 private:

@@ -13,10 +13,12 @@
 namespace media {
 } //namespace media
 
-media::image_renderer::image_renderer(moodycamel::ConcurrentQueue<image_frame> &iQ,
+media::image_renderer::image_renderer(std::string &froot,
+                                      moodycamel::ConcurrentQueue<image_frame> &iQ,
                                       moodycamel::ConcurrentQueue<audio_frame> &aQ,
                                       bool (*cvrecording)())
-:width(0), height(0), paint(nullptr), eiQ(iQ), eaQ(aQ), drawQ(), check_video_recording(cvrecording) {
+:file_root(froot), width(0), height(0), paint(nullptr),
+eiQ(iQ), eaQ(aQ), drawQ(), check_video_recording(cvrecording) {
     log_d("created.");
 }
 
@@ -27,7 +29,7 @@ media::image_renderer::~image_renderer() {
 
 void media::image_renderer::surface_created() {
     delete paint;
-    paint = new fbo_paint();
+    paint = new fbo_paint(file_root);
 //    paint = new camera_paint();
 }
 

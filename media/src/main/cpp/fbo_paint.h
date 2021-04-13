@@ -13,7 +13,7 @@ namespace media {
 
 class fbo_paint : public gl_paint {
 public:
-    fbo_paint();
+    fbo_paint(std::string &froot);
     ~fbo_paint();
 
 public:
@@ -40,6 +40,7 @@ private:
     static void gl_pixels_to_image_frame(media::image_frame &of, int32_t width, int32_t height);
 
 private:
+    std::string &file_root;
     int32_t   cvs_width;
     int32_t   cvs_height;
     float     cvs_ratio;
@@ -49,6 +50,7 @@ private:
     GLuint program;
     GLuint fbo_program;
     GLuint texture;
+    GLuint lut_texture;
     GLuint vao;
     GLuint vbo[3];
     GLuint src_fbo;
@@ -62,6 +64,10 @@ private:
     kalman k_face_y;
     kalman k_face_z;
     kalman k_face_w;
+    /////////////////////////
+    int32_t      lut_wid;
+    int32_t      lut_hei;
+    uint32_t    *lut_img;
 };
 
 } //namespace media

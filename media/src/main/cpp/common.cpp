@@ -37,7 +37,7 @@ media::common::~common() {
  * run in renderer thread.
  */
 void media::common::renderer_init() {
-    renderer = std::make_shared<image_renderer>(eiQ, eaQ, [](){
+    renderer = std::make_shared<image_renderer>(file_root, eiQ, eaQ, [](){
         return gcom != nullptr && gcom->video_recording();
     });
     vid_rec = std::make_shared<video_recorder>(mnn_path, eiQ, eaQ);

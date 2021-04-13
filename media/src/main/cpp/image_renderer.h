@@ -13,7 +13,8 @@ namespace media {
 
 class image_renderer {
 public:
-    image_renderer(moodycamel::ConcurrentQueue<image_frame> &iQ,
+    image_renderer(std::string &froot,
+                   moodycamel::ConcurrentQueue<image_frame> &iQ,
                    moodycamel::ConcurrentQueue<audio_frame> &aQ,
                    bool (*cvrecording)());
     ~image_renderer();
@@ -51,6 +52,7 @@ private:
     image_renderer& operator=(const image_renderer&) = delete;
 
 private:
+    std::string &file_root;
     int32_t width;
     int32_t height;
     paint  *paint;

@@ -51,7 +51,7 @@ public class Media {
         // init ops
         if (r.mInit) {
             // jni init
-            r.getDemoCppFileRes(); // TODO: demo png res
+            r.getLUTFileRes();
             r.jniInit(r.getFileRootRes(), r.getOpenCVCascadeFileRes(), r.getMNNFileRes());
         }
 
@@ -346,7 +346,7 @@ public class Media {
         }
     }
 
-    private String getMNNFile(@RawRes int raw, String name) {
+    private String getRawFile(@RawRes int raw, String name) {
         InputStream is = null;
         FileOutputStream os = null;
         try {
@@ -379,42 +379,16 @@ public class Media {
     }
 
     private String getMNNFileRes() {
-        return getMNNFile(R.raw.blazeface, "blazeface.mnn") + ";;;";
-//        return ";" + getMNNFile(R.raw.det1, "det1.mnn") + ";" +
-//                     getMNNFile(R.raw.det2, "det2.mnn") + ";" +
-//                     getMNNFile(R.raw.det3, "det3.mnn");
+        return getRawFile(R.raw.blazeface, "blazeface.mnn") + ";;;";
+//        return getRawFile(R.raw.det1, "det1.mnn") + ";" +
+//               getRawFile(R.raw.det2, "det2.mnn") + ";" +
+//               getRawFile(R.raw.det3, "det3.mnn");
     }
 
-    private String getDemoCppFileRes() {
-        InputStream is = null;
-        FileOutputStream os = null;
-        try {
-            Context context = getContext();
-            if (context == null)
-                return "";
-
-            is = context.getResources().openRawResource(R.raw.cpp);
-            File dir = context.getDir("files", Context.MODE_PRIVATE);
-            File file = new File(dir, "cpp.png");
-            if (file.exists())
-                return file.getAbsolutePath();
-
-            os = new FileOutputStream(file);
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1)
-                os.write(buffer, 0, bytesRead);
-
-            return file.getAbsolutePath();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "";
-        } finally {
-            try { if (is != null) is.close();
-            } catch (IOException ignored) { }
-            try { if (os != null) os.close();
-            } catch (IOException ignored) { }
-        }
+    private void getLUTFileRes() {
+        getRawFile(R.raw.lut_a, "lut_a.png");
+        getRawFile(R.raw.lut_b, "lut_b.png");
+        getRawFile(R.raw.lut_c, "lut_c.png");
     }
 
 
