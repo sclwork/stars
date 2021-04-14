@@ -35,7 +35,7 @@ private:
     fbo_paint& operator=(const fbo_paint&) = delete;
 
 private:
-    void update_matrix(glm::mat4 &matrix, int32_t angleX, int32_t angleY, float scaleX, float scaleY);
+    static void update_matrix(glm::mat4 &matrix, int32_t angleX, int32_t angleY, float scaleX, float scaleY);
     static void gl_pixels_to_image_frame(media::image_frame &of, int32_t width, int32_t height);
 
 private:

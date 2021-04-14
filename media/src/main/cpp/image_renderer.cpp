@@ -6,6 +6,7 @@
 #include "fbo_paint.h"
 #include "lut_paint.h"
 #include "face_paint.h"
+#include "ripple_paint.h"
 #include "camera_paint.h"
 #include "image_renderer.h"
 
@@ -34,7 +35,8 @@ void media::image_renderer::surface_created() {
 //    paint = new camera_paint();
 //    paint = new fbo_paint();
 //    paint = new lut_paint(file_root);
-    paint = new face_paint();
+//    paint = new face_paint();
+    paint = new ripple_paint();
 }
 
 void media::image_renderer::surface_destroyed() {
