@@ -177,7 +177,7 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glEnableVertexAttribArray(1);
 
     glm::mat4 matrix;
-    update_matrix(matrix, 0, 0, 1.0, 1.0);
+    on_update_matrix(matrix);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     setInt(effect_program, "s_Texture", 0);
@@ -301,6 +301,10 @@ const char *media::fbo_paint::gen_effect_vert_shader_str() {
 
 const char *media::fbo_paint::gen_effect_frag_shader_str() {
     return gen_frag_shader_str();
+}
+
+void media::fbo_paint::on_update_matrix(glm::mat4 &matrix) {
+    update_matrix(matrix, 0, 0, 1.0, 1.0);
 }
 
 void media::fbo_paint::on_setup_program_args(GLuint prog, const image_frame &frame) {}

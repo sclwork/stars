@@ -34,15 +34,18 @@ private:
     fbo_paint& operator=(fbo_paint&&) = delete;
     fbo_paint& operator=(const fbo_paint&) = delete;
 
-protected:
+private:
     void update_matrix(glm::mat4 &matrix, int32_t angleX, int32_t angleY, float scaleX, float scaleY);
     static void gl_pixels_to_image_frame(media::image_frame &of, int32_t width, int32_t height);
 
-protected:
+private:
     static const char *gen_vert_shader_str();
     static const char *gen_frag_shader_str();
+
+protected:
     virtual const char *gen_effect_vert_shader_str();
     virtual const char *gen_effect_frag_shader_str();
+    virtual void on_update_matrix(glm::mat4 &matrix);
     virtual void on_setup_program_args(GLuint prog, const image_frame &frame);
     virtual void on_canvas_size_changed(int32_t width, int32_t height);
 
