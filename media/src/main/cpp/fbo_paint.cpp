@@ -41,7 +41,7 @@ static GLushort indices[] = {
 
 media::fbo_paint::fbo_paint()
 :cvs_width(0), cvs_height(0), cvs_ratio(0),
-matrix(), program(GL_NONE), effect_program(GL_NONE), texture(GL_NONE),
+program(GL_NONE), effect_program(GL_NONE), texture(GL_NONE),
 src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE) {
     log_d("created.");
 }
@@ -134,7 +134,7 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
     log_d("create src_fbo/dst_fbo success.");
 
     program = create_program(gen_vert_shader_str(), gen_frag_shader_str());
-    effect_program = create_program(gen_vert_shader_str(), gen_effect_frag_shader_str());
+    effect_program = create_program(gen_effect_vert_shader_str(), gen_effect_frag_shader_str());
 
     on_canvas_size_changed(width, height);
 }
@@ -154,7 +154,6 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
         return;
     }
 
-    update_matrix(0, 0, 1.0, 1.0);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 
@@ -177,6 +176,8 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
+    glm::mat4 matrix;
+    update_matrix(matrix, 0, 0, 1.0, 1.0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     setInt(effect_program, "s_Texture", 0);
@@ -198,7 +199,6 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
 
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
     setInt(program, "s_Texture", 0);
-    setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
     gl_pixels_to_image_frame(of, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
@@ -210,11 +210,10 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, dst_fbo_texture);
     setInt(program, "s_Texture", 0);
-    setMat4(program, "u_MVPMatrix", matrix);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
 
-void media::fbo_paint::update_matrix(int32_t angleX, int32_t angleY, float scaleX, float scaleY) {
+void media::fbo_paint::update_matrix(glm::mat4 &matrix, int32_t angleX, int32_t angleY, float scaleX, float scaleY) {
     angleX = angleX % 360;
     angleY = angleY % 360;
 
@@ -267,11 +266,10 @@ const char *media::fbo_paint::gen_vert_shader_str() {
     return "#version 300 es                                  \n"
            "layout(location = 0) in vec4 a_position;         \n"
            "layout(location = 1) in vec2 a_texCoord;         \n"
-           "uniform mat4 u_MVPMatrix;                        \n"
            "out vec2 v_texCoord;                             \n"
            "void main()                                      \n"
            "{                                                \n"
-           "    gl_Position = u_MVPMatrix * a_position;      \n"
+           "    gl_Position = a_position;                    \n"
            "    v_texCoord = a_texCoord;                     \n"
            "}";
 }
@@ -285,6 +283,19 @@ const char *media::fbo_paint::gen_frag_shader_str() {
            "void main()                                      \n"
            "{                                                \n"
            "    outColor = texture(s_Texture, v_texCoord);   \n"
+           "}";
+}
+
+const char *media::fbo_paint::gen_effect_vert_shader_str() {
+    return "#version 300 es                                  \n"
+           "layout(location = 0) in vec4 a_position;         \n"
+           "layout(location = 1) in vec2 a_texCoord;         \n"
+           "uniform mat4 u_MVPMatrix;                        \n"
+           "out vec2 v_texCoord;                             \n"
+           "void main()                                      \n"
+           "{                                                \n"
+           "    gl_Position = u_MVPMatrix * a_position;      \n"
+           "    v_texCoord = a_texCoord;                     \n"
            "}";
 }
 
