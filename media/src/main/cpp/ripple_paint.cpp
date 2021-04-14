@@ -33,7 +33,8 @@ const char *media::ripple_paint::gen_effect_frag_shader_str() {
            "uniform float u_Time;                                            \n"
            "uniform float u_Boundary;                                        \n"
            "uniform vec4 u_RPoint;                                           \n"
-           "vec2 ripple(vec2 tc, float cx, float cy) {                       \n"
+           "uniform vec2 u_ROffset;                                          \n"
+           "vec2 ripple(vec2 tc, float of, float cx, float cy) {             \n"
            "    float ratio = u_TexSize.y / u_TexSize.x;                     \n"
            "    vec2 texCoord = tc * vec2(1.0, ratio);                       \n"
            "    vec2 touchXY = vec2(cx, cy) * vec2(1.0, ratio);              \n"
@@ -42,7 +43,7 @@ const char *media::ripple_paint::gen_effect_frag_shader_str() {
            "    && (distance <= (u_Time + u_Boundary))                       \n"
            "    && (distance >= (u_Time - u_Boundary))) {                    \n"
            "        float x = (distance - u_Time);                           \n"
-           "        float moveDis=20.0*x*(x-u_Boundary)*(x+u_Boundary);      \n"
+           "        float moveDis=of*x*(x-u_Boundary)*(x+u_Boundary);        \n"
            "        vec2 unitDirectionVec = normalize(texCoord - touchXY);   \n"
            "        texCoord = texCoord + (unitDirectionVec * moveDis);      \n"
            "    }                                                            \n"
@@ -57,9 +58,9 @@ const char *media::ripple_paint::gen_effect_frag_shader_str() {
            "    float fw = u_FaceRect.w / u_TexSize.y;                       \n"
            "    float cx = (fz + fx) / 2.0;                                  \n"
            "    float cy = (fw + fy) / 2.0;                                  \n"
-           "    vec2 tc = ripple(v_texCoord, cx, cy);                        \n"
-           "    tc=ripple(tc,u_RPoint.x/u_TexSize.x,u_RPoint.y/u_TexSize.y); \n"
-           "    tc=ripple(tc,u_RPoint.z/u_TexSize.x,u_RPoint.w/u_TexSize.y); \n"
+           "    vec2 tc = ripple(v_texCoord, 20.0, cx, cy);                  \n"
+           "    tc=ripple(tc,u_ROffset.x,u_RPoint.x/u_TexSize.x,u_RPoint.y/u_TexSize.y); \n"
+           "    tc=ripple(tc,u_ROffset.y,u_RPoint.z/u_TexSize.x,u_RPoint.w/u_TexSize.y); \n"
            "    outColor = texture(s_Texture, tc);                           \n"
            "}";
 }
@@ -73,17 +74,18 @@ void media::ripple_paint::on_setup_program_args(GLuint prog, const image_frame &
     if (!fs.empty()) { face = fs[0]; }
 
     auto time = (float)(fmod(f_index, 200) / 160);
+    if (time == 0.0) {
+        rfx[0] = random() % width;
+        rfy[0] = random() % height;
+        rfx[1] = random() % width;
+        rfy[1] = random() % height;
+        rfx[2] = random() % width;
+        rfy[2] = random() % height;
+    }
+
     setVec2(prog, "u_TexSize", glm::vec2(width, height));
     setInt(prog, "u_FaceCount", fs.size());
     if (fs.empty()) {
-        if (time == 0.0) {
-            rfx[0] = random() % width;
-            rfy[0] = random() % height;
-            rfx[1] = random() % width;
-            rfy[1] = random() % height;
-            rfx[2] = random() % width;
-            rfy[2] = random() % height;
-        }
         setVec4(prog, "u_FaceRect", glm::vec4(
                 rfx[0], rfy[0], rfx[0] + 80, rfy[0] + 80));
     } else {
@@ -95,6 +97,8 @@ void media::ripple_paint::on_setup_program_args(GLuint prog, const image_frame &
 
     setVec4(prog, "u_RPoint", glm::vec4(
             rfx[1] + 40, rfy[1] + 40, rfx[2] + 40, rfy[2] + 40));
+    setVec2(prog, "u_ROffset", glm::vec2(
+            10 + random() % 10, 10 + random() % 10));
     setFloat(prog, "u_Time", time * 2.5f);
     setFloat(prog, "u_Boundary", 0.12);
 
