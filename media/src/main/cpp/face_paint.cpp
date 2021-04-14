@@ -19,7 +19,7 @@ media::face_paint::~face_paint() {
     log_d("release.");
 }
 
-const char *media::face_paint::gen_frag_shader_str() {
+const char *media::face_paint::gen_effect_frag_shader_str() {
     return "#version 300 es                                                  \n"
            "precision highp float;                                           \n"
            "in vec2 v_texCoord;                                              \n"

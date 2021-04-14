@@ -39,8 +39,9 @@ protected:
     static void gl_pixels_to_image_frame(media::image_frame &of, int32_t width, int32_t height);
 
 protected:
-    virtual const char *gen_vertex_shader_str();
-    virtual const char *gen_frag_shader_str();
+    static const char *gen_vert_shader_str();
+    static const char *gen_frag_shader_str();
+    virtual const char *gen_effect_frag_shader_str();
     virtual void on_setup_program_args(GLuint prog, const image_frame &frame);
     virtual void on_canvas_size_changed(int32_t width, int32_t height);
 
@@ -52,10 +53,8 @@ protected:
     glm::mat4    matrix;
     /////////////////////////
     GLuint       program;
-    GLuint       fbo_program;
+    GLuint       effect_program;
     GLuint       texture;
-    GLuint       vao;
-    GLuint       vbo[3];
     GLuint       src_fbo;
     GLuint       src_fbo_texture;
     GLuint       dst_fbo;

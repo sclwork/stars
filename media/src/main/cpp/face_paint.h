@@ -22,7 +22,7 @@ private:
     face_paint& operator=(const face_paint&) = delete;
 
 private:
-    const char *gen_frag_shader_str() override;
+    const char *gen_effect_frag_shader_str() override;
     void on_setup_program_args(GLuint prog, const image_frame &frame) override;
 
 private:

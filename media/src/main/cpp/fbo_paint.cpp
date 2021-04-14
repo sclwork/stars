@@ -41,12 +41,19 @@ static GLushort indices[] = {
 
 media::fbo_paint::fbo_paint()
 :cvs_width(0), cvs_height(0), cvs_ratio(0),
-matrix(), program(GL_NONE), fbo_program(GL_NONE), texture(GL_NONE),/* lut_texture(GL_NONE),*/
-vao(GL_NONE), vbo(), src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE) {
+matrix(), program(GL_NONE), effect_program(GL_NONE), texture(GL_NONE),
+src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE) {
     log_d("created.");
 }
 
 media::fbo_paint::~fbo_paint() {
+    if (program != GL_NONE) glDeleteProgram(program);
+    if (effect_program != GL_NONE) glDeleteProgram(effect_program);
+    if (texture != GL_NONE) glDeleteTextures(1, &texture);
+    if (src_fbo_texture != GL_NONE) glDeleteTextures(1, &src_fbo_texture);
+    if (src_fbo != GL_NONE) glDeleteFramebuffers(1, &src_fbo);
+    if (dst_fbo_texture != GL_NONE) glDeleteTextures(1, &dst_fbo_texture);
+    if (dst_fbo != GL_NONE) glDeleteFramebuffers(1, &dst_fbo);
     log_d("release.");
 }
 
@@ -124,41 +131,12 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
         glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
     }
 
-    on_canvas_size_changed(width, height);
-
     log_d("create src_fbo/dst_fbo success.");
 
-    program = create_program(gen_vertex_shader_str(), gen_frag_shader_str());
-    fbo_program = create_program(gen_vertex_shader_str(), gen_frag_shader_str());
+    program = create_program(gen_vert_shader_str(), gen_frag_shader_str());
+    effect_program = create_program(gen_vert_shader_str(), gen_effect_frag_shader_str());
 
-    // Generate VAO Id
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    // Generate VBO Ids and load the VBOs with data
-    glGenBuffers(3, vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vcs), vcs, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(tcs), tcs, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[2]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
-    glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
-    glBindBuffer(GL_ARRAY_BUFFER, GL_NONE);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[2]);
-
-    glBindVertexArray(GL_NONE);
+    on_canvas_size_changed(width, height);
 }
 
 void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
@@ -172,21 +150,19 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     frame.get(&width, &height, &data);
 
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    if(program == GL_NONE || data == nullptr || src_fbo == GL_NONE) {
+    if(effect_program == GL_NONE || src_fbo == GL_NONE || data == nullptr) {
         return;
     }
 
     update_matrix(0, 0, 1.0, 1.0);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(tcs), mirror ? mirror_tcs : tcs, GL_STATIC_DRAW);
 
     // 渲染到 FBO
     glBindFramebuffer(GL_FRAMEBUFFER, src_fbo);
     glViewport(0, 0, width, height);
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(fbo_program);
+    glUseProgram(effect_program);
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glBindTexture(GL_TEXTURE_2D, dst_fbo_texture);
@@ -196,34 +172,46 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
 
-    glBindVertexArray(vao);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), vcs);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof (GLfloat), mirror ? mirror_tcs : tcs);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    setInt(fbo_program, "s_Texture", 0);
-    setMat4(fbo_program, "u_MVPMatrix", matrix);
-    on_setup_program_args(fbo_program, frame);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+    setInt(effect_program, "s_Texture", 0);
+    setMat4(effect_program, "u_MVPMatrix", matrix);
+    on_setup_program_args(effect_program, frame);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+    glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 
     // 再绘制一次，把方向倒过来
     glBindFramebuffer(GL_FRAMEBUFFER, dst_fbo);
     glViewport(0, 0, width, height);
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram (program);
-    glBindVertexArray(vao);
-    glActiveTexture(GL_TEXTURE0);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof (GLfloat), vcs);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof (GLfloat), mirror ? mirror_tcs : tcs);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
     setInt(program, "s_Texture", 0);
     setMat4(program, "u_MVPMatrix", matrix);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
     gl_pixels_to_image_frame(of, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 
     // 渲染到屏幕
     glViewport(0, 0, cvs_width, cvs_height);
     glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(program);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, dst_fbo_texture);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+    setInt(program, "s_Texture", 0);
+    setMat4(program, "u_MVPMatrix", matrix);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }
 
 void media::fbo_paint::update_matrix(int32_t angleX, int32_t angleY, float scaleX, float scaleY) {
@@ -275,7 +263,7 @@ void media::fbo_paint::gl_pixels_to_image_frame(
     }
 }
 
-const char *media::fbo_paint::gen_vertex_shader_str() {
+const char *media::fbo_paint::gen_vert_shader_str() {
     return "#version 300 es                                  \n"
            "layout(location = 0) in vec4 a_position;         \n"
            "layout(location = 1) in vec2 a_texCoord;         \n"
@@ -298,6 +286,10 @@ const char *media::fbo_paint::gen_frag_shader_str() {
            "{                                                \n"
            "    outColor = texture(s_Texture, v_texCoord);   \n"
            "}";
+}
+
+const char *media::fbo_paint::gen_effect_frag_shader_str() {
+    return gen_frag_shader_str();
 }
 
 void media::fbo_paint::on_setup_program_args(GLuint prog, const image_frame &frame) {}

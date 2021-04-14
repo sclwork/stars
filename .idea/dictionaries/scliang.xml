@@ -13,6 +13,7 @@
       <w>avio</w>
       <w>blazeface</w>
       <w>bsfc</w>
+      <w>coord</w>
       <w>coords</w>
       <w>cvrecording</w>
       <w>essl</w>
@@ -23,6 +24,7 @@
       <w>froot</w>
       <w>gcom</w>
       <w>haarcascade</w>
+      <w>highp</w>
       <w>ifrm</w>
       <w>ipts</w>
       <w>kalman</w>
@@ -55,6 +57,7 @@
       <w>uninit</w>
       <w>unrunning</w>
       <w>updt</w>
+      <w>vert</w>
       <w>webrtc</w>
       <w>xcenter</w>
       <w>xmax</w>
