@@ -358,9 +358,7 @@ public class Media {
             is = context.getResources().openRawResource(raw);
             File dir = context.getDir("files", Context.MODE_PRIVATE);
             File file = new File(dir, name);
-            if (file.exists())
-                return file.getAbsolutePath();
-
+            if (file.exists()) file.delete();
             os = new FileOutputStream(file);
             byte[] buffer = new byte[4096];
             int bytesRead;
@@ -399,6 +397,7 @@ public class Media {
         getRawFile(R.raw.shader_frag_effect_heart,  "shader_frag_effect_heart.glsl");
         getRawFile(R.raw.shader_frag_effect_lut,    "shader_frag_effect_lut.glsl");
         getRawFile(R.raw.shader_frag_effect_ripple, "shader_frag_effect_ripple.glsl");
+        getRawFile(R.raw.shader_frag_effect_flame,  "shader_frag_effect_flame.glsl");
         getRawFile(R.raw.shader_vert_basic,         "shader_vert_basic.glsl");
         getRawFile(R.raw.shader_vert_effect_basic,  "shader_vert_effect_basic.glsl");
     }
