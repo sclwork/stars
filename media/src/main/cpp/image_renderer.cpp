@@ -32,11 +32,11 @@ media::image_renderer::~image_renderer() {
 
 void media::image_renderer::surface_created() {
     delete paint;
-//    paint = new camera_paint();
-//    paint = new fbo_paint();
+//    paint = new camera_paint(file_root);
+//    paint = new fbo_paint(file_root);
 //    paint = new lut_paint(file_root);
-//    paint = new face_paint();
-    paint = new ripple_paint();
+//    paint = new face_paint(file_root);
+    paint = new ripple_paint(file_root);
 }
 
 void media::image_renderer::surface_destroyed() {

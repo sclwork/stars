@@ -11,8 +11,8 @@
 namespace media {
 } //namespace media
 
-media::camera_paint::camera_paint()
-:texture(GL_NONE), program(GL_NONE), sampler_location(0),
+media::camera_paint::camera_paint(std::string &froot):gl_paint(froot),
+texture(GL_NONE), program(GL_NONE), sampler_location(0),
 sampler_matrix(0), cvs_width(0), cvs_height(0), cvs_ratio(0), matrix(glm::mat4{}) {
     glGenTextures  (1, &texture);
     glActiveTexture(GL_TEXTURE0);

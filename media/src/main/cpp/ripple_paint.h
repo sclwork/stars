@@ -12,7 +12,7 @@ namespace media {
 
 class ripple_paint : public fbo_paint {
 public:
-    ripple_paint();
+    ripple_paint(std::string &froot);
     ~ripple_paint();
 
 private:
@@ -22,7 +22,7 @@ private:
     ripple_paint& operator=(const ripple_paint&) = delete;
 
 private:
-    const char *gen_effect_frag_shader_str() override;
+    std::string gen_effect_frag_shader_str() override;
     void on_setup_program_args(GLuint prog, const image_frame &frame) override;
 
 private:

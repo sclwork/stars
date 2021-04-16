@@ -70,11 +70,18 @@ static glm::vec3 texCoordToVertexCoord(glm::vec2 texCoord) {
 
 class gl_paint : public paint {
 public:
+    gl_paint(std::string &froot):file_root(froot) {}
     virtual ~gl_paint() {}
 
 public:
     static GLuint load_shader(GLenum shaderType, const char *pSource);
     static GLuint create_program(const char *pVertexShaderSource, const char *pFragShaderSource);
+
+public:
+    std::string read_shader_str(const std::string &name);
+
+protected:
+    std::string &file_root;
 };
 
 } //namespace media

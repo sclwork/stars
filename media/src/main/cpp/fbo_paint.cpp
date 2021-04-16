@@ -39,8 +39,8 @@ static GLushort indices[] = {
 
 } //namespace media
 
-media::fbo_paint::fbo_paint()
-:cvs_width(0), cvs_height(0), cvs_ratio(0),
+media::fbo_paint::fbo_paint(std::string &froot):gl_paint(froot),
+cvs_width(0), cvs_height(0), cvs_ratio(0),
 program(GL_NONE), effect_program(GL_NONE), texture(GL_NONE),
 src_fbo(GL_NONE), src_fbo_texture(GL_NONE), dst_fbo(GL_NONE), dst_fbo_texture(GL_NONE) {
     log_d("created.");
@@ -133,8 +133,8 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
 
     log_d("create src_fbo/dst_fbo success.");
 
-    program = create_program(gen_vert_shader_str(), gen_frag_shader_str());
-    effect_program = create_program(gen_effect_vert_shader_str(), gen_effect_frag_shader_str());
+    program = create_program(gen_vert_shader_str().c_str(), gen_frag_shader_str().c_str());
+    effect_program = create_program(gen_effect_vert_shader_str().c_str(), gen_effect_frag_shader_str().c_str());
 
     on_canvas_size_changed(width, height);
 }
@@ -262,45 +262,20 @@ void media::fbo_paint::gl_pixels_to_image_frame(
     }
 }
 
-const char *media::fbo_paint::gen_vert_shader_str() {
-    return "#version 300 es                                  \n"
-           "layout(location = 0) in vec4 a_position;         \n"
-           "layout(location = 1) in vec2 a_texCoord;         \n"
-           "out vec2 v_texCoord;                             \n"
-           "void main()                                      \n"
-           "{                                                \n"
-           "    gl_Position = a_position;                    \n"
-           "    v_texCoord = a_texCoord;                     \n"
-           "}";
+std::string media::fbo_paint::gen_vert_shader_str() {
+    return read_shader_str("shader_vert_basic.glsl");
 }
 
-const char *media::fbo_paint::gen_frag_shader_str() {
-    return "#version 300 es                                  \n"
-           "precision highp float;                           \n"
-           "in vec2 v_texCoord;                              \n"
-           "layout(location = 0) out vec4 outColor;          \n"
-           "uniform sampler2D s_Texture;                     \n"
-           "void main()                                      \n"
-           "{                                                \n"
-           "    outColor = texture(s_Texture, v_texCoord);   \n"
-           "}";
+std::string media::fbo_paint::gen_frag_shader_str() {
+    return read_shader_str("shader_frag_basic.glsl");
 }
 
-const char *media::fbo_paint::gen_effect_vert_shader_str() {
-    return "#version 300 es                                  \n"
-           "layout(location = 0) in vec4 a_position;         \n"
-           "layout(location = 1) in vec2 a_texCoord;         \n"
-           "uniform mat4 u_MVPMatrix;                        \n"
-           "out vec2 v_texCoord;                             \n"
-           "void main()                                      \n"
-           "{                                                \n"
-           "    gl_Position = u_MVPMatrix * a_position;      \n"
-           "    v_texCoord = a_texCoord;                     \n"
-           "}";
+std::string media::fbo_paint::gen_effect_vert_shader_str() {
+    return read_shader_str("shader_vert_effect_basic.glsl");
 }
 
-const char *media::fbo_paint::gen_effect_frag_shader_str() {
-    return gen_frag_shader_str();
+std::string media::fbo_paint::gen_effect_frag_shader_str() {
+    return read_shader_str("shader_frag_effect_basic.glsl");
 }
 
 void media::fbo_paint::on_update_matrix(glm::mat4 &matrix) {

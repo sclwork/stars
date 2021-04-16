@@ -51,6 +51,7 @@ public class Media {
         // init ops
         if (r.mInit) {
             // jni init
+            r.getGlslFiles();
             r.getLUTFileRes();
             r.jniInit(r.getFileRootRes(), r.getOpenCVCascadeFileRes(), r.getMNNFileRes());
         }
@@ -389,6 +390,17 @@ public class Media {
         getRawFile(R.raw.lut_a, "lut_a.png");
         getRawFile(R.raw.lut_b, "lut_b.png");
         getRawFile(R.raw.lut_c, "lut_c.png");
+    }
+
+    private void getGlslFiles() {
+        getRawFile(R.raw.shader_frag_basic,         "shader_frag_basic.glsl");
+        getRawFile(R.raw.shader_frag_effect_basic,  "shader_frag_effect_basic.glsl");
+        getRawFile(R.raw.shader_frag_effect_face,   "shader_frag_effect_face.glsl");
+        getRawFile(R.raw.shader_frag_effect_heart,  "shader_frag_effect_heart.glsl");
+        getRawFile(R.raw.shader_frag_effect_lut,    "shader_frag_effect_lut.glsl");
+        getRawFile(R.raw.shader_frag_effect_ripple, "shader_frag_effect_ripple.glsl");
+        getRawFile(R.raw.shader_vert_basic,         "shader_vert_basic.glsl");
+        getRawFile(R.raw.shader_vert_effect_basic,  "shader_vert_effect_basic.glsl");
     }
 
 

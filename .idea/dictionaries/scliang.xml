@@ -23,8 +23,10 @@
       <w>frontalface</w>
       <w>froot</w>
       <w>gcom</w>
+      <w>glsl</w>
       <w>haarcascade</w>
       <w>highp</w>
+      <w>ifile</w>
       <w>ifrm</w>
       <w>ipts</w>
       <w>kalman</w>

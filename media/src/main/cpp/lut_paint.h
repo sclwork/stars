@@ -11,7 +11,7 @@ namespace media {
 
 class lut_paint : public fbo_paint {
 public:
-    lut_paint(std::string &);
+    lut_paint(std::string &froot);
     ~lut_paint();
 
 private:
@@ -21,12 +21,11 @@ private:
     lut_paint& operator=(const lut_paint&) = delete;
 
 private:
-    const char *gen_effect_frag_shader_str() override;
+    std::string gen_effect_frag_shader_str() override;
     void on_canvas_size_changed(int32_t width, int32_t height) override;
     void on_setup_program_args(GLuint prog, const image_frame &frame) override;
 
 private:
-    std::string &file_root;
     GLuint       lut_texture;
     int32_t      lut_wid;
     int32_t      lut_hei;

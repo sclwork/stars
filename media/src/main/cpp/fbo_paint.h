@@ -12,7 +12,7 @@ namespace media {
 
 class fbo_paint : public gl_paint {
 public:
-    fbo_paint();
+    fbo_paint(std::string &froot);
     virtual ~fbo_paint();
 
 public:
@@ -39,12 +39,12 @@ private:
     static void gl_pixels_to_image_frame(media::image_frame &of, int32_t width, int32_t height);
 
 private:
-    static const char *gen_vert_shader_str();
-    static const char *gen_frag_shader_str();
+    std::string gen_vert_shader_str();
+    std::string gen_frag_shader_str();
 
 protected:
-    virtual const char *gen_effect_vert_shader_str();
-    virtual const char *gen_effect_frag_shader_str();
+    virtual std::string gen_effect_vert_shader_str();
+    virtual std::string gen_effect_frag_shader_str();
     virtual void on_update_matrix(glm::mat4 &matrix);
     virtual void on_setup_program_args(GLuint prog, const image_frame &frame);
     virtual void on_canvas_size_changed(int32_t width, int32_t height);

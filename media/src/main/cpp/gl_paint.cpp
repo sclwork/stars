@@ -2,6 +2,11 @@
 // Created by Scliang on 3/30/21.
 //
 
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <cstdlib>
 #include "jni_log.h"
 #include "gl_paint.h"
 
@@ -79,4 +84,12 @@ GLuint media::gl_paint::create_program(const char *pVertexShaderSource,
     }
 
     return prog;
+}
+
+std::string media::gl_paint::read_shader_str(const std::string &name) {
+    std::ostringstream buf;
+    std::ifstream ifile(file_root + "/" + name);
+    char ch;
+    while(buf&&ifile.get(ch)) buf.put(ch);
+    return buf.str();
 }

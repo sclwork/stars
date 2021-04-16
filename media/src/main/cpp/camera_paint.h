@@ -11,7 +11,7 @@ namespace media {
 
 class camera_paint: public gl_paint {
 public:
-    camera_paint();
+    camera_paint(std::string &froot);
     ~camera_paint();
 
 public:
