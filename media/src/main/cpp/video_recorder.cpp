@@ -13,8 +13,7 @@
 #include "proc.h"
 #include "mnn.h"
 #include "opencv.h"
-#include "ffmpeg_mp4.h"
-#include "ffmpeg_rtmp.h"
+#include "ffmpeg_h264.h"
 #include "ffmpeg_loudnorm.h"
 #include "webrtc_ns.h"
 

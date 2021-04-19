@@ -70,6 +70,43 @@ protected:
     AVBitStreamFilterContext *a_aac_adtstoasc;
 };
 
+class ffmpeg_mp4 : public ffmpeg_h264 {
+public:
+    ffmpeg_mp4(std::string &&n, image_args &&img, audio_args &&aud);
+    ~ffmpeg_mp4();
+
+public:
+    void init() override;
+
+private:
+    ffmpeg_mp4(ffmpeg_mp4&&) = delete;
+    ffmpeg_mp4(const ffmpeg_mp4&) = delete;
+    ffmpeg_mp4& operator=(ffmpeg_mp4&&) = delete;
+    ffmpeg_mp4& operator=(const ffmpeg_mp4&) = delete;
+
+private:
+    std::string name;
+};
+
+class ffmpeg_rtmp : public ffmpeg_h264 {
+public:
+    ffmpeg_rtmp(std::string &&f, std::string &&n, image_args &&img, audio_args &&aud);
+    ~ffmpeg_rtmp();
+
+public:
+    void init() override;
+
+private:
+    ffmpeg_rtmp(ffmpeg_rtmp&&) = delete;
+    ffmpeg_rtmp(const ffmpeg_rtmp&) = delete;
+    ffmpeg_rtmp& operator=(ffmpeg_rtmp&&) = delete;
+    ffmpeg_rtmp& operator=(const ffmpeg_rtmp&) = delete;
+
+private:
+    std::string file;
+    std::string name;
+};
+
 } //namespace media
 
 #endif //STARS_FFMPEG_H264_H

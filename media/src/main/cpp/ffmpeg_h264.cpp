@@ -12,6 +12,52 @@
 namespace media {
 } //namespace media
 
+media::ffmpeg_rtmp::ffmpeg_rtmp(std::string &&f, std::string &&n, image_args &&img, audio_args &&aud)
+:ffmpeg_h264(std::forward<image_args>(img), std::forward<audio_args>(aud)), file(f), name(n) {
+    log_d("created. [v:%d,%d,%d,%d],[a:%d,%d,%d].",
+          image.width, image.height, image.channels, image.frame_size,
+          audio.channels, audio.sample_rate, audio.frame_size);
+}
+
+media::ffmpeg_rtmp::~ffmpeg_rtmp() {
+    log_d("release.");
+}
+
+void media::ffmpeg_rtmp::init() {
+    av_register_all();
+    avcodec_register_all();
+    avformat_network_init();
+    on_init_all("flv", name);
+}
+
+media::ffmpeg_mp4::ffmpeg_mp4(std::string &&n, image_args &&img, audio_args &&aud)
+:ffmpeg_h264(std::forward<image_args>(img), std::forward<audio_args>(aud)), name(n) {
+    log_d("created. [v:%d,%d,%d,%d],[a:%d,%d,%d],%s.",
+          image.width, image.height, image.channels, image.frame_size,
+          audio.channels, audio.sample_rate, audio.frame_size, name.c_str());
+}
+
+media::ffmpeg_mp4::~ffmpeg_mp4() {
+    log_d("release.");
+}
+
+void media::ffmpeg_mp4::init() {
+    av_register_all();
+    avcodec_register_all();
+
+    // reset mp4 file
+    std::remove(name.c_str());
+    fclose(fopen(name.c_str(), "wb+"));
+
+#ifdef HAVE_IMAGE_STREAM
+    std::string out_name(name);
+#else
+    std::string out_name(f_aac_name);
+#endif
+
+    on_init_all("", out_name);
+}
+
 media::ffmpeg_h264::ffmpeg_h264(image_args &&img, audio_args &&aud)
 :image(img), audio(aud), i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0),
 vf_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr),

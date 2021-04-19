@@ -37,8 +37,8 @@ void media::image_renderer::surface_created() {
 //    paint = new fbo_paint(file_root);
 //    paint = new lut_paint(file_root);
 //    paint = new face_paint(file_root);
-//    paint = new ripple_paint(file_root);
-    paint = new flame_paint(file_root);
+    paint = new ripple_paint(file_root);
+//    paint = new flame_paint(file_root);
 }
 
 void media::image_renderer::surface_destroyed() {
