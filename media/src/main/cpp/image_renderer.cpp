@@ -8,6 +8,7 @@
 #include "face_paint.h"
 #include "ripple_paint.h"
 #include "flame_paint.h"
+#include "distortedtv_paint.h"
 #include "camera_paint.h"
 #include "image_renderer.h"
 
@@ -37,8 +38,9 @@ void media::image_renderer::surface_created() {
 //    paint = new fbo_paint(file_root);
 //    paint = new lut_paint(file_root);
 //    paint = new face_paint(file_root);
-    paint = new ripple_paint(file_root);
+//    paint = new ripple_paint(file_root);
 //    paint = new flame_paint(file_root);
+    paint = new distortedtv_paint(file_root);
 }
 
 void media::image_renderer::surface_destroyed() {

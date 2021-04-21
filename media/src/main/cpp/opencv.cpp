@@ -49,6 +49,13 @@ uint32_t *media::opencv::load_image(const std::string &file, int32_t *ow, int32_
     return data;
 }
 
+void media::opencv::grey_data(int32_t width, int32_t height, uint32_t *data) {
+    cv::Mat img(height, width, CV_8UC4, data);
+    cv::cvtColor(img, img, cv::COLOR_BGRA2GRAY);
+    cv::cvtColor(img, img, cv::COLOR_GRAY2BGRA);
+    memcpy(data, img.data, sizeof(uint32_t) * width * height);
+}
+
 void media::opencv::grey_frame(const image_frame &frame) {
     int32_t width, height; uint32_t *data;
     frame.get(&width, &height, &data);

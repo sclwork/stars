@@ -154,6 +154,8 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
         return;
     }
 
+    on_pre_tex_image(width, height, data);
+
     glBindTexture(GL_TEXTURE_2D, GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 
@@ -282,5 +284,6 @@ void media::fbo_paint::on_update_matrix(glm::mat4 &matrix) {
     update_matrix(matrix, 0, 0, 1.0, 1.0);
 }
 
+void media::fbo_paint::on_pre_tex_image(int32_t width, int32_t height, uint32_t *data) {}
 void media::fbo_paint::on_setup_program_args(GLuint prog, const image_frame &frame) {}
 void media::fbo_paint::on_canvas_size_changed(int32_t width, int32_t height) {}

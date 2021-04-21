@@ -20,7 +20,8 @@ media::flame_paint::~flame_paint() {
 }
 
 std::string media::flame_paint::gen_effect_frag_shader_str() {
-    return read_shader_str("shader_frag_effect_flame.glsl");
+//    return read_shader_str("shader_frag_effect_flame.glsl");
+    return read_shader_str("shader_frag_effect_burn.glsl");
 }
 
 void media::flame_paint::on_setup_program_args(GLuint prog, const image_frame &frame) {

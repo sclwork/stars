@@ -45,6 +45,7 @@ private:
 protected:
     virtual std::string gen_effect_vert_shader_str();
     virtual std::string gen_effect_frag_shader_str();
+    virtual void on_pre_tex_image(int32_t width, int32_t height, uint32_t *data);
     virtual void on_update_matrix(glm::mat4 &matrix);
     virtual void on_setup_program_args(GLuint prog, const image_frame &frame);
     virtual void on_canvas_size_changed(int32_t width, int32_t height);

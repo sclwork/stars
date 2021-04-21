@@ -391,15 +391,17 @@ public class Media {
     }
 
     private void getGlslFiles() {
-        getRawFile(R.raw.shader_frag_basic,         "shader_frag_basic.glsl");
-        getRawFile(R.raw.shader_frag_effect_basic,  "shader_frag_effect_basic.glsl");
-        getRawFile(R.raw.shader_frag_effect_face,   "shader_frag_effect_face.glsl");
-        getRawFile(R.raw.shader_frag_effect_heart,  "shader_frag_effect_heart.glsl");
-        getRawFile(R.raw.shader_frag_effect_lut,    "shader_frag_effect_lut.glsl");
-        getRawFile(R.raw.shader_frag_effect_ripple, "shader_frag_effect_ripple.glsl");
-        getRawFile(R.raw.shader_frag_effect_flame,  "shader_frag_effect_flame.glsl");
-        getRawFile(R.raw.shader_vert_basic,         "shader_vert_basic.glsl");
-        getRawFile(R.raw.shader_vert_effect_basic,  "shader_vert_effect_basic.glsl");
+        getRawFile(R.raw.shader_frag_basic,               "shader_frag_basic.glsl");
+        getRawFile(R.raw.shader_frag_effect_basic,        "shader_frag_effect_basic.glsl");
+        getRawFile(R.raw.shader_frag_effect_face,         "shader_frag_effect_face.glsl");
+        getRawFile(R.raw.shader_frag_effect_heart,        "shader_frag_effect_heart.glsl");
+        getRawFile(R.raw.shader_frag_effect_lut,          "shader_frag_effect_lut.glsl");
+        getRawFile(R.raw.shader_frag_effect_ripple,       "shader_frag_effect_ripple.glsl");
+        getRawFile(R.raw.shader_frag_effect_flame,        "shader_frag_effect_flame.glsl");
+        getRawFile(R.raw.shader_frag_effect_burn,         "shader_frag_effect_burn.glsl");
+        getRawFile(R.raw.shader_frag_effect_distortedtv,  "shader_frag_effect_distortedtv.glsl");
+        getRawFile(R.raw.shader_vert_basic,               "shader_vert_basic.glsl");
+        getRawFile(R.raw.shader_vert_effect_basic,        "shader_vert_effect_basic.glsl");
     }
 
 
