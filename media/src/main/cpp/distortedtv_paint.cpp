@@ -23,7 +23,8 @@ media::distortedtv_paint::~distortedtv_paint() {
 
 std::string media::distortedtv_paint::gen_effect_frag_shader_str() {
 //    return read_shader_str("shader_frag_effect_distortedtv.glsl");
-    return read_shader_str("shader_frag_effect_distortedtv_box.glsl");
+//    return read_shader_str("shader_frag_effect_distortedtv_box.glsl");
+    return read_shader_str("shader_frag_effect_distortedtv_glitch.glsl");
 }
 
 void media::distortedtv_paint::on_pre_tex_image(int32_t width, int32_t height, uint32_t *data) {

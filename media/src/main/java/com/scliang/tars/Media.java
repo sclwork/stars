@@ -411,6 +411,8 @@ public class Media {
                 "shader_frag_effect_distortedtv.glsl");
         getRawFile(R.raw.shader_frag_effect_distortedtv_box,
                 "shader_frag_effect_distortedtv_box.glsl");
+        getRawFile(R.raw.shader_frag_effect_distortedtv_glitch,
+                "shader_frag_effect_distortedtv_glitch.glsl");
         getRawFile(R.raw.shader_vert_basic,
                 "shader_vert_basic.glsl");
         getRawFile(R.raw.shader_vert_effect_basic,
