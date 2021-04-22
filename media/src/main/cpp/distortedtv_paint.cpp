@@ -22,7 +22,8 @@ media::distortedtv_paint::~distortedtv_paint() {
 }
 
 std::string media::distortedtv_paint::gen_effect_frag_shader_str() {
-    return read_shader_str("shader_frag_effect_distortedtv.glsl");
+//    return read_shader_str("shader_frag_effect_distortedtv.glsl");
+    return read_shader_str("shader_frag_effect_distortedtv_box.glsl");
 }
 
 void media::distortedtv_paint::on_pre_tex_image(int32_t width, int32_t height, uint32_t *data) {
@@ -41,6 +42,7 @@ void media::distortedtv_paint::on_setup_program_args(GLuint prog, const image_fr
 
     setVec2(prog, "u_TexSize", glm::vec2(width, height));
     setFloat(prog, "u_Time", f_index / 64.0f);
+    setBool(prog, "u_Mirror", frame.use_mirror());
 
     f_index++;
     if (f_index == INT32_MAX) f_index = 0;
