@@ -22,6 +22,11 @@ enum effect_type {
     EFFECT_DistortedtvGlitch,
     EFFECT_DistortedtvCRT,
     EFFECT_PageCurl,
+    EFFECT_OldVideo,
+    EFFECT_Crosshatch,
+    EFFECT_CMYK,
+    EFFECT_Drawing,
+    EFFECT_Neon,
 };
 
 class effect_selector_paint : public fbo_paint {

@@ -40,7 +40,7 @@ void media::image_renderer::surface_created() {
 //    paint = new face_paint(file_root);
 //    paint = new ripple_paint(file_root);
 //    paint = new flame_paint(file_root);
-    paint = new effect_selector_paint(file_root, EFFECT_PageCurl);
+    paint = new effect_selector_paint(file_root, EFFECT_Neon);
 }
 
 void media::image_renderer::surface_destroyed() {

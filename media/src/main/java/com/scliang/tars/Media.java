@@ -427,6 +427,16 @@ public class Media {
                 "shader_frag_effect_3floyd.glsl");
         getRawFile(R.raw.shader_frag_effect_pagecurl,
                 "shader_frag_effect_pagecurl.glsl");
+        getRawFile(R.raw.shader_frag_effect_old_video,
+                "shader_frag_effect_old_video.glsl");
+        getRawFile(R.raw.shader_frag_effect_crosshatch,
+                "shader_frag_effect_crosshatch.glsl");
+        getRawFile(R.raw.shader_frag_effect_cmyk,
+                "shader_frag_effect_cmyk.glsl");
+        getRawFile(R.raw.shader_frag_effect_drawing,
+                "shader_frag_effect_drawing.glsl");
+        getRawFile(R.raw.shader_frag_effect_neon,
+                "shader_frag_effect_neon.glsl");
         getRawFile(R.raw.shader_vert_none,
                 "shader_vert_none.glsl");
         getRawFile(R.raw.shader_vert_effect_none,

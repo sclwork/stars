@@ -43,6 +43,16 @@ std::string media::effect_selector_paint::gen_effect_frag_shader_str() {
             return read_shader_str("shader_frag_effect_distortedtv_crt.glsl");
         case EFFECT_PageCurl:
             return read_shader_str("shader_frag_effect_pagecurl.glsl");
+        case EFFECT_OldVideo:
+            return read_shader_str("shader_frag_effect_old_video.glsl");
+        case EFFECT_Crosshatch:
+            return read_shader_str("shader_frag_effect_crosshatch.glsl");
+        case EFFECT_CMYK:
+            return read_shader_str("shader_frag_effect_cmyk.glsl");
+        case EFFECT_Drawing:
+            return read_shader_str("shader_frag_effect_drawing.glsl");
+        case EFFECT_Neon:
+            return read_shader_str("shader_frag_effect_neon.glsl");
         ///////////////////////////////////////////////////////////////////////////////
         case EFFECT_None:
         default:
