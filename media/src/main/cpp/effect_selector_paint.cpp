@@ -39,6 +39,10 @@ std::string media::effect_selector_paint::gen_effect_frag_shader_str() {
             return read_shader_str("shader_frag_effect_distortedtv_box.glsl");
         case EFFECT_DistortedtvGlitch:
             return read_shader_str("shader_frag_effect_distortedtv_glitch.glsl");
+        case EFFECT_DistortedtvCRT:
+            return read_shader_str("shader_frag_effect_distortedtv_crt.glsl");
+        case EFFECT_PageCurl:
+            return read_shader_str("shader_frag_effect_pagecurl.glsl");
         ///////////////////////////////////////////////////////////////////////////////
         case EFFECT_None:
         default:

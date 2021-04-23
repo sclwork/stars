@@ -20,6 +20,8 @@ enum effect_type {
     EFFECT_Distortedtv,
     EFFECT_DistortedtvBox,
     EFFECT_DistortedtvGlitch,
+    EFFECT_DistortedtvCRT,
+    EFFECT_PageCurl,
 };
 
 class effect_selector_paint : public fbo_paint {

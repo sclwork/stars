@@ -413,6 +413,8 @@ public class Media {
                 "shader_frag_effect_distortedtv_box.glsl");
         getRawFile(R.raw.shader_frag_effect_distortedtv_glitch,
                 "shader_frag_effect_distortedtv_glitch.glsl");
+        getRawFile(R.raw.shader_frag_effect_distortedtv_crt,
+                "shader_frag_effect_distortedtv_crt.glsl");
         getRawFile(R.raw.shader_frag_effect_eb,
                 "shader_frag_effect_eb.glsl");
         getRawFile(R.raw.shader_frag_effect_sin_wave,
@@ -423,6 +425,8 @@ public class Media {
                 "shader_frag_effect_3basic.glsl");
         getRawFile(R.raw.shader_frag_effect_3floyd,
                 "shader_frag_effect_3floyd.glsl");
+        getRawFile(R.raw.shader_frag_effect_pagecurl,
+                "shader_frag_effect_pagecurl.glsl");
         getRawFile(R.raw.shader_vert_none,
                 "shader_vert_none.glsl");
         getRawFile(R.raw.shader_vert_effect_none,
