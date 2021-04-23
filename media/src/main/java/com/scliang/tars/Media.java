@@ -391,10 +391,10 @@ public class Media {
     }
 
     private void getGlslFiles() {
-        getRawFile(R.raw.shader_frag_basic,
-                "shader_frag_basic.glsl");
-        getRawFile(R.raw.shader_frag_effect_basic,
-                "shader_frag_effect_basic.glsl");
+        getRawFile(R.raw.shader_frag_none,
+                "shader_frag_none.glsl");
+        getRawFile(R.raw.shader_frag_effect_none,
+                "shader_frag_effect_none.glsl");
         getRawFile(R.raw.shader_frag_effect_face,
                 "shader_frag_effect_face.glsl");
         getRawFile(R.raw.shader_frag_effect_heart,
@@ -415,12 +415,18 @@ public class Media {
                 "shader_frag_effect_distortedtv_glitch.glsl");
         getRawFile(R.raw.shader_frag_effect_eb,
                 "shader_frag_effect_eb.glsl");
-        getRawFile(R.raw.shader_frag_effect_blur,
-                "shader_frag_effect_blur.glsl");
-        getRawFile(R.raw.shader_vert_basic,
-                "shader_vert_basic.glsl");
-        getRawFile(R.raw.shader_vert_effect_basic,
-                "shader_vert_effect_basic.glsl");
+        getRawFile(R.raw.shader_frag_effect_sin_wave,
+                "shader_frag_effect_sin_wave.glsl");
+        getRawFile(R.raw.shader_frag_effect_floyd,
+                "shader_frag_effect_floyd.glsl");
+        getRawFile(R.raw.shader_frag_effect_3basic,
+                "shader_frag_effect_3basic.glsl");
+        getRawFile(R.raw.shader_frag_effect_3floyd,
+                "shader_frag_effect_3floyd.glsl");
+        getRawFile(R.raw.shader_vert_none,
+                "shader_vert_none.glsl");
+        getRawFile(R.raw.shader_vert_effect_none,
+                "shader_vert_effect_none.glsl");
     }
 
 

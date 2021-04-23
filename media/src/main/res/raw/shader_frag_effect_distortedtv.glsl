@@ -78,10 +78,10 @@ float snoise(vec2 v) {
 }
 
 float staticV(vec2 uv) {
-    float staticHeight = snoise(vec2(9.0,u_Time*1.2+3.0))*0.3+5.0;
-    float staticAmount = snoise(vec2(1.0,u_Time*1.2-6.0))*0.1+0.3;
-    float staticStrength = snoise(vec2(-9.75,u_Time*0.6-3.0))*2.0+2.0;
-    return (1.0-step(snoise(vec2(5.0*pow(u_Time,2.0)+pow(uv.x*7.0,1.2),pow((mod(u_Time,100.0)+100.0)*uv.y*0.3+3.0,staticHeight))),staticAmount))*staticStrength;
+    float staticHeight = snoise(vec2(9.0,u_Time/64.0*1.2+3.0))*0.3+5.0;
+    float staticAmount = snoise(vec2(1.0,u_Time/64.0*1.2-6.0))*0.1+0.3;
+    float staticStrength = snoise(vec2(-9.75,u_Time/64.0*0.6-3.0))*2.0+2.0;
+    return (1.0-step(snoise(vec2(5.0*pow(u_Time/64.0,2.0)+pow(uv.x*7.0,1.2),pow((mod(u_Time/64.0,100.0)+100.0)*uv.y*0.3+3.0,staticHeight))),staticAmount))*staticStrength;
 }
 
 void main() {
@@ -90,15 +90,15 @@ void main() {
 //    vec2 fragCoord = gl_FragCoord.xy;
     vec2 uv = v_texCoord; //fragCoord.xy/u_TexSize.xy;
 
-    float jerkOffset = (1.0-step(snoise(vec2(u_Time*1.3,5.0)),0.8))*0.05;
+    float jerkOffset = (1.0-step(snoise(vec2(u_Time/64.0*1.3,5.0)),0.8))*0.05;
 
-    float fuzzOffset = snoise(vec2(u_Time*15.0,uv.y*80.0))*0.003;
-    float largeFuzzOffset = snoise(vec2(u_Time*1.0,uv.y*25.0))*0.004;
+    float fuzzOffset = snoise(vec2(u_Time/64.0*15.0,uv.y*80.0))*0.003;
+    float largeFuzzOffset = snoise(vec2(u_Time/64.0*1.0,uv.y*25.0))*0.004;
 
-    float vertMovementOn = (1.0-step(snoise(vec2(u_Time*0.2,8.0)),0.4))*vertMovementOpt;
-    float vertJerk = (1.0-step(snoise(vec2(u_Time*1.5,5.0)),0.6))*vertJerkOpt;
-    float vertJerk2 = (1.0-step(snoise(vec2(u_Time*5.5,5.0)),0.2))*vertJerkOpt;
-    float yOffset = abs(sin(u_Time)*4.0)*vertMovementOn+vertJerk*vertJerk2*0.3;
+    float vertMovementOn = (1.0-step(snoise(vec2(u_Time/64.0*0.2,8.0)),0.4))*vertMovementOpt;
+    float vertJerk = (1.0-step(snoise(vec2(u_Time/64.0*1.5,5.0)),0.6))*vertJerkOpt;
+    float vertJerk2 = (1.0-step(snoise(vec2(u_Time/64.0*5.5,5.0)),0.2))*vertJerkOpt;
+    float yOffset = abs(sin(u_Time/64.0)*4.0)*vertMovementOn+vertJerk*vertJerk2*0.3;
     float y = mod(uv.y+yOffset,1.0);
 
     float staticVal = 0.0;

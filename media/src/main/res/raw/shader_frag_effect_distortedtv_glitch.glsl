@@ -61,7 +61,7 @@ void main() {
     vec2 uv = v_texCoord;
 //    uv.y = 1.0 - uv.y;
 
-    float time = mod(u_Time, 32.0); // + modelmat[0].x + modelmat[0].z;
+    float time = mod(u_Time/64.0, 32.0); // + modelmat[0].x + modelmat[0].z;
 
     float GLITCH = 0.15;
 

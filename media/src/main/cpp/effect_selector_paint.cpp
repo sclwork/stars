@@ -23,14 +23,26 @@ media::effect_selector_paint::~effect_selector_paint() {
 
 std::string media::effect_selector_paint::gen_effect_frag_shader_str() {
     switch (e_type) {
+        case EFFECT_3Basic:
+            return read_shader_str("shader_frag_effect_3basic.glsl");
         case EFFECT_EdgesBilateral:
             return read_shader_str("shader_frag_effect_eb.glsl");
-        case EFFECT_Blur:
-            return read_shader_str("shader_frag_effect_blur.glsl");
-    /////////////////////////////////////////////////////////////////////
+        case EFFECT_SinWave:
+            return read_shader_str("shader_frag_effect_sin_wave.glsl");
+        case EFFECT_Floyd:
+            return read_shader_str("shader_frag_effect_floyd.glsl");
+        case EFFECT_3Floyd:
+            return read_shader_str("shader_frag_effect_3floyd.glsl");
+        case EFFECT_Distortedtv:
+            return read_shader_str("shader_frag_effect_distortedtv.glsl");
+        case EFFECT_DistortedtvBox:
+            return read_shader_str("shader_frag_effect_distortedtv_box.glsl");
+        case EFFECT_DistortedtvGlitch:
+            return read_shader_str("shader_frag_effect_distortedtv_glitch.glsl");
+        ///////////////////////////////////////////////////////////////////////////////
         case EFFECT_None:
         default:
-            return read_shader_str("shader_frag_effect_basic.glsl");
+            return read_shader_str("shader_frag_effect_none.glsl");
     }
 }
 

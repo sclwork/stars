@@ -12,8 +12,14 @@ namespace media {
 
 enum effect_type {
     EFFECT_None,
+    EFFECT_3Basic,
     EFFECT_EdgesBilateral,
-    EFFECT_Blur,
+    EFFECT_SinWave,
+    EFFECT_Floyd,
+    EFFECT_3Floyd,
+    EFFECT_Distortedtv,
+    EFFECT_DistortedtvBox,
+    EFFECT_DistortedtvGlitch,
 };
 
 class effect_selector_paint : public fbo_paint {

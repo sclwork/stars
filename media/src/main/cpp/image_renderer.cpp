@@ -8,7 +8,6 @@
 #include "face_paint.h"
 #include "ripple_paint.h"
 #include "flame_paint.h"
-#include "distortedtv_paint.h"
 #include "effect_selector_paint.h"
 #include "camera_paint.h"
 #include "image_renderer.h"
@@ -41,7 +40,6 @@ void media::image_renderer::surface_created() {
 //    paint = new face_paint(file_root);
 //    paint = new ripple_paint(file_root);
 //    paint = new flame_paint(file_root);
-//    paint = new distortedtv_paint(file_root);
     paint = new effect_selector_paint(file_root, EFFECT_EdgesBilateral);
 }
 

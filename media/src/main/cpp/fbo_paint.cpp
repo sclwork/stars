@@ -265,19 +265,19 @@ void media::fbo_paint::gl_pixels_to_image_frame(
 }
 
 std::string media::fbo_paint::gen_vert_shader_str() {
-    return read_shader_str("shader_vert_basic.glsl");
+    return read_shader_str("shader_vert_none.glsl");
 }
 
 std::string media::fbo_paint::gen_frag_shader_str() {
-    return read_shader_str("shader_frag_basic.glsl");
+    return read_shader_str("shader_frag_none.glsl");
 }
 
 std::string media::fbo_paint::gen_effect_vert_shader_str() {
-    return read_shader_str("shader_vert_effect_basic.glsl");
+    return read_shader_str("shader_vert_effect_none.glsl");
 }
 
 std::string media::fbo_paint::gen_effect_frag_shader_str() {
-    return read_shader_str("shader_frag_effect_basic.glsl");
+    return read_shader_str("shader_frag_effect_none.glsl");
 }
 
 void media::fbo_paint::on_update_matrix(glm::mat4 &matrix) {
