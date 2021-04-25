@@ -437,6 +437,16 @@ public class Media {
                 "shader_frag_effect_drawing.glsl");
         getRawFile(R.raw.shader_frag_effect_neon,
                 "shader_frag_effect_neon.glsl");
+        getRawFile(R.raw.shader_frag_effect_fisheye,
+                "shader_frag_effect_fisheye.glsl");
+        getRawFile(R.raw.shader_frag_effect_barrelblur,
+                "shader_frag_effect_barrelblur.glsl");
+        getRawFile(R.raw.shader_frag_effect_fastblur,
+                "shader_frag_effect_fastblur.glsl");
+        getRawFile(R.raw.shader_frag_effect_illustration,
+                "shader_frag_effect_illustration.glsl");
+        getRawFile(R.raw.shader_frag_effect_hexagon,
+                "shader_frag_effect_hexagon.glsl");
         getRawFile(R.raw.shader_vert_none,
                 "shader_vert_none.glsl");
         getRawFile(R.raw.shader_vert_effect_none,

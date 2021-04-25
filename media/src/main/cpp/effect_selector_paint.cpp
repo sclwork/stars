@@ -53,6 +53,16 @@ std::string media::effect_selector_paint::gen_effect_frag_shader_str() {
             return read_shader_str("shader_frag_effect_drawing.glsl");
         case EFFECT_Neon:
             return read_shader_str("shader_frag_effect_neon.glsl");
+        case EFFECT_Fisheye:
+            return read_shader_str("shader_frag_effect_fisheye.glsl");
+        case EFFECT_BarrelBlur:
+            return read_shader_str("shader_frag_effect_barrelblur.glsl");
+        case EFFECT_FastBlur:
+            return read_shader_str("shader_frag_effect_fastblur.glsl");
+        case EFFECT_Illustration:
+            return read_shader_str("shader_frag_effect_illustration.glsl");
+        case EFFECT_Hexagon:
+            return read_shader_str("shader_frag_effect_hexagon.glsl");
         ///////////////////////////////////////////////////////////////////////////////
         case EFFECT_None:
         default:

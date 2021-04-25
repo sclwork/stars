@@ -11,6 +11,7 @@
       <w>avfilter</w>
       <w>avformat</w>
       <w>avio</w>
+      <w>barrelblur</w>
       <w>blazeface</w>
       <w>bsfc</w>
       <w>cmyk</w>
@@ -19,8 +20,10 @@
       <w>cvrecording</w>
       <w>distortedtv</w>
       <w>essl</w>
+      <w>fastblur</w>
       <w>ffmpeg</w>
       <w>ffps</w>
+      <w>fisheye</w>
       <w>fmts</w>
       <w>frontalface</w>
       <w>froot</w>

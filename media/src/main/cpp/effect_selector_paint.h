@@ -27,6 +27,11 @@ enum effect_type {
     EFFECT_CMYK,
     EFFECT_Drawing,
     EFFECT_Neon,
+    EFFECT_Fisheye,
+    EFFECT_BarrelBlur,
+    EFFECT_FastBlur,
+    EFFECT_Illustration,
+    EFFECT_Hexagon,
 };
 
 class effect_selector_paint : public fbo_paint {
