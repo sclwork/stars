@@ -45,7 +45,7 @@ public:
      * from selected camera collect an image frame
      * @return collect success image_frame, all return image_frame is same address
      */
-    void collect_frame(image_frame &f);
+    bool collect_frame(image_frame &f);
 
 public:
     /**

@@ -20,6 +20,17 @@ import javax.microedition.khronos.opengles.GL10;
 public class Media {
 
     /**
+     * Camera
+     */
+    public enum Camera {
+        Front(1),
+        Back(0),
+
+        ;Camera(int index) { mIndex = index; }
+        private final int mIndex;
+    }
+
+    /**
      * Init media utils
      * @return true: load native library [media] success
      */
@@ -76,9 +87,16 @@ public class Media {
     }
 
     /**
-     * setup preview GLSurfaceView
+     * setup preview GLSurfaceView, default camera to preview
      */
     public static void setMediaGLView(MediaGLView glView) {
+        setMediaGLView(glView, Camera.Back);
+    }
+
+    /**
+     * setup preview GLSurfaceView, default camera to preview
+     */
+    public static void setMediaGLView(MediaGLView glView, Camera defCamera) {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
@@ -87,6 +105,9 @@ public class Media {
         if (glView == null) {
             return;
         }
+
+        // setup default camera
+        Media.selCamera = defCamera;
 
         RecorderRenderer renderer = new RecorderRenderer(new MediaGLView.OnRendererListener() {
             @Override
@@ -107,6 +128,7 @@ public class Media {
             @Override
             public void onRendererSurfaceChanged(int width, int height) {
                 Media.rendererSurfaceChanged(width, height);
+                Media.switchCamera(Media.selCamera);
             }
 
             @Override
@@ -200,6 +222,39 @@ public class Media {
 
         // jni check video record running
         return r.jniVideoRecording();
+    }
+
+    /**
+     * switch front/back camera
+     */
+    public static int switchCamera() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return -1;
+
+        if (selCamera == Camera.Back) {
+            return switchCamera(Camera.Front);
+        } else if (selCamera == Camera.Front) {
+            return switchCamera(Camera.Back);
+        } else {
+            return switchCamera(Camera.Back);
+        }
+    }
+
+    /**
+     * switch front/back camera
+     */
+    public static int switchCamera(Camera camera) {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return -1;
+
+        // jni switch front/back camera
+        int res = r.jniCameraSelect(camera.mIndex);
+        if (res == 0) { selCamera = camera; }
+        return res;
     }
 
     private static class RecorderRenderer implements GLSurfaceView.Renderer {
@@ -473,6 +528,8 @@ public class Media {
     private native int     jniStartVideoRecord(@NonNull String name);
     private native int     jniStopVideoRecord();
     private native boolean jniVideoRecording();
+    ///////////////////////////////////////////////////////////
+    private native int jniCameraSelect(int camera);
 
 
 
@@ -484,6 +541,7 @@ public class Media {
     private void setContext(Context context) { mContext = new SoftReference<>(context); }
     private Context getContext() { return mContext == null ? null : mContext.get(); }
     private static class SingletonHolder { private static final Media INSTANCE = new Media(); }
+    private static Camera selCamera = Camera.Back; // default back camera
     private Media() { }
     private boolean mInit;
 }

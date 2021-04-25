@@ -89,6 +89,19 @@ bool video_recording() {
     return com_ptr->video_recording();
 }
 
+void camera_select(int32_t cam) {
+    auto *pcam = (int32_t*)malloc(sizeof(int32_t));
+    if (pcam == nullptr) {
+        return;
+    }
+    *pcam = cam;
+    loop_post_main([](void*c, void (*cb)(void*)) {
+        auto m = (int32_t*)c;
+        com_ptr->camera_select(*m);
+        free(m);
+    }, pcam, nullptr);
+}
+
 static void loop_main_run() {
     loop_main_running = true;
     log_d("hardware concurrency: %d", std::thread::hardware_concurrency());

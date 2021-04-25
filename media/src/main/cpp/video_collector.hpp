@@ -27,19 +27,16 @@ namespace media {
 
 class video_collector {
 public:
-    video_collector(bool use_mnn, bool use_opencv,
+    video_collector(bool use_mnn,
                     int32_t w, int32_t h, int32_t camera,
                     std::string &mnn_path,
                     std::shared_ptr<std::atomic_bool> &runnable,
                     std::shared_ptr<std::atomic_bool> &recording,
                     void (*callback)(image_frame&&),
-//                    moodycamel::ConcurrentQueue<image_frame> &iQ,
                     moodycamel::ConcurrentQueue<audio_frame> &aQ)
-     :ms(0), tv(), use_mnn(use_mnn), use_opencv(use_opencv),
-      w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
-      runnable(runnable), recording(recording), renderer_callback(callback), _mux(),
-      image(nullptr), audio(nullptr), mnn(nullptr),
-      img_args(), aud_args(), aud_frame(nullptr), /*eiQ(iQ),*/ eaQ(aQ) {
+    :ms(0), tv(), use_mnn(use_mnn), w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
+    runnable(runnable), recording(recording), renderer_callback(callback), _mux(),
+    image(nullptr), audio(nullptr), mnn(nullptr), img_args(), aud_args(), aud_frame(nullptr), /*eiQ(iQ),*/ eaQ(aQ) {
         log_d_("video_collector[%d,%d,%d] created.", this->w, this->h, this->camera);
     }
 
@@ -141,14 +138,14 @@ private:
         }
 
         image_frame img_frame;
-        vcr->image->collect_frame(img_frame);
+        if (!vcr->image->collect_frame(img_frame)) {
+            return;
+        }
+
         if (!img_frame.available()) {
             return;
         }
 
-        if (vcr->use_opencv) {
-            opencv::grey_frame(img_frame);
-        }
         if (vcr->use_mnn && vcr->mnn != nullptr) {
             std::vector<cv::Rect> faces;
             vcr->mnn->detect_faces(img_frame, faces);
@@ -176,7 +173,7 @@ private:
 private:
     long ms;
     struct timeval tv;
-    bool use_mnn, use_opencv;
+    bool use_mnn;
     int32_t w, h, camera, fps_ms;
     std::string mnn_path;
     std::shared_ptr<std::atomic_bool> runnable;
@@ -189,7 +186,6 @@ private:
     image_args img_args;
     audio_args aud_args;
     std::shared_ptr<audio_frame> aud_frame;
-//    moodycamel::ConcurrentQueue<image_frame> &eiQ;
     moodycamel::ConcurrentQueue<audio_frame> &eaQ;
 };
 

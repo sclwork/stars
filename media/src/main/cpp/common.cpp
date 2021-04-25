@@ -18,7 +18,7 @@ media::common::common(const std::string &file_root,
                       const std::string &mnn_path,
                       void (*on_request_render)(int32_t))
 :file_root(file_root), mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr),
-eiQ(), eaQ(), on_request_render_callback(on_request_render) {
+eiQ(), eaQ(), on_request_render_callback(on_request_render), vid_size() {
     gcom = this;
     log_d("file_root:%s.", file_root.c_str());
     log_d("cas_path:%s.", cas_path.c_str());
@@ -79,11 +79,8 @@ void media::common::renderer_surface_changed(int32_t w, int32_t h) {
     if (renderer != nullptr) {
         renderer->surface_changed(w, h);
     }
-    if (vid_rec != nullptr) {
-        vid_rec->start_preview([](image_frame &&frm) {
-            if (gcom != nullptr) gcom->renderer_updt_frame(std::forward<image_frame>(frm));
-        }, w / 2, h / 2, 1);
-    }
+    vid_size[0] = w / 2;
+    vid_size[1] = h / 2;
 }
 
 /*
@@ -135,5 +132,16 @@ bool media::common::video_recording() {
         return vid_rec->recording();
     } else {
         return false;
+    }
+}
+
+/*
+ * run in media main loop thread.
+ */
+void media::common::camera_select(int32_t cam) {
+    if (vid_rec != nullptr) {
+        vid_rec->start_preview([](image_frame &&frm) {
+            if (gcom != nullptr) gcom->renderer_updt_frame(std::forward<image_frame>(frm));
+        }, vid_size[0], vid_size[1], cam);
     }
 }

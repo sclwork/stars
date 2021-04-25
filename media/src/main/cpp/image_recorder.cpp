@@ -59,13 +59,13 @@ void media::image_recorder::update_size(int32_t w, int32_t h) {
     }
 }
 
-void media::image_recorder::collect_frame(media::image_frame &of) {
+bool media::image_recorder::collect_frame(media::image_frame &of) {
     if (run_cam == nullptr) {
-        return;
+        return false;
     }
 
     if (!is_previewing()) {
-        return;
+        return false;
     }
 
     // check/setup frame width/height/cache
@@ -73,5 +73,5 @@ void media::image_recorder::collect_frame(media::image_frame &of) {
         of.update_size(width, height);
     }
 
-    run_cam->get_latest_image(of);
+    return run_cam->get_latest_image(of);
 }

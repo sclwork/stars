@@ -57,6 +57,11 @@ public:
     void video_record_stop();
     bool video_recording();
 
+    /**
+     * camera setup params
+     */
+    void camera_select(int32_t cam);
+
 private:
     /*
      * run in caller thread.
@@ -78,6 +83,8 @@ private:
     moodycamel::ConcurrentQueue<image_frame> eiQ;
     moodycamel::ConcurrentQueue<audio_frame> eaQ;
     void (*on_request_render_callback)(int32_t);
+    /////////////////////////////////////////////
+    int32_t vid_size[2];
 };
 
 } //namespace media

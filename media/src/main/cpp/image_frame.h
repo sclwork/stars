@@ -53,7 +53,8 @@ public:
      * setup camera/image orientation
      * @param o orientation:[0|90|180|270]
      */
-    void set_ori(int32_t o);
+    void set_ori(int32_t o) { ori = o; }
+    int32_t get_ori() const { return ori; }
     /**
      * @return true: if camera/image orientation is 270
      */

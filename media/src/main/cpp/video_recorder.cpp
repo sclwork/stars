@@ -65,7 +65,7 @@ void media::video_recorder::start_preview(void (*callback)(image_frame&&),
     }
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto recording = std::make_shared<std::atomic_bool>(false);
-    auto *ctx = new video_collector(true, false, w, h, camera,
+    auto *ctx = new video_collector(true, w, h, camera,
             mnn_path, runnable, recording, callback, /*eiQ,*/ eaQ);
     collector = std::shared_ptr<video_collector>(ctx, [](void*){}); // delete cp in img_collect_run
     std::thread collect_t(img_collect_run, ctx);
@@ -80,6 +80,10 @@ void media::video_recorder::stop_preview() {
 }
 
 void media::video_recorder::start_record(std::string &&file_root, std::string &&name) {
+    if (collector == nullptr || !collector->running()) {
+        log_e("start video record fail: video collector is not running.");
+        return;
+    }
     log_d("start video record[%s]-[%s].", file_root.c_str(), name.c_str());
     image_args img_args{};
     audio_args aud_args{};

@@ -9,7 +9,6 @@
 #include "ripple_paint.h"
 #include "flame_paint.h"
 #include "effect_selector_paint.h"
-#include "camera_paint.h"
 #include "image_renderer.h"
 
 #define log_d(...)  LOG_D("Media-Native:image_renderer", __VA_ARGS__)
@@ -34,7 +33,6 @@ media::image_renderer::~image_renderer() {
 
 void media::image_renderer::surface_created() {
     delete paint;
-//    paint = new camera_paint(file_root);
 //    paint = new fbo_paint(file_root);
 //    paint = new lut_paint(file_root);
 //    paint = new face_paint(file_root);
@@ -70,6 +68,7 @@ void media::image_renderer::draw_frame() {
     image_frame of, nf;
     drawQ.try_dequeue(nf);
     paint->draw(nf, of);
+    of.set_ori(nf.get_ori());
 
     if (check_video_recording != nullptr && check_video_recording() && of.available()) {
         eiQ.enqueue(std::forward<image_frame>(of));

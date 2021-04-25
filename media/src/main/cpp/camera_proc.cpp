@@ -18,13 +18,13 @@
 
 namespace media {
 
-void yuv2argb(struct img_args &img_args) {
+bool yuv2argb(struct img_args &img_args) {
     int32_t res = libyuv::Android420ToARGB(img_args.y_pixel, img_args.y_stride,
                                            img_args.u_pixel, img_args.u_stride, img_args.v_pixel, img_args.v_stride, img_args.vu_pixel_stride,
                                            img_args.argb_pixel, img_args.src_w * 4, img_args.src_w, img_args.src_h);
 //    log_d("libyuv::NV21ToARGB: %d.", res);
     if (res != 0) {
-        return;
+        return false;
     }
 
     libyuv::RotationModeEnum r;
@@ -42,7 +42,7 @@ void yuv2argb(struct img_args &img_args) {
                              img_args.dst_argb_pixel, img_args.img_width * 4, img_args.src_w, img_args.src_h, r);
 //    log_d("libyuv::ARGBRotate: %d.", res);
     if (res != 0) {
-        return;
+        return false;
     }
 
 //    log_d("wof,hof: %d,%d.", img_args.wof, img_args.hof);
@@ -71,6 +71,8 @@ void yuv2argb(struct img_args &img_args) {
                    sizeof(uint8_t) * img_args.frame_w * 4);
         }
     }
+
+    return true;
 }
 
 } //namespace media

@@ -148,6 +148,15 @@ JNIEnv *env, jobject thiz) {
     return media::video_recording();
 }
 
+JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniCameraSelect(
+JNIEnv *env, jobject thiz,
+jint camera) {
+    // select camera
+    media::camera_select(camera);
+    return 0;
+}
+
 #ifdef __cplusplus
 }
 #endif

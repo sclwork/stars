@@ -38,6 +38,11 @@ void video_record_start(const std::string &name);
 void video_record_stop();
 bool video_recording();
 
+/**
+ * camera setup params
+ */
+void camera_select(int32_t cam);
+
 } //namespace media
 
 #endif //STARS_JNI_BRIDGE_H
