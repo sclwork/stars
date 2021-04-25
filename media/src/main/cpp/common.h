@@ -51,11 +51,20 @@ public:
      */
     void renderer_draw_frame();
     /**
+     * update effect paint
+     */
+    void renderer_updt_paint(const std::string &name);
+    /**
      * start/stop/rtmp video record.
      */
     void video_record_start(std::string &&name);
     void video_record_stop();
     bool video_recording();
+
+    /**
+     * camera setup params
+     */
+    void camera_select(int32_t cam);
 
 private:
     /*
@@ -73,11 +82,14 @@ private:
 private:
     std::string file_root;
     std::string mnn_path;
+    std::string effect_name;
     std::shared_ptr<image_renderer> renderer;
     std::shared_ptr<video_recorder> vid_rec;
     moodycamel::ConcurrentQueue<image_frame> eiQ;
     moodycamel::ConcurrentQueue<audio_frame> eaQ;
     void (*on_request_render_callback)(int32_t);
+    /////////////////////////////////////////////
+    int32_t vid_size[2];
 };
 
 } //namespace media

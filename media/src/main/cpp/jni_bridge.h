@@ -30,6 +30,7 @@ void renderer_surface_created();
 void renderer_surface_destroyed();
 void renderer_surface_changed(int32_t w, int32_t h);
 void renderer_draw_frame();
+void renderer_updt_paint(const std::string &name);
 
 /**
  * mp4/rtmp video record
@@ -37,6 +38,11 @@ void renderer_draw_frame();
 void video_record_start(const std::string &name);
 void video_record_stop();
 bool video_recording();
+
+/**
+ * camera setup params
+ */
+void camera_select(int32_t cam);
 
 } //namespace media
 

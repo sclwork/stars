@@ -123,6 +123,17 @@ JNIEnv *env, jobject thiz) {
 }
 
 JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniRendererUpdatePaint(
+JNIEnv *env, jobject thiz,
+jstring name) {
+    const char *n = env->GetStringUTFChars(name, nullptr);
+    // update effect paint
+    media::renderer_updt_paint(n);
+    env->ReleaseStringUTFChars(name, n);
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
 Java_com_scliang_tars_Media_jniStartVideoRecord(
 JNIEnv *env, jobject thiz,
 jstring mp4File) {
@@ -146,6 +157,15 @@ Java_com_scliang_tars_Media_jniVideoRecording(
 JNIEnv *env, jobject thiz) {
     // check video recording
     return media::video_recording();
+}
+
+JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniCameraSelect(
+JNIEnv *env, jobject thiz,
+jint camera) {
+    // select camera
+    media::camera_select(camera);
+    return 0;
 }
 
 #ifdef __cplusplus

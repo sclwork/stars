@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RawRes;
@@ -13,11 +14,24 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class Media {
+
+    /**
+     * Camera
+     */
+    public enum Camera {
+        Front(1),
+        Back(0),
+
+        ;Camera(int index) { mIndex = index; }
+        private final int mIndex;
+    }
 
     /**
      * Init media utils
@@ -50,6 +64,8 @@ public class Media {
 
         // init ops
         if (r.mInit) {
+            // clear
+            effectNames.clear();
             // jni init
             r.getGlslFiles();
             r.getLUTFileRes();
@@ -76,9 +92,41 @@ public class Media {
     }
 
     /**
-     * setup preview GLSurfaceView
+     * get Supported Effect names
+     */
+    public static List<String> getSupportedEffectNames() {
+        return effectNames;
+    }
+
+    /**
+     * update/setup Supported Effect
+     * @param name Supported Effect name
+     */
+    public static void updateEffectPaint(String name) {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
+        if (glView == null)
+            return;
+
+        // jni update effect paint
+        glView.queueEvent(()->r.jniRendererUpdatePaint(name));
+    }
+
+    /**
+     * setup preview GLSurfaceView, default camera to preview
      */
     public static void setMediaGLView(MediaGLView glView) {
+        setMediaGLView(glView, Camera.Back);
+    }
+
+    /**
+     * setup preview GLSurfaceView, default camera to preview
+     */
+    public static void setMediaGLView(MediaGLView glView, Camera defCamera) {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
@@ -87,6 +135,9 @@ public class Media {
         if (glView == null) {
             return;
         }
+
+        // setup default camera
+        Media.selCamera = defCamera;
 
         RecorderRenderer renderer = new RecorderRenderer(new MediaGLView.OnRendererListener() {
             @Override
@@ -107,6 +158,7 @@ public class Media {
             @Override
             public void onRendererSurfaceChanged(int width, int height) {
                 Media.rendererSurfaceChanged(width, height);
+                Media.switchCamera(Media.selCamera);
             }
 
             @Override
@@ -171,8 +223,12 @@ public class Media {
         if (!r.mInit)
             return;
 
+        MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
+        if (glView == null)
+            return;
+
         // jni start video record
-        r.jniStartVideoRecord(name);
+        glView.queueEvent(()->r.jniStartVideoRecord(name));
     }
 
     /**
@@ -184,8 +240,12 @@ public class Media {
         if (!r.mInit)
             return;
 
+        MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
+        if (glView == null)
+            return;
+
         // jni stop video record
-        r.jniStopVideoRecord();
+        glView.queueEvent(r::jniStopVideoRecord);
     }
 
     /**
@@ -200,6 +260,46 @@ public class Media {
 
         // jni check video record running
         return r.jniVideoRecording();
+    }
+
+    /**
+     * switch front/back camera
+     */
+    public static int switchCamera() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return -1;
+
+        if (selCamera == Camera.Back) {
+            return switchCamera(Camera.Front);
+        } else if (selCamera == Camera.Front) {
+            return switchCamera(Camera.Back);
+        } else {
+            return switchCamera(Camera.Back);
+        }
+    }
+
+    /**
+     * switch front/back camera
+     */
+    public static int switchCamera(Camera camera) {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return -1;
+
+        MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
+        if (glView == null)
+            return -1;
+
+        // jni switch front/back camera
+        glView.queueEvent(()->{
+            int res = r.jniCameraSelect(camera.mIndex);
+            if (res == 0) { selCamera = camera; }
+        });
+
+        return 0;
     }
 
     private static class RecorderRenderer implements GLSurfaceView.Renderer {
@@ -355,6 +455,17 @@ public class Media {
             if (context == null)
                 return "";
 
+            if (TextUtils.isEmpty(name)) {
+                return "";
+            }
+
+            if (name.contains("shader_frag_effect_")) {
+                effectNames.add(
+                        name.replace("shader_frag_effect_", "")
+                            .replace(".glsl", "")
+                            .toUpperCase());
+            }
+
             is = context.getResources().openRawResource(raw);
             File dir = context.getDir("files", Context.MODE_PRIVATE);
             File file = new File(dir, name);
@@ -397,16 +508,16 @@ public class Media {
                 "shader_frag_effect_none.glsl");
         getRawFile(R.raw.shader_frag_effect_face,
                 "shader_frag_effect_face.glsl");
-        getRawFile(R.raw.shader_frag_effect_heart,
-                "shader_frag_effect_heart.glsl");
-        getRawFile(R.raw.shader_frag_effect_lut,
-                "shader_frag_effect_lut.glsl");
+//        getRawFile(R.raw.shader_frag_effect_heart,
+//                "shader_frag_effect_heart.glsl");
+//        getRawFile(R.raw.shader_frag_effect_lut,
+//                "shader_frag_effect_lut.glsl");
         getRawFile(R.raw.shader_frag_effect_ripple,
                 "shader_frag_effect_ripple.glsl");
-        getRawFile(R.raw.shader_frag_effect_flame,
-                "shader_frag_effect_flame.glsl");
-        getRawFile(R.raw.shader_frag_effect_burn,
-                "shader_frag_effect_burn.glsl");
+//        getRawFile(R.raw.shader_frag_effect_flame,
+//                "shader_frag_effect_flame.glsl");
+//        getRawFile(R.raw.shader_frag_effect_burn,
+//                "shader_frag_effect_burn.glsl");
         getRawFile(R.raw.shader_frag_effect_distortedtv,
                 "shader_frag_effect_distortedtv.glsl");
         getRawFile(R.raw.shader_frag_effect_distortedtv_box,
@@ -469,10 +580,13 @@ public class Media {
     private native int jniRendererSurfaceChanged(int width, int height);
     private native int jniRendererSurfaceDestroyed();
     private native int jniRendererDrawFrame();
+    private native int jniRendererUpdatePaint(@NonNull String name);
     ///////////////////////////////////////////////////////////
     private native int     jniStartVideoRecord(@NonNull String name);
     private native int     jniStopVideoRecord();
     private native boolean jniVideoRecording();
+    ///////////////////////////////////////////////////////////
+    private native int jniCameraSelect(int camera);
 
 
 
@@ -484,6 +598,8 @@ public class Media {
     private void setContext(Context context) { mContext = new SoftReference<>(context); }
     private Context getContext() { return mContext == null ? null : mContext.get(); }
     private static class SingletonHolder { private static final Media INSTANCE = new Media(); }
+    private static Camera selCamera = Camera.Back; // default back camera
+    private final static List<String> effectNames = new ArrayList<>();
     private Media() { }
     private boolean mInit;
 }

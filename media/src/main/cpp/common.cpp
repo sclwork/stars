@@ -17,8 +17,8 @@ media::common::common(const std::string &file_root,
                       const std::string &cas_path,
                       const std::string &mnn_path,
                       void (*on_request_render)(int32_t))
-:file_root(file_root), mnn_path(mnn_path), renderer(nullptr), vid_rec(nullptr),
-eiQ(), eaQ(), on_request_render_callback(on_request_render) {
+:file_root(file_root), mnn_path(mnn_path), effect_name("NONE"), renderer(nullptr), vid_rec(nullptr),
+eiQ(), eaQ(), on_request_render_callback(on_request_render), vid_size() {
     gcom = this;
     log_d("file_root:%s.", file_root.c_str());
     log_d("cas_path:%s.", cas_path.c_str());
@@ -56,7 +56,7 @@ void media::common::renderer_release() {
  */
 void media::common::renderer_surface_created() {
     if (renderer != nullptr) {
-        renderer->surface_created();
+        renderer->surface_created(effect_name);
     }
 }
 
@@ -79,11 +79,8 @@ void media::common::renderer_surface_changed(int32_t w, int32_t h) {
     if (renderer != nullptr) {
         renderer->surface_changed(w, h);
     }
-    if (vid_rec != nullptr) {
-        vid_rec->start_preview([](image_frame &&frm) {
-            if (gcom != nullptr) gcom->renderer_updt_frame(std::forward<image_frame>(frm));
-        }, w / 2, h / 2, 1);
-    }
+    vid_size[0] = w / 2;
+    vid_size[1] = h / 2;
 }
 
 /*
@@ -92,6 +89,16 @@ void media::common::renderer_surface_changed(int32_t w, int32_t h) {
 void media::common::renderer_draw_frame() {
     if (renderer != nullptr) {
         renderer->draw_frame();
+    }
+}
+
+/*
+ * run in renderer thread.
+ */
+void media::common::renderer_updt_paint(const std::string &name) {
+    effect_name = std::string(name);
+    if (renderer != nullptr) {
+        renderer->updt_paint(effect_name);
     }
 }
 
@@ -109,7 +116,7 @@ void media::common::renderer_updt_frame(image_frame &&frm) {
 }
 
 /*
- * run in media main loop thread.
+ * run in renderer thread.
  */
 void media::common::video_record_start(std::string &&name) {
     if (vid_rec != nullptr) {
@@ -119,7 +126,7 @@ void media::common::video_record_start(std::string &&name) {
 }
 
 /*
- * run in media main loop thread.
+ * run in renderer thread.
  */
 void media::common::video_record_stop() {
     if (vid_rec != nullptr) {
@@ -135,5 +142,19 @@ bool media::common::video_recording() {
         return vid_rec->recording();
     } else {
         return false;
+    }
+}
+
+/*
+ * run in renderer thread.
+ */
+void media::common::camera_select(int32_t cam) {
+    if (renderer != nullptr) {
+        renderer->clear_frame();
+    }
+    if (vid_rec != nullptr) {
+        vid_rec->start_preview([](image_frame &&frm) {
+            if (gcom != nullptr) gcom->renderer_updt_frame(std::forward<image_frame>(frm));
+        }, vid_size[0], vid_size[1], cam);
     }
 }

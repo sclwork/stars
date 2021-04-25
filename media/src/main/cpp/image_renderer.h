@@ -23,7 +23,7 @@ public:
     /**
      * run in renderer thread.
      */
-    void surface_created();
+    void surface_created(const std::string &effect);
     /**
      * run in renderer thread.
      */
@@ -44,6 +44,19 @@ public:
      * read frm from frameQ and draw.
      */
     void draw_frame();
+    /**
+     * clear draw frame
+     */
+    void clear_frame();
+
+public:
+    /**
+     * update effect paint
+     */
+    void updt_paint(const std::string &name);
+
+private:
+    paint *create_paint(const std::string &name);
 
 private:
     image_renderer(image_renderer&&) = delete;

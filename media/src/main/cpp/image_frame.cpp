@@ -104,10 +104,6 @@ void media::image_frame::get_faces(std::vector<cv::Rect> &fs) const {
     for (const auto& r : faces) { fs.push_back(r); }
 }
 
-void media::image_frame::set_ori(int32_t o) {
-    ori = o;
-}
-
 void media::image_frame::get(int32_t *out_w, int32_t *out_h, uint32_t **out_cache) const {
     if (out_w) *out_w = width;
     if (out_h) *out_h = height;

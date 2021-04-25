@@ -70,23 +70,24 @@ void renderer_draw_frame() {
 //    d("renderer draw frame.");
 }
 
+void renderer_updt_paint(const std::string &name) {
+    com_ptr->renderer_updt_paint(name);
+}
+
 void video_record_start(const std::string &name) {
-    loop_post_main([](void*c, void (*cb)(void*)) {
-        const char *file = (char *) c;
-        com_ptr->video_record_start(std::string(file));
-//        log_d("start video record[%s].", file);
-    }, (void *) name.c_str(), nullptr);
+    com_ptr->video_record_start(std::string(name));
 }
 
 void video_record_stop() {
-    loop_post_main([](void*c, void (*cb)(void*)) {
-        com_ptr->video_record_stop();
-//        log_d("stop video record.");
-    }, nullptr, nullptr);
+    com_ptr->video_record_stop();
 }
 
 bool video_recording() {
     return com_ptr->video_recording();
+}
+
+void camera_select(int32_t cam) {
+    com_ptr->camera_select(cam);
 }
 
 static void loop_main_run() {

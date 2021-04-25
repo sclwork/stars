@@ -9,7 +9,6 @@
 #include "ripple_paint.h"
 #include "flame_paint.h"
 #include "effect_selector_paint.h"
-#include "camera_paint.h"
 #include "image_renderer.h"
 
 #define log_d(...)  LOG_D("Media-Native:image_renderer", __VA_ARGS__)
@@ -32,15 +31,9 @@ media::image_renderer::~image_renderer() {
     log_d("release.");
 }
 
-void media::image_renderer::surface_created() {
+void media::image_renderer::surface_created(const std::string &effect) {
     delete paint;
-//    paint = new camera_paint(file_root);
-//    paint = new fbo_paint(file_root);
-//    paint = new lut_paint(file_root);
-//    paint = new face_paint(file_root);
-//    paint = new ripple_paint(file_root);
-//    paint = new flame_paint(file_root);
-    paint = new effect_selector_paint(file_root, EFFECT_Hexagon);
+    paint = create_paint(effect);
 }
 
 void media::image_renderer::surface_destroyed() {
@@ -70,8 +63,79 @@ void media::image_renderer::draw_frame() {
     image_frame of, nf;
     drawQ.try_dequeue(nf);
     paint->draw(nf, of);
+    of.set_ori(nf.get_ori());
 
     if (check_video_recording != nullptr && check_video_recording() && of.available()) {
         eiQ.enqueue(std::forward<image_frame>(of));
     }
+}
+
+void media::image_renderer::clear_frame() {
+    media::paint *t = paint;
+    paint = nullptr;
+    image_frame f;
+    while (drawQ.try_dequeue(f));
+    paint = t;
+}
+
+void media::image_renderer::updt_paint(const std::string &name) {
+    clear_frame();
+    delete paint;
+    paint = create_paint(name);
+}
+
+media::paint *media::image_renderer::create_paint(const std::string &name) {
+    log_d("create effect paint name: %s.", name.c_str());
+    media::paint *p;
+    if (name == "NONE") {
+        p = new fbo_paint(file_root);
+    } else if (name == "FACE") {
+        p = new face_paint(file_root);
+    } else if (name == "RIPPLE") {
+        p = new ripple_paint(file_root);
+    } else if (name == "3BASIC") {
+        p = new effect_selector_paint(file_root, EFFECT_3Basic);
+    } else if (name == "DISTORTEDTV") {
+        p = new effect_selector_paint(file_root, EFFECT_Distortedtv);
+    } else if (name == "DISTORTEDTV_BOX") {
+        p = new effect_selector_paint(file_root, EFFECT_DistortedtvBox);
+    } else if (name == "DISTORTEDTV_CRT") {
+        p = new effect_selector_paint(file_root, EFFECT_DistortedtvCRT);
+    } else if (name == "DISTORTEDTV_GLITCH") {
+        p = new effect_selector_paint(file_root, EFFECT_DistortedtvGlitch);
+    } else if (name == "EB") {
+        p = new effect_selector_paint(file_root, EFFECT_EdgesBilateral);
+    } else if (name == "SIN_WAVE") {
+        p = new effect_selector_paint(file_root, EFFECT_SinWave);
+    } else if (name == "FLOYD") {
+        p = new effect_selector_paint(file_root, EFFECT_Floyd);
+    } else if (name == "3FLOYD") {
+        p = new effect_selector_paint(file_root, EFFECT_3Floyd);
+    } else if (name == "PAGECURL") {
+        p = new effect_selector_paint(file_root, EFFECT_PageCurl);
+    } else if (name == "OLD_VIDEO") {
+        p = new effect_selector_paint(file_root, EFFECT_OldVideo);
+    } else if (name == "CROSSHATCH") {
+        p = new effect_selector_paint(file_root, EFFECT_Crosshatch);
+    } else if (name == "CMYK") {
+        p = new effect_selector_paint(file_root, EFFECT_CMYK);
+    } else if (name == "DRAWING") {
+        p = new effect_selector_paint(file_root, EFFECT_Drawing);
+    } else if (name == "NEON") {
+        p = new effect_selector_paint(file_root, EFFECT_Neon);
+    } else if (name == "FISHEYE") {
+        p = new effect_selector_paint(file_root, EFFECT_Fisheye);
+    } else if (name == "BARRELBLUR") {
+        p = new effect_selector_paint(file_root, EFFECT_BarrelBlur);
+    } else if (name == "FASTBLUR") {
+        p = new effect_selector_paint(file_root, EFFECT_FastBlur);
+    } else if (name == "ILLUSTRATION") {
+        p = new effect_selector_paint(file_root, EFFECT_Illustration);
+    } else if (name == "HEXAGON") {
+        p = new effect_selector_paint(file_root, EFFECT_Hexagon);
+    } else {
+        p = new fbo_paint(file_root);
+    }
+    p->set_canvas_size(width, height);
+    return p;
 }
