@@ -133,6 +133,12 @@ media::paint *media::image_renderer::create_paint(const std::string &name) {
         p = new effect_selector_paint(file_root, EFFECT_Illustration);
     } else if (name == "HEXAGON") {
         p = new effect_selector_paint(file_root, EFFECT_Hexagon);
+    } else if (name == "SOBEL") {
+        p = new effect_selector_paint(file_root, EFFECT_Sobel);
+    } else if (name == "LENS") {
+        p = new effect_selector_paint(file_root, EFFECT_Lens);
+    } else if (name == "FLOAT_CAMERA") {
+        p = new effect_selector_paint(file_root, EFFECT_FloatCamera);
     } else {
         p = new fbo_paint(file_root);
     }

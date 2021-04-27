@@ -63,6 +63,12 @@ std::string media::effect_selector_paint::gen_effect_frag_shader_str() {
             return read_shader_str("shader_frag_effect_illustration.glsl");
         case EFFECT_Hexagon:
             return read_shader_str("shader_frag_effect_hexagon.glsl");
+        case EFFECT_Sobel:
+            return read_shader_str("shader_frag_effect_sobel.glsl");
+        case EFFECT_Lens:
+            return read_shader_str("shader_frag_effect_lens.glsl");
+        case EFFECT_FloatCamera:
+            return read_shader_str("shader_frag_effect_float_camera.glsl");
         ///////////////////////////////////////////////////////////////////////////////
         case EFFECT_None:
         default:

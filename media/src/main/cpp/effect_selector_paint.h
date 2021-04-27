@@ -32,6 +32,9 @@ enum effect_type {
     EFFECT_FastBlur,
     EFFECT_Illustration,
     EFFECT_Hexagon,
+    EFFECT_Sobel,
+    EFFECT_Lens,
+    EFFECT_FloatCamera,
 };
 
 class effect_selector_paint : public fbo_paint {
