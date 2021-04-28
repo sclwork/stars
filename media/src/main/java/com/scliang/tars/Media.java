@@ -23,6 +23,14 @@ import javax.microedition.khronos.opengles.GL10;
 public class Media {
 
     /**
+     * Type
+     */
+    public enum Type {
+        Record,
+        Play,
+    }
+
+    /**
      * Camera
      */
     public enum Camera {
@@ -117,16 +125,30 @@ public class Media {
     }
 
     /**
-     * setup preview GLSurfaceView, default camera to preview
+     * setup preview GLSurfaceView
      */
     public static void setMediaGLView(MediaGLView glView) {
-        setMediaGLView(glView, Camera.Back);
+        setMediaGLView(glView, Type.Play, Camera.Back);
     }
 
     /**
-     * setup preview GLSurfaceView, default camera to preview
+     * setup preview GLSurfaceView
+     */
+    public static void setMediaGLView(MediaGLView glView, Type type) {
+        setMediaGLView(glView, type, Camera.Back);
+    }
+
+    /**
+     * setup preview GLSurfaceView
      */
     public static void setMediaGLView(MediaGLView glView, Camera defCamera) {
+        setMediaGLView(glView, Type.Record, defCamera);
+    }
+
+    /**
+     * setup preview GLSurfaceView
+     */
+    public static void setMediaGLView(MediaGLView glView, Type type, Camera defCamera) {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
@@ -136,6 +158,8 @@ public class Media {
             return;
         }
 
+        // setup default type
+        Media.selType = type;
         // setup default camera
         Media.selCamera = defCamera;
 
@@ -158,7 +182,10 @@ public class Media {
             @Override
             public void onRendererSurfaceChanged(int width, int height) {
                 Media.rendererSurfaceChanged(width, height);
-                Media.switchCamera(Media.selCamera);
+                // only record type
+                if (selType == Type.Record) {
+                    Media.switchCamera(Media.selCamera);
+                }
             }
 
             @Override
@@ -223,6 +250,11 @@ public class Media {
         if (!r.mInit)
             return;
 
+        // only record type
+        if (selType != Type.Record) {
+            return;
+        }
+
         MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
         if (glView == null)
             return;
@@ -239,6 +271,11 @@ public class Media {
         // must init [success] first
         if (!r.mInit)
             return;
+
+        // only record type
+        if (selType != Type.Record) {
+            return;
+        }
 
         MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
         if (glView == null)
@@ -258,6 +295,11 @@ public class Media {
         if (!r.mInit)
             return false;
 
+        // only record type
+        if (selType != Type.Record) {
+            return false;
+        }
+
         // jni check video record running
         return r.jniVideoRecording();
     }
@@ -265,41 +307,47 @@ public class Media {
     /**
      * switch front/back camera
      */
-    public static int switchCamera() {
+    public static void switchCamera() {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
-            return -1;
+            return;
+
+        // only record type
+        if (selType != Type.Record) {
+            return;
+        }
 
         if (selCamera == Camera.Back) {
-            return switchCamera(Camera.Front);
+            switchCamera(Camera.Front);
         } else if (selCamera == Camera.Front) {
-            return switchCamera(Camera.Back);
-        } else {
-            return switchCamera(Camera.Back);
+            switchCamera(Camera.Back);
         }
     }
 
     /**
      * switch front/back camera
      */
-    public static int switchCamera(Camera camera) {
+    public static void switchCamera(Camera camera) {
         final Media r = SingletonHolder.INSTANCE;
         // must init [success] first
         if (!r.mInit)
-            return -1;
+            return;
+
+        // only record type
+        if (selType != Type.Record) {
+            return;
+        }
 
         MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
         if (glView == null)
-            return -1;
+            return;
 
         // jni switch front/back camera
         glView.queueEvent(()->{
             int res = r.jniCameraSelect(camera.mIndex);
             if (res == 0) { selCamera = camera; }
         });
-
-        return 0;
     }
 
     private static class RecorderRenderer implements GLSurfaceView.Renderer {
@@ -605,6 +653,7 @@ public class Media {
     private Context getContext() { return mContext == null ? null : mContext.get(); }
     private static class SingletonHolder { private static final Media INSTANCE = new Media(); }
     private static Camera selCamera = Camera.Back; // default back camera
+    private static Type selType = Type.Record; // default record
     private final static List<String> effectNames = new ArrayList<>();
     private Media() { }
     private boolean mInit;

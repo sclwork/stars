@@ -19,10 +19,9 @@ namespace media {
 
 media::image_renderer::image_renderer(std::string &froot,
                                       moodycamel::ConcurrentQueue<image_frame> &iQ,
-                                      moodycamel::ConcurrentQueue<audio_frame> &aQ,
                                       bool (*cvrecording)())
 :file_root(froot), width(0), height(0), paint(nullptr),
-eiQ(iQ), eaQ(aQ), drawQ(), check_video_recording(cvrecording) {
+eiQ(iQ), drawQ(), check_video_recording(cvrecording) {
     log_d("created.");
 }
 

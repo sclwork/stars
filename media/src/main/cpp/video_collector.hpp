@@ -36,7 +36,7 @@ public:
                     moodycamel::ConcurrentQueue<audio_frame> &aQ)
     :ms(0), tv(), use_mnn(use_mnn), w(w), h(h), camera(camera), fps_ms(0), mnn_path(mnn_path),
     runnable(runnable), recording(recording), renderer_callback(callback), _mux(),
-    image(nullptr), audio(nullptr), mnn(nullptr), img_args(), aud_args(), aud_frame(nullptr), /*eiQ(iQ),*/ eaQ(aQ) {
+    image(nullptr), audio(nullptr), mnn(nullptr), img_args(), aud_args(), aud_frame(nullptr), eaQ(aQ) {
         log_d_("video_collector[%d,%d,%d] created.", this->w, this->h, this->camera);
     }
 

@@ -66,7 +66,7 @@ void media::video_recorder::start_preview(void (*callback)(image_frame&&),
     auto runnable = std::make_shared<std::atomic_bool>(true);
     auto recording = std::make_shared<std::atomic_bool>(false);
     auto *ctx = new video_collector(true, w, h, camera,
-            mnn_path, runnable, recording, callback, /*eiQ,*/ eaQ);
+            mnn_path, runnable, recording, callback, eaQ);
     collector = std::shared_ptr<video_collector>(ctx, [](void*){}); // delete cp in img_collect_run
     std::thread collect_t(img_collect_run, ctx);
     collect_t.detach();

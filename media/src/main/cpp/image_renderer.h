@@ -15,7 +15,6 @@ class image_renderer {
 public:
     image_renderer(std::string &froot,
                    moodycamel::ConcurrentQueue<image_frame> &iQ,
-                   moodycamel::ConcurrentQueue<audio_frame> &aQ,
                    bool (*cvrecording)());
     ~image_renderer();
 
@@ -70,7 +69,6 @@ private:
     int32_t height;
     paint  *paint;
     moodycamel::ConcurrentQueue<image_frame> &eiQ;
-    moodycamel::ConcurrentQueue<audio_frame> &eaQ;
     moodycamel::ConcurrentQueue<image_frame> drawQ;
     bool (*check_video_recording)();
 };

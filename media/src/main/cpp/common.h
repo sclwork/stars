@@ -89,7 +89,7 @@ private:
     moodycamel::ConcurrentQueue<audio_frame> eaQ;
     void (*on_request_render_callback)(int32_t);
     /////////////////////////////////////////////
-    int32_t vid_size[2];
+    int32_t surface_size[2];
 };
 
 } //namespace media
