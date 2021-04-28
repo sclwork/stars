@@ -2,16 +2,16 @@
 
 <br /><br />
 
-| 功能 |  |  |  |  |  |  |
-| --- | --- | --- | --- | --- | --- | --- |
-| 图像采集 | camera2ndk | libyuv | mnn |  |  |  |
-| 声音采集 | OpenSLES |  |  |  |  |
-| 图像特效 |  |  |  |  |  | glsl |
-| 图像预览 |  |  | OpenGLES | GLSurfaceView | FBO | Kalman |
-| 图像编码 | x264 | ffmpeg |  |  |  |
-| 声音编码 | pcm | loudnorm | webrtc-ns | aac |  |  |
-| 导出Mp4 |  |  |  |  |  | ffmpeg |
-| RTMP推流 |  |  |  |  |  | ffmpeg |
+| 功能     |            |          |           |               |     |        |
+|:--------|:-----------|:---------|:-----------|:--------------|:----|:-------|
+| 图像采集   | camera2ndk | libyuv   | mnn       |               |     |        |
+| 声音采集   | OpenSLES   |          |           |               |     |        |
+| 图像特效   |            |          |           |               |     | glsl   |
+| 图像预览   |            |          | OpenGLES  | GLSurfaceView | FBO | Kalman |
+| 图像编码   | x264       | ffmpeg   |           |               |     |        |
+| 声音编码   | pcm        | loudnorm | webrtc-ns | aac           |     |        |
+| 导出Mp4   |            |          |           |               |     | ffmpeg |
+| RTMP推流  |            |          |           |               |     | ffmpeg |
 
 <br /><br />
 
@@ -51,6 +51,7 @@ protected void onCreate(Bundle savedInstanceState) {
     Media.init(this); // init media.
     MediaGLView recorderView = findViewById(R.id.recorder_view);
     Media.setMediaGLView(recorderView); // setup MediaGLView
+    // Media.setMediaGLView(recorderView, Media.Camera.Front); // default select front camera
     ...
 }
 
@@ -74,6 +75,23 @@ protected void onDestroy() {
     super.onDestroy();
     ...
 }
+```
+
+<br />
+
+```
+// switch front/back camera
+final View camera = findViewById(R.id.camera);
+if (camera != null) camera.setOnClickListener(v -> Media.switchCamera());
+```
+
+<br />
+
+```
+// get supported effect names
+List<String> names = Media.getSupportedEffectNames();
+// setup effect to fbo paint
+Media.updateEffectPaint(name);
 ```
 
 <br />
