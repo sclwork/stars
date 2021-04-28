@@ -43,8 +43,10 @@ public:
     virtual void encode_audio_frame(const audio_frame& aud_frame);
 
 protected:
-    void on_init_all(const std::string &format, const std::string &out_name);
-    void on_free_all();
+    virtual int32_t on_gen_img_bit_rate() { return 64000; }
+    virtual int32_t on_gen_aud_bit_rate() { return 64000; }
+    virtual void on_init_all(const std::string &format, const std::string &out_name);
+    virtual void on_free_all();
 
 protected:
     image_args  image;
@@ -83,6 +85,10 @@ private:
     ffmpeg_mp4(const ffmpeg_mp4&) = delete;
     ffmpeg_mp4& operator=(ffmpeg_mp4&&) = delete;
     ffmpeg_mp4& operator=(const ffmpeg_mp4&) = delete;
+
+private:
+    int32_t on_gen_img_bit_rate() override { return 512000; }
+    int32_t on_gen_aud_bit_rate() override { return 128000; }
 
 private:
     std::string name;

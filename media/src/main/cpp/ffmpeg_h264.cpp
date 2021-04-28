@@ -114,7 +114,7 @@ void media::ffmpeg_h264::on_init_all(const std::string &format, const std::strin
     ic_ctx->width = image.width;
     ic_ctx->height = image.height;
     ic_ctx->time_base = {1, image.fps<=0?15:(int32_t)image.fps};
-    ic_ctx->bit_rate = 512000;
+    ic_ctx->bit_rate = on_gen_img_bit_rate();
     ic_ctx->gop_size = 10;
     ic_ctx->qmin = 10;
     ic_ctx->qmax = 51;
@@ -244,7 +244,7 @@ void media::ffmpeg_h264::on_init_all(const std::string &format, const std::strin
 
     ac_ctx->codec_id = a_codec->id;
     ac_ctx->codec_type = AVMEDIA_TYPE_AUDIO;
-    ac_ctx->bit_rate = 128000;
+    ac_ctx->bit_rate = on_gen_aud_bit_rate();
     ac_ctx->sample_rate = audio.sample_rate;
     ac_ctx->sample_fmt = AV_SAMPLE_FMT_FLTP;
     ac_ctx->channels = audio.channels;
