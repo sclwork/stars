@@ -17,7 +17,8 @@ media::common::common(const std::string &file_root,
                       const std::string &cas_path,
                       const std::string &mnn_path,
                       void (*on_request_render)(int32_t))
-:file_root(file_root), mnn_path(mnn_path), effect_name("NONE"), renderer(nullptr), vid_rec(nullptr),
+:file_root(file_root), mnn_path(mnn_path), effect_name("NONE"),
+renderer(nullptr), vid_rec(nullptr), vid_ply(nullptr),
 eiQ(), eaQ(), on_request_render_callback(on_request_render), surface_size() {
     gcom = this;
     log_d("file_root:%s.", file_root.c_str());
@@ -29,6 +30,7 @@ eiQ(), eaQ(), on_request_render_callback(on_request_render), surface_size() {
 media::common::~common() {
     renderer.reset();
     vid_rec.reset();
+    vid_ply.reset();
     gcom = nullptr;
     log_d("release.");
 }
@@ -41,6 +43,7 @@ void media::common::renderer_init() {
         return gcom != nullptr && gcom->video_recording();
     });
     vid_rec = std::make_shared<video_recorder>(mnn_path, eiQ, eaQ);
+    vid_ply = std::make_shared<video_player>(eiQ, eaQ);
 }
 
 /*
@@ -49,6 +52,7 @@ void media::common::renderer_init() {
 void media::common::renderer_release() {
     renderer.reset();
     vid_rec.reset();
+    vid_ply.reset();
 }
 
 /*
@@ -156,5 +160,34 @@ void media::common::camera_select(int32_t cam) {
         vid_rec->start_preview([](image_frame &&frm) {
             if (gcom != nullptr) gcom->renderer_updt_frame(std::forward<image_frame>(frm));
         }, surface_size[0], surface_size[1], cam);
+    }
+}
+
+/*
+ * run in renderer thread.
+ */
+void media::common::video_play_start(std::string &&name) {
+    if (vid_ply != nullptr) {
+        vid_ply->start_play(std::forward<std::string>(name));
+    }
+}
+
+/*
+ * run in renderer thread.
+ */
+void media::common::video_play_stop() {
+    if (vid_ply != nullptr) {
+        vid_ply->stop_play();
+    }
+}
+
+/*
+ * run in caller thread.
+ */
+bool media::common::video_playing() {
+    if (vid_ply != nullptr) {
+        return vid_ply->playing();
+    } else {
+        return false;
     }
 }

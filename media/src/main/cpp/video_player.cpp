@@ -11,10 +11,19 @@
 namespace media {
 } //namespace media
 
-media::video_player::video_player() {
+media::video_player::video_player(moodycamel::ConcurrentQueue<image_frame> &iQ,
+                                  moodycamel::ConcurrentQueue<audio_frame> &aQ)
+:plying(false), eiQ(iQ),eaQ(aQ) {
     log_d("created.");
 }
 
 media::video_player::~video_player() {
     log_d("release.");
+}
+
+void media::video_player::start_play(std::string &&name) {
+    log_d("start video play: %s.", name.c_str());
+}
+
+void media::video_player::stop_play() {
 }

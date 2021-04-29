@@ -168,6 +168,32 @@ jint camera) {
     return 0;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniStartVideoPlay(
+JNIEnv *env, jobject thiz,
+jstring mp4File) {
+    const char *mp4_file = env->GetStringUTFChars(mp4File, nullptr);
+    // start video play
+    media::video_play_start(mp4_file);
+    env->ReleaseStringUTFChars(mp4File, mp4_file);
+    return 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_scliang_tars_Media_jniStopVideoPlay(
+JNIEnv *env, jobject thiz) {
+    // stop video play
+    media::video_play_stop();
+    return 0;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_scliang_tars_Media_jniVideoPlaying(
+JNIEnv *env, jobject thiz) {
+    // check video playing
+    return media::video_playing();
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -42,10 +42,37 @@ public class Media {
     }
 
     /**
+     * Media State Listener
+     */
+    public interface OnMediaStateChangeListener {
+        void onMediaSurfaceCreated();
+        void onMediaSurfaceChanged(int width, int height);
+        void onMediaSurfaceDestroyed();
+    }
+
+    /* SimpleStateChangeListener */
+    public static abstract class SimpleStateChangeListener implements OnMediaStateChangeListener {
+        @Override
+        public void onMediaSurfaceCreated() {}
+        @Override
+        public void onMediaSurfaceChanged(int width, int height) {}
+        @Override
+        public void onMediaSurfaceDestroyed() {}
+    }
+
+    /**
      * Init media utils
      * @return true: load native library [media] success
      */
     public static boolean init(Context context) {
+        return init(context, null);
+    }
+
+    /**
+     * Init media utils
+     * @return true: load native library [media] success
+     */
+    public static boolean init(Context context, OnMediaStateChangeListener listener) {
         final Media r = SingletonHolder.INSTANCE;
         if (r.mInit)
             return true;
@@ -65,6 +92,7 @@ public class Media {
 
         // save context to SoftReference
         r.setContext(context);
+        r.stateListener = new SoftReference<>(listener);
 
         // load so library
         try { System.loadLibrary("media"); r.mInit = true;
@@ -93,6 +121,8 @@ public class Media {
         if (!r.mInit)
             return;
 
+        r.mGLView = null;
+        r.stateListener = null;
         // jni release
         r.jniRelease();
         // flag
@@ -177,6 +207,11 @@ public class Media {
             @Override
             public void onRendererSurfaceCreated() {
                 Media.rendererSurfaceCreated();
+                // callback
+                OnMediaStateChangeListener lis =
+                        SingletonHolder.INSTANCE.stateListener==null?null:
+                                SingletonHolder.INSTANCE.stateListener.get();
+                if (lis != null) lis.onMediaSurfaceCreated();
             }
 
             @Override
@@ -186,11 +221,21 @@ public class Media {
                 if (selType == Type.Record) {
                     Media.switchCamera(Media.selCamera);
                 }
+                // callback
+                OnMediaStateChangeListener lis =
+                        SingletonHolder.INSTANCE.stateListener==null?null:
+                                SingletonHolder.INSTANCE.stateListener.get();
+                if (lis != null) lis.onMediaSurfaceChanged(width, height);
             }
 
             @Override
             public void onRendererSurfaceDestroyed() {
                 Media.rendererSurfaceDestroyed();
+                // callback
+                OnMediaStateChangeListener lis =
+                        SingletonHolder.INSTANCE.stateListener==null?null:
+                                SingletonHolder.INSTANCE.stateListener.get();
+                if (lis != null) lis.onMediaSurfaceDestroyed();
             }
 
             @Override
@@ -348,6 +393,71 @@ public class Media {
             int res = r.jniCameraSelect(camera.mIndex);
             if (res == 0) { selCamera = camera; }
         });
+    }
+
+    /**
+     * Start Video Play
+     * @param name [.mp4]  play video from mp4 file   (/sdcard/demo.mp4)
+     *             [rtmp:] rtmp video stream from url (rtmp://127.0.0.1/live/demo)
+     */
+    public static void startVideoPlay(@NonNull String name) {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        // only record type
+        if (selType != Type.Play) {
+            return;
+        }
+
+        MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
+        if (glView == null)
+            return;
+
+        // jni start video play
+        glView.queueEvent(()->r.jniStartVideoPlay(name));
+    }
+
+    /**
+     * Stop Video Play
+     */
+    public static void stopVideoPlay() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return;
+
+        // only record type
+        if (selType != Type.Play) {
+            return;
+        }
+
+        MediaGLView glView = r.mGLView == null ? null : r.mGLView.get();
+        if (glView == null)
+            return;
+
+        // jni stop video play
+        glView.queueEvent(r::jniStopVideoPlay);
+    }
+
+    /**
+     * Check VideoPlay Running
+     * @return true: playing
+     */
+    public static boolean isVideoPlaying() {
+        final Media r = SingletonHolder.INSTANCE;
+        // must init [success] first
+        if (!r.mInit)
+            return false;
+
+        // only record type
+        if (selType != Type.Play) {
+            return false;
+        }
+
+        // jni check video play running
+        return r.jniVideoPlaying();
     }
 
     private static class RecorderRenderer implements GLSurfaceView.Renderer {
@@ -641,6 +751,10 @@ public class Media {
     private native boolean jniVideoRecording();
     ///////////////////////////////////////////////////////////
     private native int jniCameraSelect(int camera);
+    ///////////////////////////////////////////////////////////
+    private native int     jniStartVideoPlay(@NonNull String name);
+    private native int     jniStopVideoPlay();
+    private native boolean jniVideoPlaying();
 
 
 
@@ -649,6 +763,7 @@ public class Media {
     ///////////////////////////////////////////////////////////
     private SoftReference<Context> mContext;
     private SoftReference<MediaGLView> mGLView;
+    private SoftReference<OnMediaStateChangeListener> stateListener;
     private void setContext(Context context) { mContext = new SoftReference<>(context); }
     private Context getContext() { return mContext == null ? null : mContext.get(); }
     private static class SingletonHolder { private static final Media INSTANCE = new Media(); }

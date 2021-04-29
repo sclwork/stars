@@ -44,6 +44,13 @@ bool video_recording();
  */
 void camera_select(int32_t cam);
 
+/**
+ * mp4/rtmp video play
+ */
+void video_play_start(const std::string &name);
+void video_play_stop();
+bool video_playing();
+
 } //namespace media
 
 #endif //STARS_JNI_BRIDGE_H

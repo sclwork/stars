@@ -90,6 +90,18 @@ void camera_select(int32_t cam) {
     com_ptr->camera_select(cam);
 }
 
+void video_play_start(const std::string &name) {
+    com_ptr->video_play_start(std::string(name));
+}
+
+void video_play_stop() {
+    com_ptr->video_play_stop();
+}
+
+bool video_playing() {
+    return com_ptr->video_playing();
+}
+
 static void loop_main_run() {
     loop_main_running = true;
     log_d("hardware concurrency: %d", std::thread::hardware_concurrency());

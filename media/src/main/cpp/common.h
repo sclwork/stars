@@ -11,6 +11,7 @@
 #include "jni_log.h"
 #include "image_renderer.h"
 #include "video_recorder.h"
+#include "video_player.h"
 
 namespace media {
 
@@ -66,6 +67,13 @@ public:
      */
     void camera_select(int32_t cam);
 
+    /**
+     * start/stop/rtmp video play.
+     */
+    void video_play_start(std::string &&name);
+    void video_play_stop();
+    bool video_playing();
+
 private:
     /*
      * run in caller thread.
@@ -85,6 +93,7 @@ private:
     std::string effect_name;
     std::shared_ptr<image_renderer> renderer;
     std::shared_ptr<video_recorder> vid_rec;
+    std::shared_ptr<video_player>   vid_ply;
     moodycamel::ConcurrentQueue<image_frame> eiQ;
     moodycamel::ConcurrentQueue<audio_frame> eaQ;
     void (*on_request_render_callback)(int32_t);

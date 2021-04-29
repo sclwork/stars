@@ -17,7 +17,12 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Media.init(this);
+        Media.init(this, new Media.SimpleStateChangeListener() {
+            @Override
+            public void onMediaSurfaceChanged(int width, int height) {
+                mediaSurfaceChanged(width, height);
+            }
+        });
         Window window = getWindow();
         window.getDecorView().setSystemUiVisibility(
 //                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR |
@@ -67,6 +72,11 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onDestroy() {
         Media.release();
         super.onDestroy();
+    }
+
+    private void mediaSurfaceChanged(int width, int height) {
+        Media.startVideoPlay(getFilesDir() + "/demo.mp4");
+//        Media.startVideoPlay("rtmp://192.168.0.17:9999/live/demo");
     }
 
     private void acquireScreen() {
