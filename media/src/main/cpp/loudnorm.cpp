@@ -2,9 +2,9 @@
 // Created by Scliang on 3/18/21.
 //
 
-#include "proc.h"
+#include "utils.h"
 #include "jni_log.h"
-#include "ffmpeg_loudnorm.h"
+#include "loudnorm.h"
 
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_loudnorm", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_loudnorm", __VA_ARGS__)
@@ -12,18 +12,18 @@
 namespace media {
 } //namespace media
 
-media::ffmpeg_loudnorm::ffmpeg_loudnorm(std::string &&pam, audio_args &&aud)
+media::loudnorm::loudnorm(std::string &&pam, audio_args &&aud)
 :param(pam), audio(aud), graph(nullptr), abuffer_ctx(nullptr),
 loudnorm_ctx(nullptr), aformat_ctx(nullptr), abuffersink_ctx(nullptr),
 en_frame(nullptr), de_frame(nullptr) {
     log_d("created [%s].", param.c_str());
 }
 
-media::ffmpeg_loudnorm::~ffmpeg_loudnorm() {
+media::loudnorm::~loudnorm() {
     log_d("release.");
 }
 
-void media::ffmpeg_loudnorm::init() {
+void media::loudnorm::init() {
     av_register_all();
     avcodec_register_all();
 
@@ -178,7 +178,7 @@ void media::ffmpeg_loudnorm::init() {
     log_d("init success.");
 }
 
-void media::ffmpeg_loudnorm::complete() {
+void media::loudnorm::complete() {
     int32_t res = av_buffersrc_add_frame_flags(abuffer_ctx, nullptr,
             AV_BUFFERSRC_FLAG_KEEP_REF|AV_BUFFERSRC_FLAG_PUSH);
     if (res < 0) {
@@ -189,7 +189,7 @@ void media::ffmpeg_loudnorm::complete() {
     on_free_all();
 }
 
-void media::ffmpeg_loudnorm::on_free_all() {
+void media::loudnorm::on_free_all() {
     if (de_frame != nullptr) av_frame_free(&de_frame);
     if (en_frame != nullptr) av_frame_free(&en_frame);
     if (abuffer_ctx != nullptr) avfilter_free(abuffer_ctx);
@@ -199,7 +199,7 @@ void media::ffmpeg_loudnorm::on_free_all() {
     if (graph != nullptr) avfilter_graph_free(&graph);
 }
 
-void media::ffmpeg_loudnorm::encode_frame(const audio_frame& aud_frame) {
+void media::loudnorm::encode_frame(const audio_frame& aud_frame) {
     int32_t count = 0; uint8_t *aud_data = nullptr;
     if (aud_frame.available()) {
         aud_frame.get(&count, &aud_data);
@@ -241,7 +241,7 @@ void media::ffmpeg_loudnorm::encode_frame(const audio_frame& aud_frame) {
     }
 }
 
-bool media::ffmpeg_loudnorm::get_encoded_frame(audio_frame &frame) {
+bool media::loudnorm::get_encoded_frame(audio_frame &frame) {
     int32_t res = av_buffersink_get_frame(abuffersink_ctx, de_frame);
     if (res == AVERROR_EOF) {
         char err[64];

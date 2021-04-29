@@ -4,7 +4,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -12,7 +11,7 @@ import android.widget.Button;
 
 import java.util.List;
 
-public class DemoActivity extends AppCompatActivity {
+public class RecorderActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +26,7 @@ public class DemoActivity extends AppCompatActivity {
                 View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
 
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_recorder);
         final MediaGLView recorderView = findViewById(R.id.recorder_view);
         Media.setMediaGLView(recorderView, Media.Camera.Front);
         final View camera = findViewById(R.id.camera);
@@ -55,7 +54,7 @@ public class DemoActivity extends AppCompatActivity {
             for (int i = 0; i < names.size(); i++) {
                 String name = names.get(i);
                 items[i] = name;
-                Log.d("Media-Native", "EffectName: " + name);
+//                Log.d("Media-Native", "EffectName: " + name);
             }
             AlertDialog.Builder listDialog = new AlertDialog.Builder(this);
             listDialog.setItems(items, (dialog, which) -> {

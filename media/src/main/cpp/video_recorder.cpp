@@ -10,11 +10,11 @@
 #include "video_recorder.h"
 #include "image_recorder.h"
 #include "audio_recorder.h"
-#include "proc.h"
+#include "utils.h"
 #include "mnn.h"
 #include "opencv.h"
-#include "ffmpeg_h264.h"
-#include "ffmpeg_loudnorm.h"
+#include "h264_encoder.h"
+#include "loudnorm.h"
 #include "webrtc_ns.h"
 
 #define log_d(...)  LOG_D("Media-Native:video_recorder", __VA_ARGS__)

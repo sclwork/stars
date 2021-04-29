@@ -4,7 +4,7 @@
 
 #include <cstdio>
 #include "jni_log.h"
-#include "ffmpeg_h264.h"
+#include "h264_encoder.h"
 
 #define log_d(...)  LOG_D("Media-Native:ffmpeg_h264", __VA_ARGS__)
 #define log_e(...)  LOG_E("Media-Native:ffmpeg_h264", __VA_ARGS__)
@@ -13,7 +13,7 @@ namespace media {
 } //namespace media
 
 media::ffmpeg_rtmp::ffmpeg_rtmp(std::string &&f, std::string &&n, image_args &&img, audio_args &&aud)
-:ffmpeg_h264(std::forward<image_args>(img), std::forward<audio_args>(aud)), file(f), name(n) {
+: h264_encoder(std::forward<image_args>(img), std::forward<audio_args>(aud)), file(f), name(n) {
     log_d("created. [v:%d,%d,%d,%d],[a:%d,%d,%d].",
           image.width, image.height, image.channels, image.frame_size,
           audio.channels, audio.sample_rate, audio.frame_size);
@@ -31,7 +31,7 @@ void media::ffmpeg_rtmp::init() {
 }
 
 media::ffmpeg_mp4::ffmpeg_mp4(std::string &&n, image_args &&img, audio_args &&aud)
-:ffmpeg_h264(std::forward<image_args>(img), std::forward<audio_args>(aud)), name(n) {
+: h264_encoder(std::forward<image_args>(img), std::forward<audio_args>(aud)), name(n) {
     log_d("created. [v:%d,%d,%d,%d],[a:%d,%d,%d],%s.",
           image.width, image.height, image.channels, image.frame_size,
           audio.channels, audio.sample_rate, audio.frame_size, name.c_str());
@@ -58,7 +58,7 @@ void media::ffmpeg_mp4::init() {
     on_init_all("", out_name);
 }
 
-media::ffmpeg_h264::ffmpeg_h264(image_args &&img, audio_args &&aud)
+media::h264_encoder::h264_encoder(image_args &&img, audio_args &&aud)
 :image(img), audio(aud), i_pts(0), a_pts(0), a_encode_offset(0), a_encode_length(0),
 vf_ctx(nullptr), ic_ctx(nullptr), i_stm(nullptr), i_sws_ctx(nullptr), i_rgb_frm(nullptr), i_yuv_frm(nullptr),
 ac_ctx(nullptr), a_stm(nullptr), a_swr_ctx(nullptr), a_frm(nullptr), a_encode_cache(nullptr),
@@ -68,12 +68,12 @@ a_aac_adtstoasc(av_bitstream_filter_init("aac_adtstoasc")) {
     log_d("created.");
 }
 
-media::ffmpeg_h264::~ffmpeg_h264() {
+media::h264_encoder::~h264_encoder() {
     on_free_all();
     log_d("release.");
 }
 
-void media::ffmpeg_h264::complete() {
+void media::h264_encoder::complete() {
     // close rtmp stream
     if (vf_ctx) {
         av_write_trailer(vf_ctx);
@@ -82,7 +82,7 @@ void media::ffmpeg_h264::complete() {
     on_free_all();
 }
 
-void media::ffmpeg_h264::on_init_all(const std::string &format, const std::string &out_name) {
+void media::h264_encoder::on_init_all(const std::string &format, const std::string &out_name) {
     int32_t res = avformat_alloc_output_context2(&vf_ctx, nullptr,
             format.length()<=0?nullptr:(format.c_str()), out_name.c_str());
     if (res < 0) {
@@ -369,7 +369,7 @@ void media::ffmpeg_h264::on_init_all(const std::string &format, const std::strin
     log_d("init_video_encode vf_ctx stream num: %d.", vf_ctx->nb_streams);
 }
 
-void media::ffmpeg_h264::on_free_all() {
+void media::h264_encoder::on_free_all() {
     // close image encode
     if (i_sws_ctx) sws_freeContext(i_sws_ctx);
     i_sws_ctx = nullptr;
@@ -395,7 +395,7 @@ void media::ffmpeg_h264::on_free_all() {
     vf_ctx = nullptr;
 }
 
-void media::ffmpeg_h264::encode_image_frame(const image_frame& img_frame) {
+void media::h264_encoder::encode_image_frame(const image_frame& img_frame) {
 #ifdef HAVE_IMAGE_STREAM
     if (vf_ctx == nullptr) {
         return;
@@ -448,7 +448,7 @@ void media::ffmpeg_h264::encode_image_frame(const image_frame& img_frame) {
 #endif
 }
 
-void media::ffmpeg_h264::encode_audio_frame(const audio_frame& aud_frame) {
+void media::h264_encoder::encode_audio_frame(const audio_frame& aud_frame) {
 #ifdef HAVE_AUDIO_STREAM
     if (vf_ctx == nullptr) {
         return;

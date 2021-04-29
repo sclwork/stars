@@ -13,11 +13,11 @@
 #include "video_recorder.h"
 #include "image_recorder.h"
 #include "audio_recorder.h"
-#include "proc.h"
+#include "utils.h"
 #include "mnn.h"
 #include "opencv.h"
-#include "ffmpeg_h264.h"
-#include "ffmpeg_loudnorm.h"
+#include "h264_encoder.h"
+#include "loudnorm.h"
 #include "webrtc_ns.h"
 
 #define log_d_(...)  LOG_D("Media-Native:video_recorder", __VA_ARGS__)
@@ -37,8 +37,8 @@ public:
             moodycamel::ConcurrentQueue<image_frame> &iQ,
             moodycamel::ConcurrentQueue<audio_frame> &aQ)
      :_mux(), runnable(runnable),
-      loudnorm(use_loudnorm?std::make_shared<ffmpeg_loudnorm>("I=-16:tp=-1.5:LRA=11",
-                                                              std::forward<audio_args>(aud_args)):nullptr),
+     lo(use_loudnorm?std::make_shared<loudnorm>("I=-16:tp=-1.5:LRA=11",
+             std::forward<audio_args>(aud_args)):nullptr),
       ns(ns_mode>=0?std::make_shared<webrtc_ns>(ns_mode, aud_args.sample_rate):nullptr),
       mp4(endWith(name,".mp4")?std::make_shared<ffmpeg_mp4>(
               std::forward<std::string>(name),
@@ -47,7 +47,7 @@ public:
               std::forward<std::string>(file_root), std::forward<std::string>(name),
               std::forward<image_args>(img_args), std::forward<audio_args>(aud_args)):nullptr),
       imageQ(iQ), audioQ(aQ) {
-        if (loudnorm != nullptr) loudnorm->init();
+        if (lo != nullptr) lo->init();
         if (ns != nullptr) ns->init();
         if (mp4 != nullptr) mp4->init();
         if (rtmp != nullptr) rtmp->init();
@@ -58,7 +58,7 @@ public:
         if (mp4 != nullptr) mp4->complete();
         if (rtmp != nullptr) rtmp->complete();
         if (ns != nullptr) ns->complete();
-        if (loudnorm != nullptr) loudnorm->complete();
+        if (lo != nullptr) lo->complete();
         log_d_("video_encoder release.");
     }
 
@@ -77,7 +77,7 @@ public:
 
     void run() {
         check_frameQ();
-        check_loudnorm();
+        check_lo();
         check_ns();
     }
 
@@ -94,8 +94,8 @@ private:
         }
         audio_frame afrm;
         if (audioQ.try_dequeue(afrm)) {
-            if (loudnorm != nullptr) {
-                loudnorm->encode_frame(afrm);
+            if (lo != nullptr) {
+                lo->encode_frame(afrm);
             } else {
                 if (ns != nullptr) {
                     ns->encode_frame(afrm);
@@ -111,10 +111,10 @@ private:
         }
     }
 
-    void check_loudnorm() {
-        if (loudnorm != nullptr) {
+    void check_lo() {
+        if (lo != nullptr) {
             audio_frame audio;
-            if (!loudnorm->get_encoded_frame(audio)) {
+            if (!lo->get_encoded_frame(audio)) {
                 return;
             }
             if (ns != nullptr) {
@@ -148,7 +148,7 @@ private:
 private:
     mutable std::mutex _mux;
     std::shared_ptr<std::atomic_bool> runnable;
-    std::shared_ptr<ffmpeg_loudnorm> loudnorm;
+    std::shared_ptr<loudnorm> lo;
     std::shared_ptr<webrtc_ns> ns;
     std::shared_ptr<ffmpeg_mp4> mp4;
     std::shared_ptr<ffmpeg_rtmp> rtmp;

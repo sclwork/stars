@@ -2,8 +2,8 @@
 // Created by Scliang on 3/23/21.
 //
 
-#ifndef STARS_FFMPEG_H264_H
-#define STARS_FFMPEG_H264_H
+#ifndef STARS_H264_ENCODER_H
+#define STARS_H264_ENCODER_H
 
 #define HAVE_IMAGE_STREAM
 #define HAVE_AUDIO_STREAM
@@ -25,16 +25,16 @@ extern "C" {
 
 #include <mutex>
 #include <string>
-#include "ffmpeg_args.h"
+#include "ai_args.h"
 #include "image_frame.h"
 #include "audio_frame.h"
 
 namespace media {
 
-class ffmpeg_h264 {
+class h264_encoder {
 public:
-    ffmpeg_h264(image_args &&img, audio_args &&aud);
-    virtual ~ffmpeg_h264();
+    h264_encoder(image_args &&img, audio_args &&aud);
+    virtual ~h264_encoder();
 
 public:
     virtual void init() = 0;
@@ -72,7 +72,7 @@ protected:
     AVBitStreamFilterContext *a_aac_adtstoasc;
 };
 
-class ffmpeg_mp4 : public ffmpeg_h264 {
+class ffmpeg_mp4 : public h264_encoder {
 public:
     ffmpeg_mp4(std::string &&n, image_args &&img, audio_args &&aud);
     ~ffmpeg_mp4();
@@ -94,7 +94,7 @@ private:
     std::string name;
 };
 
-class ffmpeg_rtmp : public ffmpeg_h264 {
+class ffmpeg_rtmp : public h264_encoder {
 public:
     ffmpeg_rtmp(std::string &&f, std::string &&n, image_args &&img, audio_args &&aud);
     ~ffmpeg_rtmp();
@@ -115,4 +115,4 @@ private:
 
 } //namespace media
 
-#endif //STARS_FFMPEG_H264_H
+#endif //STARS_H264_ENCODER_H

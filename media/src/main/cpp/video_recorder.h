@@ -7,10 +7,10 @@
 
 #include <memory>
 #include <stdint.h>
-#include "proc.h"
+#include "utils.h"
 #include "image_frame.h"
 #include "audio_frame.h"
-#include "ffmpeg_args.h"
+#include "ai_args.h"
 #include "concurrent_queue.h"
 
 #include "video_encoder.hpp"

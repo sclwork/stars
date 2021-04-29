@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".RecorderActivity">
+
+    <com.scliang.tars.MediaGLView
+        android:id="@+id/recorder_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <Button
+        android:id="@+id/camera"
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="60dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#ffffffff"
+        android:text="SWITCH" />
+
+    <Button
+        android:id="@+id/record"
+        android:layout_width="100dp"
+        android:layout_height="40dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="60dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#ffffffff"
+        android:text="RECORD" />
+
+    <Button
+        android:id="@+id/effect"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_toRightOf="@id/camera"
+        android:layout_toLeftOf="@id/record"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="60dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#ffffffff"
+        android:text="NONE" />
+
+</RelativeLayout>

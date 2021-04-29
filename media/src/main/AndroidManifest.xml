@@ -19,7 +19,7 @@
         android:theme="@style/Theme.Stars">
 
         <activity
-            android:name=".DemoActivity"
+            android:name=".MainActivity"
             android:configChanges="screenLayout|navigation|orientation|keyboard|keyboardHidden|screenSize|locale|layoutDirection"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Stars.Video">
@@ -28,6 +28,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".RecorderActivity"
+            android:configChanges="screenLayout|navigation|orientation|keyboard|keyboardHidden|screenSize|locale|layoutDirection"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Stars.Video" />
+
+        <activity
+            android:name=".PlayerActivity"
+            android:configChanges="screenLayout|navigation|orientation|keyboard|keyboardHidden|screenSize|locale|layoutDirection"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Stars.Video" />
 
     </application>
 

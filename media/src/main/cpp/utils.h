@@ -2,8 +2,8 @@
 // Created by Scliang on 3/10/21.
 //
 
-#ifndef STARS_PROC_H
-#define STARS_PROC_H
+#ifndef STARS_UTILS_H
+#define STARS_UTILS_H
 
 #include <string>
 #include "image_frame.h"
@@ -82,4 +82,4 @@ private:
 
 } //namespace media
 
-#endif //STARS_PROC_H
+#endif //STARS_UTILS_H

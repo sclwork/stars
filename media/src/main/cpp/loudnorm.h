@@ -2,8 +2,8 @@
 // Created by Scliang on 3/18/21.
 //
 
-#ifndef STARS_FFMPEG_LOUDNORM_H
-#define STARS_FFMPEG_LOUDNORM_H
+#ifndef STARS_LOUDNORM_H
+#define STARS_LOUDNORM_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,15 +24,15 @@ extern "C" {
 
 #include <mutex>
 #include <string>
-#include "ffmpeg_args.h"
+#include "ai_args.h"
 #include "audio_frame.h"
 
 namespace media {
 
-class ffmpeg_loudnorm {
+class loudnorm {
 public:
-    ffmpeg_loudnorm(std::string &&pam, audio_args &&aud);
-    ~ffmpeg_loudnorm();
+    loudnorm(std::string &&pam, audio_args &&aud);
+    ~loudnorm();
 
 public:
     /**
@@ -58,10 +58,10 @@ private:
     void on_free_all();
 
 private:
-    ffmpeg_loudnorm(ffmpeg_loudnorm&&) = delete;
-    ffmpeg_loudnorm(const ffmpeg_loudnorm&) = delete;
-    ffmpeg_loudnorm& operator=(ffmpeg_loudnorm&&) = delete;
-    ffmpeg_loudnorm& operator=(const ffmpeg_loudnorm&) = delete;
+    loudnorm(loudnorm&&) = delete;
+    loudnorm(const loudnorm&) = delete;
+    loudnorm& operator=(loudnorm&&) = delete;
+    loudnorm& operator=(const loudnorm&) = delete;
 
 private:
     std::string      param;
@@ -78,4 +78,4 @@ private:
 
 } //namespace media
 
-#endif //STARS_FFMPEG_LOUDNORM_H
+#endif //STARS_LOUDNORM_H

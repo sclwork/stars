@@ -6,7 +6,7 @@
 #define STARS_IMAGE_RENDERER_H
 
 #include "paint.h"
-#include "proc.h"
+#include "utils.h"
 #include "concurrent_queue.h"
 
 namespace media {

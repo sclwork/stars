@@ -6,7 +6,7 @@
 #define STARS_EFFECT_SELECTOR_PAINT_H
 
 #include "fbo_paint.h"
-#include "proc.h"
+#include "utils.h"
 
 namespace media {
 
