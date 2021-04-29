@@ -12,13 +12,13 @@
 #include "audio_frame.h"
 #include "ai_args.h"
 #include "concurrent_queue.h"
+#include "video_decoder.hpp"
 
 namespace media {
 
 class video_player {
 public:
-    video_player(moodycamel::ConcurrentQueue<image_frame> &iQ,
-                 moodycamel::ConcurrentQueue<audio_frame> &aQ);
+    video_player();
     ~video_player();
 
 public:
@@ -26,7 +26,8 @@ public:
       * start video play from to mp4 file
       * @param name mp4 file path / rtmp url
       */
-    void start_play(std::string &&name);
+    void start_play(int32_t w, int32_t h, std::string &&name,
+                    void (*callback)(image_frame&&));
     /**
      * stop video play
      */
@@ -45,8 +46,8 @@ private:
 
 private:
     std::atomic_bool plying;
-    moodycamel::ConcurrentQueue<image_frame> &eiQ;
-    moodycamel::ConcurrentQueue<audio_frame> &eaQ;
+    //////////////////////////////////////
+    std::shared_ptr<video_decoder> decoder;
 };
 
 } //namespace media

@@ -43,7 +43,7 @@ void media::common::renderer_init() {
         return gcom != nullptr && gcom->video_recording();
     });
     vid_rec = std::make_shared<video_recorder>(mnn_path, eiQ, eaQ);
-    vid_ply = std::make_shared<video_player>(eiQ, eaQ);
+    vid_ply = std::make_shared<video_player>();
 }
 
 /*
@@ -168,7 +168,10 @@ void media::common::camera_select(int32_t cam) {
  */
 void media::common::video_play_start(std::string &&name) {
     if (vid_ply != nullptr) {
-        vid_ply->start_play(std::forward<std::string>(name));
+        vid_ply->start_play(surface_size[0], surface_size[1],
+                std::forward<std::string>(name), [](image_frame &&frm) {
+            if (gcom != nullptr) gcom->renderer_updt_frame(std::forward<image_frame>(frm));
+        });
     }
 }
 

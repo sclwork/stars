@@ -42,16 +42,12 @@ jstring fileRootPath, jstring opencvCascadePath, jstring mnnModelPaths) {
         if (g_JavaVM != nullptr) {
             g_JavaVM->AttachCurrentThread(&p_env, nullptr);
         }
-        if (p_env == nullptr || g_MediaClass == nullptr) {
-            return;
-        }
-        auto mediaClass = (jclass) g_MediaClass;
-        if (mediaClass == nullptr) {
-            return;
-        }
-        jmethodID mediaRRID = p_env->GetStaticMethodID(mediaClass, "requestRender", "(I)V");
-        if (mediaRRID != nullptr) {
-            p_env->CallStaticVoidMethod(mediaClass, mediaRRID, code);
+        if (p_env != nullptr && g_MediaClass != nullptr) {
+            auto mediaClass = (jclass) g_MediaClass;
+            jmethodID mediaRRID = p_env->GetStaticMethodID(mediaClass, "requestRender", "(I)V");
+            if (mediaRRID != nullptr) {
+                p_env->CallStaticVoidMethod(mediaClass, mediaRRID, code);
+            }
         }
         if (g_JavaVM != nullptr) {
             g_JavaVM->DetachCurrentThread();

@@ -6,10 +6,22 @@
 #define STARS_UTILS_H
 
 #include <string>
+#include <unistd.h>
 #include "image_frame.h"
 #include "audio_frame.h"
 
 namespace media {
+
+/*
+ * 06     检查读写权限
+ * 04     检查读权限
+ * 02     检查写权限
+ * 01     检查执行权限
+ * 00     检查文件的存在性
+ */
+static inline bool file_exists(const std::string &name) {
+    return access(name.c_str(), 0) == 0;
+}
 
 static inline bool startWith(const std::string &str, const std::string &head) {
     return str.compare(0, head.size(), head) == 0;

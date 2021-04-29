@@ -105,6 +105,7 @@ public class Media {
             // jni init
             r.getGlslFiles();
             r.getLUTFileRes();
+            r.getRawFile(R.raw.ic_vid_file_not_exists, "ic_vid_file_not_exists.png");
             r.jniInit(r.getFileRootRes(), r.getOpenCVCascadeFileRes(), r.getMNNFileRes());
         }
 
