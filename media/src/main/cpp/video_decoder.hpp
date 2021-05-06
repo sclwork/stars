@@ -48,12 +48,13 @@ public:
     video_decoder(int32_t w, int32_t h, std::string &&n,
                   std::shared_ptr<std::atomic_bool> &runnable,
                   void (*callback)(image_frame&&))
-    :width(w), height(h), name(n), runnable(runnable), renderer_callback(callback) {
-        log_d("video_decoder created.");
+    :ms(0), tv(), _mux(), width(w), height(h), fps_ms((int32_t)(1000.0f/30.0f)),
+    name(n), runnable(runnable), renderer_callback(callback) {
+        log_d("created.");
     }
 
     ~video_decoder() {
-        log_d("video_decoder release.");
+        log_d("release.");
     }
 
 public:
@@ -70,22 +71,36 @@ public:
     }
 
     void run() {
-//        bool exists = file_exists(name);
-////        log_d("start video play:[%d,%d;%d] %s.", width, height, exists, name.c_str());
-//        if (!exists) {
-//            image_frame f(width, height);
-//            uint32_t *cache = nullptr;
-//            f.get(nullptr, nullptr, &cache);
-//            get_file_not_exists_tip_frame(width, height, cache);
-//            if (renderer_callback != nullptr) renderer_callback(std::forward<image_frame>(f));
-//        }
+        bool exists = file_exists(name);
+//        log_d("start video play:[%d,%d;%d] %s.", width, height, exists, name.c_str());
+        if (!exists) {
+            gettimeofday(&tv, nullptr);
+            ms = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+            image_frame f(width, height);
+            uint32_t *cache = nullptr;
+            f.get(nullptr, nullptr, &cache);
+            get_file_not_exists_tip_frame(width, height, cache);
+            if (f.available()) {
+                if (renderer_callback != nullptr) renderer_callback(std::forward<image_frame>(f));
+            }
+            gettimeofday(&tv, nullptr);
+            ms = tv.tv_sec * 1000 + tv.tv_usec / 1000 - ms;
+            ms = fps_ms - ms;
+            if (ms > 0) {
+//                log_d("need wait time: %ldms.", ms);
+                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+            }
+            return;
+        }
     }
 
 private:
+    long ms;
+    struct timeval tv;
     mutable std::mutex _mux;
-    std::shared_ptr<std::atomic_bool> runnable;
-    int32_t width, height;
+    int32_t width, height, fps_ms;
     std::string name;
+    std::shared_ptr<std::atomic_bool> runnable;
     void (*renderer_callback)(image_frame&&);
 };
 

@@ -26,7 +26,7 @@ public:
      * @param frame image frame
      * @return new image_frame need delete
      */
-    virtual void draw(const image_frame &frame, image_frame &of) = 0;
+    virtual void draw(const image_frame &frame, image_frame *of= nullptr) = 0;
 };
 
 } //namespace media

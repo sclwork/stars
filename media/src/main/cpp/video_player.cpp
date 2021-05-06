@@ -28,11 +28,13 @@ media::video_player::video_player()
 }
 
 media::video_player::~video_player() {
+    stop_play();
     log_d("release.");
 }
 
 void media::video_player::start_play(int32_t w, int32_t h, std::string &&name,
                                      void (*callback)(image_frame&&)) {
+    log_d("start video play: %s.", name.c_str());
     if (decoder != nullptr) {
         decoder->unrunning();
         decoder = nullptr;
@@ -46,4 +48,10 @@ void media::video_player::start_play(int32_t w, int32_t h, std::string &&name,
 }
 
 void media::video_player::stop_play() {
+    log_d("stop video play.");
+    plying = false;
+    if (decoder != nullptr) {
+        decoder->unrunning();
+        decoder = nullptr;
+    }
 }

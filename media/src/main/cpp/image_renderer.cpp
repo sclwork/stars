@@ -59,12 +59,14 @@ void media::image_renderer::draw_frame() {
         return;
     }
 
+    bool recording = check_video_recording != nullptr && check_video_recording();
+
     image_frame of, nf;
     drawQ.try_dequeue(nf);
-    paint->draw(nf, of);
-    of.set_ori(nf.get_ori());
+    paint->draw(nf, recording?&of:nullptr);
 
-    if (check_video_recording != nullptr && check_video_recording() && of.available()) {
+    if (recording && of.available()) {
+        of.set_ori(nf.get_ori());
         eiQ.enqueue(std::forward<image_frame>(of));
     }
 }

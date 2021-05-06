@@ -26,7 +26,7 @@ public:
      * draw image frame
      * @param frame image frame
      */
-    void draw(const image_frame &frame, image_frame &of) override;
+    void draw(const image_frame &frame, image_frame *of= nullptr) override;
 
 private:
     fbo_paint(fbo_paint&&) = delete;
@@ -36,7 +36,7 @@ private:
 
 private:
     static void update_matrix(glm::mat4 &matrix, int32_t angleX, int32_t angleY, float scaleX, float scaleY);
-    static void gl_pixels_to_image_frame(media::image_frame &of, int32_t width, int32_t height);
+    static void gl_pixels_to_image_frame(media::image_frame *of, int32_t width, int32_t height);
 
 private:
     std::string gen_vert_shader_str();

@@ -139,7 +139,7 @@ void media::fbo_paint::set_canvas_size(int32_t width, int32_t height) {
     on_canvas_size_changed(width, height);
 }
 
-void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
+void media::fbo_paint::draw(const image_frame &frame, image_frame *of) {
     if (!frame.available()) {
         return;
     }
@@ -202,7 +202,7 @@ void media::fbo_paint::draw(const image_frame &frame, image_frame &of) {
     glBindTexture(GL_TEXTURE_2D, src_fbo_texture);
     setInt(program, "s_Texture", 0);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
-    gl_pixels_to_image_frame(of, width, height);
+    if (of != nullptr) gl_pixels_to_image_frame(of, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
 
     // 渲染到屏幕
@@ -246,18 +246,18 @@ void media::fbo_paint::update_matrix(glm::mat4 &matrix, int32_t angleX, int32_t 
 }
 
 void media::fbo_paint::gl_pixels_to_image_frame(
-        media::image_frame &of, int32_t width, int32_t height) {
+        media::image_frame *of, int32_t width, int32_t height) {
     uint32_t *of_data = nullptr;
-    if (of.available()) {
-        if (of.same_size(width, height)) {
-            of.get(nullptr, nullptr, &of_data);
+    if (of->available()) {
+        if (of->same_size(width, height)) {
+            of->get(nullptr, nullptr, &of_data);
         } else {
-            of.update_size(width, height);
-            of.get(nullptr, nullptr, &of_data);
+            of->update_size(width, height);
+            of->get(nullptr, nullptr, &of_data);
         }
     } else {
-        of.update_size(width, height);
-        of.get(nullptr, nullptr, &of_data);
+        of->update_size(width, height);
+        of->get(nullptr, nullptr, &of_data);
     }
     if (of_data != nullptr) {
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, of_data);
