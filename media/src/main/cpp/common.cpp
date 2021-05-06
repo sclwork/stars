@@ -80,11 +80,10 @@ void media::common::renderer_surface_destroyed() {
  * run in renderer thread.
  */
 void media::common::renderer_surface_changed(int32_t w, int32_t h) {
+    surface_size[0] = w; surface_size[1] = h;
     if (renderer != nullptr) {
-        renderer->surface_changed(w, h);
+        renderer->surface_changed(surface_size[0], surface_size[1]);
     }
-    surface_size[0] = w / 2;
-    surface_size[1] = h / 2;
 }
 
 /*
@@ -159,7 +158,7 @@ void media::common::camera_select(int32_t cam) {
     if (vid_rec != nullptr) {
         vid_rec->start_preview([](image_frame &&frm) {
             if (gcom != nullptr) gcom->renderer_updt_frame(std::forward<image_frame>(frm));
-        }, surface_size[0], surface_size[1], cam);
+        }, surface_size[0] / 2, surface_size[1] / 2, cam);
     }
 }
 

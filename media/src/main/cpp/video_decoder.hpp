@@ -49,7 +49,7 @@ public:
                   std::shared_ptr<std::atomic_bool> &runnable,
                   void (*callback)(image_frame&&))
     :ms(0), tv(), _mux(), width(w), height(h), fps_ms((int32_t)(1000.0f/30.0f)),
-    name(n), runnable(runnable), renderer_callback(callback) {
+    name(n), exists(file_exists(name)), runnable(runnable), renderer_callback(callback) {
         log_d("created.");
     }
 
@@ -71,7 +71,6 @@ public:
     }
 
     void run() {
-        bool exists = file_exists(name);
 //        log_d("start video play:[%d,%d;%d] %s.", width, height, exists, name.c_str());
         if (!exists) {
             gettimeofday(&tv, nullptr);
@@ -100,6 +99,7 @@ private:
     mutable std::mutex _mux;
     int32_t width, height, fps_ms;
     std::string name;
+    bool exists;
     std::shared_ptr<std::atomic_bool> runnable;
     void (*renderer_callback)(image_frame&&);
 };
